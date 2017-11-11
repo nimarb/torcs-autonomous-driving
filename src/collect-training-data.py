@@ -3,7 +3,7 @@
 """
 collect-training-data.py
     parameters:
-        ~
+        ~num_data_to_collect
         ~
     publications: 
     services: 
@@ -24,29 +24,30 @@ class training_data_collector(object):
     """collector"""
 
     def __init__(self):
-        self.started = False
-        self.data_collection_size = 500
+        self.init_ros()
         self.angle_array = np.empty(self.data_collection_size)
         self.distance_array = np.empty(self.data_collection_size)
         self.counter = 0
         self.tmp_angle_array = np.empty(self.data_collection_size)
         self.tmp_distance_array = np.empty(self.data_collection_size)
         self.tmp_counter = 0
-        rospy.init_node("TrainingDataCollector", anonymous=True)
-        rospy.on_shutdown(self.shutdown)
         self.img_path = os.path.join(current_dir, "..", "data", "images")
         self.sensor_path = os.path.join(current_dir, "..", "data", "sensor")
         self.angle_path = os.path.join(current_dir, "..", "data", "sensor", "angle")
         self.distance_path = os.path.join(current_dir, "..", "data", "sensor", "distance")
-        self.bridge = CvBridge()
         self.get_data()
 
+    def init_ros(self):
+        self._data_collection_size_param = "~num_data_to_collect"
+        self.data_collection_size = rospy.get_param(self._data_collection_size_param)
+        rospy.init_node("TrainingDataCollector", anonymous=True)
+        rospy.on_shutdown(self.shutdown)
+        self.bridge = CvBridge()
 
     def get_data(self):
         print("Start getting data")
         self.sub_sens = rospy.Subscriber("torcs_ros/sensors_state", TORCSSensors, self.get_sensor_data_cb)
         self.sub_img = rospy.Subscriber("torcs_ros/pov_image", Image, self.get_img_data_cb)
-
 
     def get_img_data_cb(self, data):
         if self.counter == self.data_collection_size:
@@ -84,6 +85,9 @@ class training_data_collector(object):
 
     def shutdown(self):
         rospy.loginfo("Shutting down")
+        for param in [self._data_collection_size_param]:
+            if rospy.has_param(param):
+                rospy.delete_param(param)
 
 
 if __name__ == "__main__":
