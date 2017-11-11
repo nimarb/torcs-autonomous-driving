@@ -39,7 +39,9 @@ class training_data_collector(object):
 
     def init_ros(self):
         self._data_collection_size_param = "~num_data_to_collect"
-        self.data_collection_size = rospy.get_param(self._data_collection_size_param)
+        if rospy.has_param(self._data_collection_size_param):
+            self.data_collection_size = rospy.get_param(self._data_collection_size_param)
+        self.data_collection_size = 5500
         rospy.init_node("TrainingDataCollector", anonymous=True)
         rospy.on_shutdown(self.shutdown)
         self.bridge = CvBridge()
