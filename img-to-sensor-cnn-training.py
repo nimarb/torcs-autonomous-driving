@@ -1,25 +1,24 @@
-import keras
-from keras.models import Sequential
+import os, os.path
+import glob
+import json
+
+from keras.models import Sequential, load_model
 from keras.layers import Flatten, Dense, Activation, Dropout
 from keras.layers.pooling import MaxPooling2D
 from keras.layers.convolutional import Conv2D
+from keras.callbacks import EarlyStopping
 
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-import glob
 
-import os, os.path
-current_dir = os.path.abspath(os.path.dirname(__file__))
-data_dir = os.path.join(current_dir, "..", "catkin_ws", "src", "img_to_sensor_data", "data")
+CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
+DATA_DIR = os.path.join(CURRENT_DIR, "..", "catkin_ws", "src", "img_to_sensor_data", "data")
 
 class ImgToSensorCNN:
     """ ConvNet to infer distance and angle of a vehicle to the road centrefrom img data """
 
     def __init__(self):
-        self.init_vars()
-
-    def init_vars(self):
         self.img_width = 80
         self.img_height = 60
         self.num_train_set = 5400
@@ -34,8 +33,9 @@ class ImgToSensorCNN:
         self.model_name = "model.hd5"
 
     def load_imgs(self):
+        """ load all images into array, sorted by last modified time """
         img_iter = 0
-        for filename in glob.glob(data_dir + "/images/*.jpg"):
+        for filename in sorted(glob.glob(DATA_DIR + "/images/*.jpg"), key=os.path.getmtime):
             img = cv2.imread(filename)
             if img_iter < self.num_train_set:
                 #print("train imgs: " + str(img_iter))
@@ -48,8 +48,8 @@ class ImgToSensorCNN:
         print("All imgs loaded into np array")
 
     def load_labels(self):
-        distance_array = np.load(data_dir + "/sensor/distance.npy")
-        angle_array = np.load(data_dir + "/sensor/angle.npy")
+        distance_array = np.load(DATA_DIR + "/sensor/distance.npy")
+        angle_array = np.load(DATA_DIR + "/sensor/angle.npy")
         self.train_distance_array = distance_array[:self.num_train_set]
         self.test_distance_array = distance_array[self.num_train_set:self.num_train_set+self.num_test_set]
         self.train_angle_array = angle_array[:self.num_train_set]
@@ -74,13 +74,14 @@ class ImgToSensorCNN:
 
     def save_model(self):
         self.model.save(self.model_name)
-        json = self.model.to_json()
+        json_str = self.model.to_json()
+        json_str = json.dumps(json_str, indent=4, sort_keys=True)
         with open(self.model_name + ".json", 'w') as f:
-            f.write(json)
+            f.write(json_str)
         print("Saved model")
 
     def load_model(self):
-        self.model = keras.models.load_model(self.model_name)
+        self.model = load_model(self.model_name)
         print("Loaded model")
 
     def cnn_model(self):
@@ -107,6 +108,7 @@ class ImgToSensorCNN:
         self.model.compile(loss="mean_squared_error", optimizer="adam", metrics=["mae"])
         self.model.fit(x=data, y=train_target_vals, 
                         batch_size=self.batch_size, epochs=self.num_epochs)
+                        #callbacks=EarlyStopping(monitor='val_loss', min_delta=0.05))
                         #validation_data=[self.test_angle_array, self.test_distance_array])
 
     def test_model(self):
