@@ -1,19 +1,26 @@
 import os, os.path
 import glob
 import json
+import platform
 
 from keras.models import Sequential, load_model
-from keras.layers import Flatten, Dense, Activation, Dropout
+from keras.layers import Flatten, Dense, Activation, Dropout, LeakyReLU
 from keras.layers.pooling import MaxPooling2D
 from keras.layers.convolutional import Conv2D
 from keras.callbacks import EarlyStopping
 
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
+
+
+if "DigitsBoxBMW2" == platform.node():
+    os.environ["CUDA_VISIBLE_DEVICES"]="1"
+    DATA_DIR = os.path.join("/", "raid", "student_data", "PP_TORCS_LearnDrive1", "data")
+else: 
+    DATA_DIR = os.path.join(CURRENT_DIR, "..", "catkin_ws", "src", "img_to_sensor_data", "data")
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
-DATA_DIR = os.path.join(CURRENT_DIR, "..", "catkin_ws", "src", "img_to_sensor_data", "data")
 
 class ImgToSensorCNN:
     """ ConvNet to infer distance and angle of a vehicle to the road centrefrom img data """
@@ -38,11 +45,9 @@ class ImgToSensorCNN:
         for filename in sorted(glob.glob(DATA_DIR + "/images/*.jpg"), key=os.path.getmtime):
             img = cv2.imread(filename)
             if img_iter < self.num_train_set:
-                #print("train imgs: " + str(img_iter))
                 self.train_imgs[img_iter] = img
                 img_iter += 1
             elif img_iter >= self.num_train_set:
-                #print("test imgs: " + str(img_iter))
                 self.test_imgs[img_iter - self.num_train_set] = img
                 img_iter += 1
         print("All imgs loaded into np array")
@@ -61,10 +66,10 @@ class ImgToSensorCNN:
 
     def plot_array_values(self, array):
         x = np.arange(array.size)
-        plt.plot(x, array, linewidth=0.5)
+        #plt.plot(x, array, linewidth=0.5)
         binwidth = 0.1
         #plt.hist(array, bins=np.arange(min(array), max(array) + binwidth, binwidth), linewidth=0.5)
-        plt.show()
+        #plt.show()
 
     def sort_data_into_classes(self):
         """actually not needed, working on a regression problem"""
@@ -88,14 +93,15 @@ class ImgToSensorCNN:
         # loss= mean_squared_error, metrics=mean_absolute_error
         self.model = Sequential()
         self.model.add(Conv2D(32, kernel_size=(3, 3), padding="same",
-                    input_shape=(self.img_height, self.img_width, 3), 
-                    activation="relu"))
+                    input_shape=(self.img_height, self.img_width, 3)))
+        self.model.add(LeakyReLU(alpha=0.3))
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         self.model.add(Conv2D(64, kernel_size=(3, 3)))
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         self.model.add(Flatten())
-        #self.model.add(Dense(512, activation='relu'))
-        self.model.add(Dense(2, activation='relu'))
+        self.model.add(Dense(512))
+        #self.model.add(Dense(2, activation="linear"))
+        self.model.add(Dense(2))
 
         data = np.empty((self.num_train_set, self.img_height, self.img_width, 3), dtype=object)
         for i in range (self.num_train_set):
@@ -140,11 +146,14 @@ class ImgToSensorCNN:
         
 
 if __name__ == "__main__":
+    train = True
     cnn = ImgToSensorCNN()
     cnn.load_imgs()
     cnn.load_labels()
-    cnn.cnn_model()
-    cnn.save_model()
-    #cnn.load_model()
+    if True == train:
+        cnn.cnn_model()
+        cnn.save_model()
+    else:
+        cnn.load_model()
     cnn.test_model()
     cnn.preditct_test_pics()
