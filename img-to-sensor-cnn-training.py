@@ -46,21 +46,25 @@ class ImgToSensorCNN:
 
     def load_imgs(self):
         """ load all images into array, sorted by last modified time """
-        img_iter = 0
-        tests = sample(range(0, (self.num_train_set + self.num_test_set) - 1, self.num_test_set)
+        tests = sample(range(0, (self.num_train_set + self.num_test_set) - 1), self.num_test_set)
         tests.sort()
         test_index = 0
-        for filename in sorted(glob.glob(DATA_DIR + "/images/*.jpg"), key=os.path.getmtime):
+        train_index = 0
+        img_iter = 0
+        for filename in sorted(glob.glob(DATA_DIR + "/images/*" + self.img_data_type), key=os.path.getmtime):
             img = cv2.imread(filename)
-            if tests[test_index] != img_iter:
             #if img_iter < self.num_train_set:
-                self.train_imgs[img_iter] = img
+            if tests[test_index] == img_iter:
+                self.test_imgs[test_index] = img
+                if self.num_test_set < test_index:
+                    test_index += 1
                 img_iter += 1
             #elif img_iter >= self.num_train_set:
-            elif tests[test_index] == img_iter:
-                self.test_imgs[img_iter - self.num_train_set] = img
+            else:
+                self.train_imgs[train_index] = img
+                if self.num_train_set < train_index:
+                    train_index += 1
                 img_iter += 1
-                test_index += 1
         print("All imgs loaded into np array")
 
     def load_labels(self):
