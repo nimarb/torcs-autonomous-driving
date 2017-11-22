@@ -31,11 +31,9 @@ class ImgToSensorCNN:
         self.num_test_set = 100
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
         self.test_imgs = np.empty(self.num_test_set, dtype=object)
-        self.train_data = np.empty(self.num_train_set)
-        self.test_data = np.empty(self.num_test_set)
         self.model = object
         self.batch_size = 32
-        self.num_epochs = 100
+        self.num_epochs = 15
         self.model_name = "model.hd5"
 
     def load_imgs(self):
@@ -59,6 +57,40 @@ class ImgToSensorCNN:
         self.train_angle_array = angle_array[:self.num_train_set]
         self.test_angle_array = angle_array[self.num_train_set:self.num_train_set+self.num_test_set]
         print("Loaded label arrays into np array")
+
+    def test_shuffle_methods(self):
+        """ tests array shuffling methods against each other """
+        arr1 = np.arange(20, 30)
+        arr2 = np.arange(50, 60)
+        print(arr1)
+        print(arr2)
+        perm = np.random.permutation(10)
+        print(arr1[perm])
+        print(arr2[perm])
+
+        arr1 = np.arange(20, 30)
+        arr2 = np.arange(50, 60)
+        rng_s = np.random.get_state()
+        np.random.shuffle(arr1)
+        np.random.set_state(rng_s)
+        np.random.shuffle(arr2)
+        print(arr1)
+        print(arr2)
+
+    def shuffle_data_arrays(self):
+        rng_s = np.random.get_state()
+        np.random.shuffle(self.train_angle_array)
+        np.random.set_state(rng_s)
+        np.random.shuffle(self.train_distance_array)
+        np.random.set_state(rng_s)
+        np.random.shuffle(self.train_imgs)
+        np.random.set_state(rng_s)
+        np.random.shuffle(self.test_angle_array)
+        np.random.set_state(rng_s)
+        np.random.shuffle(self.test_distance_array)
+        np.random.set_state(rng_s)
+        np.random.shuffle(self.test_imgs)
+        print("Shuffled all data arrays!")
 
     def check_equal_occurances(self, array):
         print("array contains " + str(array.size) + " elements in total and " + str(np.unique(array).size) + " unique entries")
@@ -91,14 +123,16 @@ class ImgToSensorCNN:
     def cnn_model(self):
         # loss= mean_squared_error, metrics=mean_absolute_error
         self.model = Sequential()
-        self.model.add(Conv2D(32, kernel_size=(3, 3), padding="same",
+        self.model.add(Conv2D(32, kernel_size=(3, 3), strides=(1, 1), 
+                    padding="same", 
                     input_shape=(self.img_height, self.img_width, 3)))
-        self.model.add(LeakyReLU(alpha=0.3))
+        self.model.add(LeakyReLU(alpha=0.1))
+        #self.model.add(Activation("relu"))
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        self.model.add(Conv2D(64, kernel_size=(3, 3)))
-        self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        #self.model.add(Conv2D(64, kernel_size=(3, 3)))
+        #self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         self.model.add(Flatten())
-        self.model.add(Dense(512))
+        #self.model.add(Dense(512))
         #self.model.add(Dense(2, activation="linear"))
         self.model.add(Dense(2))
 
@@ -110,10 +144,10 @@ class ImgToSensorCNN:
         train_target_vals[:, 0] = self.train_angle_array
         train_target_vals[:, 1] = self.train_distance_array
 
-        self.model.compile(loss="mean_squared_error", optimizer="adam", metrics=["mae"])
+        self.model.compile(loss="mean_squared_error", optimizer="rmsprop", metrics=["mae"])
         self.model.fit(x=data, y=train_target_vals, 
-                        batch_size=self.batch_size, epochs=self.num_epochs, 
-                        callbacks=[EarlyStopping(monitor='loss', min_delta=0.05)])
+                        batch_size=self.batch_size, epochs=self.num_epochs)
+                        #callbacks=[EarlyStopping(monitor='mean_absolute_error', min_delta=0.05)])
                         #validation_data=[self.test_angle_array, self.test_distance_array])
 
     def test_model(self):
@@ -145,10 +179,12 @@ class ImgToSensorCNN:
         
 
 if __name__ == "__main__":
-    train = True
+    train = False
     cnn = ImgToSensorCNN()
     cnn.load_imgs()
     cnn.load_labels()
+    #cnn.test_shuffle_methods()
+    cnn.shuffle_data_arrays()
     if True == train:
         cnn.cnn_model()
         cnn.save_model()
