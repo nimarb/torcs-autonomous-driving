@@ -30,8 +30,10 @@ class ImgToSensorCNN:
         self.img_height = 60
         self.num_train_set = 5400
         self.num_test_set = 100
+        self.img_data_type = ".jpg"
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
         self.test_imgs = np.empty(self.num_test_set, dtype=object)
+        self.imgs = np.empty(self.num_train_set + self.num_test_set, dtype=object)
         self.model = object
         self.batch_size = 32
         self.num_epochs = 15
@@ -41,10 +43,27 @@ class ImgToSensorCNN:
         """ Ability to set the test/training data size in percent of available img files """
         img_dir = os.path.join(DATA_DIR, "images")
         num_img = len([f for f in os.listdir(img_dir) if f.endswith(self.img_data_type) and os.path.isfile(os.path.join(img_dir, f))])
-        self.num_test_set = num_img * (test_percent * 0.01)
+        self.num_test_set = round(num_img * (test_percent * 0.01))
         self.num_train_set = num_img - self.num_test_set
+        self.train_imgs = np.empty(self.num_train_set, dtype=object)
+        self.test_imgs = np.empty(self.num_test_set, dtype=object)
+        self.imgs = np.empty(self.num_train_set + self.num_test_set, dtype=object)
+
+    def load_data(self):
+        self.load_imgs()
+        self.load_labels()
+        self.split_into_test_train_set()
 
     def load_imgs(self):
+        """ load all images into array, sorted by last modified time """
+        img_iter = 0
+        for filename in sorted(glob.glob(DATA_DIR + "/images/*" + self.img_data_type), key=os.path.getmtime):
+            img = cv2.imread(filename)
+            self.imgs[img_iter] = img
+            img_iter += 1
+        print("All imgs loaded into np array")
+
+    def load_imgs_with_rnd_split(self):
         """ load all images into array, sorted by last modified time """
         tests = sample(range(0, (self.num_train_set + self.num_test_set) - 1), self.num_test_set)
         tests.sort()
@@ -68,13 +87,24 @@ class ImgToSensorCNN:
         print("All imgs loaded into np array")
 
     def load_labels(self):
-        distance_array = np.load(DATA_DIR + "/sensor/distance.npy")
-        angle_array = np.load(DATA_DIR + "/sensor/angle.npy")
-        self.train_distance_array = distance_array[:self.num_train_set]
-        self.test_distance_array = distance_array[self.num_train_set:self.num_train_set+self.num_test_set]
-        self.train_angle_array = angle_array[:self.num_train_set]
-        self.test_angle_array = angle_array[self.num_train_set:self.num_train_set+self.num_test_set]
+        self.distance_array = np.load(DATA_DIR + "/sensor/distance.npy")
+        self.angle_array = np.load(DATA_DIR + "/sensor/angle.npy")
         print("Loaded label arrays into np array")
+
+    def split_into_test_train_set(self):
+        self.shuffle_three_arrays_in_unison(self.imgs, self.distance_array, self.angle_array)
+
+        self.train_distance_array = self.distance_array[:self.num_train_set]
+        self.test_distance_array = self.distance_array[self.num_train_set:self.num_train_set+self.num_test_set]
+        self.train_angle_array = self.angle_array[:self.num_train_set]
+        self.test_angle_array = self.angle_array[self.num_train_set:self.num_train_set+self.num_test_set]
+        self.distance_array = None
+        self.angle_array = None
+
+        self.train_imgs = self.imgs[:self.num_train_set]
+        self.test_imgs = self.imgs[self.num_train_set:self.num_train_set+self.num_test_set]
+        self.imgs = None
+
 
     def test_shuffle_methods(self):
         """ tests array shuffling methods against each other """
@@ -95,19 +125,29 @@ class ImgToSensorCNN:
         print(arr1)
         print(arr2)
 
-    def shuffle_data_arrays(self):
+    def shuffle_three_arrays_in_unison(self, a, b, c):
         rng_s = np.random.get_state()
-        np.random.shuffle(self.train_angle_array)
+        np.random.shuffle(a)
         np.random.set_state(rng_s)
-        np.random.shuffle(self.train_distance_array)
+        np.random.shuffle(b)
         np.random.set_state(rng_s)
-        np.random.shuffle(self.train_imgs)
-        np.random.set_state(rng_s)
-        np.random.shuffle(self.test_angle_array)
-        np.random.set_state(rng_s)
-        np.random.shuffle(self.test_distance_array)
-        np.random.set_state(rng_s)
-        np.random.shuffle(self.test_imgs)
+        np.random.shuffle(c)
+
+    def shuffle_data_arrays(self):
+        self.shuffle_three_arrays_in_unison(self.train_angle_array, self.train_distance_array, self.train_imgs)
+        self.shuffle_three_arrays_in_unison(self.test_angle_array, self.test_distance_array, self.test_imgs)
+        #rng_s = np.random.get_state()
+        #np.random.shuffle(self.train_angle_array)
+        #np.random.set_state(rng_s)
+        #np.random.shuffle(self.train_distance_array)
+        #np.random.set_state(rng_s)
+        #np.random.shuffle(self.train_imgs)
+        #np.random.set_state(rng_s)
+        #np.random.shuffle(self.test_angle_array)
+        #np.random.set_state(rng_s)
+        #np.random.shuffle(self.test_distance_array)
+        #np.random.set_state(rng_s)
+        #np.random.shuffle(self.test_imgs)
         print("Shuffled all data arrays!")
 
     def check_equal_occurances(self, array):
@@ -141,17 +181,16 @@ class ImgToSensorCNN:
     def cnn_model(self):
         # loss= mean_squared_error, metrics=mean_absolute_error
         self.model = Sequential()
-        self.model.add(Conv2D(32, kernel_size=(3, 3), strides=(1, 1), 
+        self.model.add(C:Donv2D(32, kernel_size=(3, 3), strides=(1, 1), 
                     padding="same", 
                     input_shape=(self.img_height, self.img_width, 3)))
         self.model.add(LeakyReLU(alpha=0.1))
         #self.model.add(Activation("relu"))
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        #self.model.add(Conv2D(64, kernel_size=(3, 3)))
-        #self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        self.model.add(Conv2D(64, kernel_size=(3, 3)))
+        self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         self.model.add(Flatten())
-        #self.model.add(Dense(512))
-        #self.model.add(Dense(2, activation="linear"))
+        self.model.add(Dense(512))
         self.model.add(Dense(2))
 
         data = np.empty((self.num_train_set, self.img_height, self.img_width, 3), dtype=object)
@@ -168,7 +207,8 @@ class ImgToSensorCNN:
         es = EarlyStopping(monitor='mean_absolute_error', min_delta=0.04)
         #cbs.append(es)
 
-        self.model.compile(loss="mean_squared_error", optimizer="rmsprop", metrics=["mae"])
+        # other good optimiser: adam, rmsprop
+        self.model.compile(loss="mean_squared_error", optimizer="adam", metrics=["mae"])
         self.model.fit(x=data, y=train_target_vals, 
                         batch_size=self.batch_size, epochs=self.num_epochs, 
                         callbacks=cbs)
@@ -217,8 +257,8 @@ class LossHistory(Callback):
 if __name__ == "__main__":
     train = True
     cnn = ImgToSensorCNN()
-    cnn.load_imgs()
-    cnn.load_labels()
+    cnn.set_test_set_in_percent(10)
+    cnn.load_data()
     #cnn.test_shuffle_methods()
     cnn.shuffle_data_arrays()
     if True == train:
