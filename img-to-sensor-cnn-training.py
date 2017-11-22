@@ -37,6 +37,13 @@ class ImgToSensorCNN:
         self.num_epochs = 15
         self.model_name = "model.hd5"
 
+    def set_test_set_in_percent(self, test_percent):
+        """ Ability to set the test/training data size in percent of available img files """
+        img_dir = os.path.join(DATA_DIR, "images")
+        num_img = len([f for f in os.listdir(img_dir) if f.endswith(self.img_data_type) and os.path.isfile(os.path.join(img_dir, f))])
+        self.num_test_set = num_img * (test_percent * 0.01)
+        self.num_train_set = num_img - self.num_test_set
+
     def load_imgs(self):
         """ load all images into array, sorted by last modified time """
         img_iter = 0
