@@ -2,6 +2,7 @@ import os, os.path
 import glob
 import json
 import platform
+from random import sample
 
 from keras.models import Sequential, load_model
 from keras.layers import Flatten, Dense, Activation, Dropout, LeakyReLU
@@ -39,14 +40,20 @@ class ImgToSensorCNN:
     def load_imgs(self):
         """ load all images into array, sorted by last modified time """
         img_iter = 0
+        tests = sample(range(0, (self.num_train_set + self.num_test_set) - 1, self.num_test_set)
+        tests.sort()
+        test_index = 0
         for filename in sorted(glob.glob(DATA_DIR + "/images/*.jpg"), key=os.path.getmtime):
             img = cv2.imread(filename)
-            if img_iter < self.num_train_set:
+            if tests[test_index] != img_iter:
+            #if img_iter < self.num_train_set:
                 self.train_imgs[img_iter] = img
                 img_iter += 1
-            elif img_iter >= self.num_train_set:
+            #elif img_iter >= self.num_train_set:
+            elif tests[test_index] == img_iter:
                 self.test_imgs[img_iter - self.num_train_set] = img
                 img_iter += 1
+                test_index += 1
         print("All imgs loaded into np array")
 
     def load_labels(self):
