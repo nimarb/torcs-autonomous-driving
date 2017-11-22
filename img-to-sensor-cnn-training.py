@@ -13,14 +13,13 @@ import numpy as np
 import cv2
 #import matplotlib.pyplot as plt
 
+CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 if "DigitsBoxBMW2" == platform.node():
     os.environ["CUDA_VISIBLE_DEVICES"]="1"
     DATA_DIR = os.path.join("/", "raid", "student_data", "PP_TORCS_LearnDrive1", "data")
 else: 
     DATA_DIR = os.path.join(CURRENT_DIR, "..", "catkin_ws", "src", "img_to_sensor_data", "data")
-
-CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class ImgToSensorCNN:
     """ ConvNet to infer distance and angle of a vehicle to the road centrefrom img data """
@@ -36,7 +35,7 @@ class ImgToSensorCNN:
         self.test_data = np.empty(self.num_test_set)
         self.model = object
         self.batch_size = 32
-        self.num_epochs = 3
+        self.num_epochs = 100
         self.model_name = "model.hd5"
 
     def load_imgs(self):
@@ -113,8 +112,8 @@ class ImgToSensorCNN:
 
         self.model.compile(loss="mean_squared_error", optimizer="adam", metrics=["mae"])
         self.model.fit(x=data, y=train_target_vals, 
-                        batch_size=self.batch_size, epochs=self.num_epochs)
-                        #callbacks=EarlyStopping(monitor='val_loss', min_delta=0.05))
+                        batch_size=self.batch_size, epochs=self.num_epochs, 
+                        callbacks=[EarlyStopping(monitor='loss', min_delta=0.05)])
                         #validation_data=[self.test_angle_array, self.test_distance_array])
 
     def test_model(self):
