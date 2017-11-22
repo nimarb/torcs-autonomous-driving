@@ -7,7 +7,7 @@ from keras.models import Sequential, load_model
 from keras.layers import Flatten, Dense, Activation, Dropout, LeakyReLU
 from keras.layers.pooling import MaxPooling2D
 from keras.layers.convolutional import Conv2D
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, Callback
 
 import numpy as np
 import cv2
@@ -144,10 +144,16 @@ class ImgToSensorCNN:
         train_target_vals[:, 0] = self.train_angle_array
         train_target_vals[:, 1] = self.train_distance_array
 
+        cbs = []
+        loss_hist = LossHistory()
+        cbs.append(loss_hist)
+        es = EarlyStopping(monitor='mean_absolute_error', min_delta=0.04)
+        #cbs.append(es)
+
         self.model.compile(loss="mean_squared_error", optimizer="rmsprop", metrics=["mae"])
         self.model.fit(x=data, y=train_target_vals, 
-                        batch_size=self.batch_size, epochs=self.num_epochs)
-                        #callbacks=[EarlyStopping(monitor='mean_absolute_error', min_delta=0.05)])
+                        batch_size=self.batch_size, epochs=self.num_epochs, 
+                        callbacks=cbs)
                         #validation_data=[self.test_angle_array, self.test_distance_array])
 
     def test_model(self):
@@ -176,10 +182,22 @@ class ImgToSensorCNN:
             print("angle val: " + str(self.test_angle_array[i]), "; pred: " + str(val[0]))
             print("dist val: " + str(self.test_distance_array[i]), "; pred: " + str(val[1]))
             i += 1
+
+
+class LossHistory(Callback):
+    def on_train_begin(self, logs={}):
+        self.loss = []
+        self.metric = []
+        self.epochs = 0
+
+    def on_epoch_end(self, batch, logs={}):
+        self.loss.append(logs.get("mean_squared_error"))
+        self.metric.append(logs.get("mae"))
+        self.epochs += 1
         
 
 if __name__ == "__main__":
-    train = False
+    train = True
     cnn = ImgToSensorCNN()
     cnn.load_imgs()
     cnn.load_labels()
