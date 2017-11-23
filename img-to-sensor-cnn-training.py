@@ -166,6 +166,23 @@ class ImgToSensorCNN:
         num_classes_angles = np.around(self.train_angle_array, decimals=class_round_precision)
         num_classes_distances = np.around(self.train_distance_array, decimals=class_round_precision)
 
+    def save_metadata(self):
+        metadata = {}
+        metadata["img_width"] = self.img_width
+        metadata["img_height"] = self.img_height
+        metadata["img_data_type"] = self.img_data_type
+        metadata["num_test_set"] = self.num_test_set
+        metadata["num_train_set"] = self.num_train_set
+        metadata["num_epochs"] = self.num_epochs
+        metadata["loss_function"] = self.loss_function
+        metadata["metrics"] = self.metrics
+        metadata["loss_hist"] = self.loss_hist.loss
+        metadata["metrics_hist"] = self.loss_hist.metric
+        json_str = json.dumps(metadata)
+        with open(self.model_name * "-metadata.json", "w") as f:
+            f.write(json_str)
+        print("Saved metadata")
+
     def save_model(self):
         self.model.save(self.model_name)
         json_str = self.model.to_json()
@@ -264,6 +281,7 @@ if __name__ == "__main__":
     if True == train:
         cnn.cnn_model()
         cnn.save_model()
+        cnn.save_metadata()
     else:
         cnn.load_model()
     cnn.test_model()
