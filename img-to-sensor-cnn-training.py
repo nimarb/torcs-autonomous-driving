@@ -3,6 +3,7 @@ import glob
 import json
 import platform
 from random import sample
+import time
 
 from keras.models import Sequential, load_model
 from keras.layers import Flatten, Dense, Activation, Dropout, LeakyReLU
@@ -15,19 +16,21 @@ import cv2
 #import matplotlib.pyplot as plt
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
+DATA_NAME = "data-cg_track_3-2laps-640x480"
 
 if "DigitsBoxBMW2" == platform.node():
     os.environ["CUDA_VISIBLE_DEVICES"]="1"
-    DATA_DIR = os.path.join("/", "raid", "student_data", "PP_TORCS_LearnDrive1", "data")
+    DATA_DIR = os.path.join("/", "raid", "student_data", "PP_TORCS_LearnDrive1", DATA_NAME)
 else: 
-    DATA_DIR = os.path.join(CURRENT_DIR, "..", "catkin_ws", "src", "img_to_sensor_data", "data")
+    DATA_DIR = os.path.join(CURRENT_DIR, "..", "catkin_ws", "src", "img_to_sensor_data", DATA_NAME)
 
 class ImgToSensorCNN:
     """ ConvNet to infer distance and angle of a vehicle to the road centrefrom img data """
 
     def __init__(self):
-        self.img_width = 80
-        self.img_height = 60
+        self.img_width = 160
+        self.img_height = 120
+        self.resize_imgs = True
         self.num_train_set = 5400
         self.num_test_set = 100
         self.img_data_type = ".jpg"
@@ -39,7 +42,7 @@ class ImgToSensorCNN:
         self.num_epochs = 150
         self.loss_function = "mean_squared_error"
         self.metrics = "mae"
-        self.model_name = "model.hd5"
+        self.model_name = "learndrive-model"
 
     def set_test_set_in_percent(self, test_percent):
         """ Ability to set the test/training data size in percent of available img files """
@@ -61,13 +64,14 @@ class ImgToSensorCNN:
         img_iter = 0
         for filename in sorted(glob.glob(DATA_DIR + "/images/*" + self.img_data_type), key=os.path.getmtime):
             img = cv2.imread(filename)
-            if 0 == img_iter and img.shape[:1] != self.img_height:
+            if self.resize_imgs:
                 (h, w, _) = img.shape
-                print("Script IMG size diverging from actual size")
-                print("Script h=" + str(self.img_height) + "; actual h=" + str(h))
-                print("Correcting to actual IMG size..")
-                self.img_height = h
-                self.img_width = w
+                if h != self.img_height and w != self.img_width:
+                    factor = self.img_width / w
+                    img = cv2.resize(img, None, fx=factor, fy=factor)
+                    if 0 == img_iter:
+                        print("Resizing imgs; src width=" + str(w) + "; dest w=" + str(w*factor))
+                        print("Factor = " + str(factor))
             self.imgs[img_iter] = img
             img_iter += 1
         print("All imgs loaded into np array")
@@ -175,6 +179,12 @@ class ImgToSensorCNN:
         num_classes_angles = np.around(self.train_angle_array, decimals=class_round_precision)
         num_classes_distances = np.around(self.train_distance_array, decimals=class_round_precision)
 
+    def save(self):
+        stamp = str(time.time()).split(".")[0]
+        self.model_name = self.model_name + "-" + stamp[5:]
+        self.save_metadata()
+        self.save_model()
+
     def save_metadata(self):
         metadata = {}
         metadata["img_width"] = self.img_width
@@ -187,20 +197,22 @@ class ImgToSensorCNN:
         metadata["metrics"] = self.metrics
         metadata["loss_hist"] = self.loss_hist.loss
         metadata["metrics_hist"] = self.loss_hist.metric
+        metadata["data_name"] = DATA_NAME
         json_str = json.dumps(metadata)
-        with open(self.model_name * "-metadata.json", "w") as f:
+        with open(self.model_name + "-metadata.json", "w") as f:
             f.write(json_str)
         print("Saved metadata")
 
     def save_model(self):
-        self.model.save(self.model_name)
+        self.model.save(self.model_name + ".hd5")
         json_str = self.model.to_json()
         json_str = json.dumps(json_str, indent=4, sort_keys=True)
-        with open(self.model_name + ".json", 'w') as f:
+        with open(self.model_name + "-architecture.json", 'w') as f:
             f.write(json_str)
         print("Saved model")
 
-    def load_model(self):
+    def load_model(self, name):
+        self.model_name = name
         self.model = load_model(self.model_name)
         print("Loaded model")
 
@@ -290,8 +302,7 @@ if __name__ == "__main__":
     cnn.shuffle_data_arrays()
     if True == train:
         cnn.cnn_model()
-        cnn.save_model()
-        cnn.save_metadata()
+        cnn.save()
     else:
         cnn.load_model()
     cnn.test_model()
