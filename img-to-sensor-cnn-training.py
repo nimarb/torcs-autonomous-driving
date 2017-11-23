@@ -36,7 +36,9 @@ class ImgToSensorCNN:
         self.imgs = np.empty(self.num_train_set + self.num_test_set, dtype=object)
         self.model = object
         self.batch_size = 32
-        self.num_epochs = 15
+        self.num_epochs = 150
+        self.loss_function = "mean_squared_error"
+        self.metrics = "mae"
         self.model_name = "model.hd5"
 
     def set_test_set_in_percent(self, test_percent):
@@ -59,6 +61,13 @@ class ImgToSensorCNN:
         img_iter = 0
         for filename in sorted(glob.glob(DATA_DIR + "/images/*" + self.img_data_type), key=os.path.getmtime):
             img = cv2.imread(filename)
+            if 0 == img_iter and img.shape[:1] != self.img_height:
+                (h, w, _) = img.shape
+                print("Script IMG size diverging from actual size")
+                print("Script h=" + str(self.img_height) + "; actual h=" + str(h))
+                print("Correcting to actual IMG size..")
+                self.img_height = h
+                self.img_width = w
             self.imgs[img_iter] = img
             img_iter += 1
         print("All imgs loaded into np array")
@@ -198,7 +207,7 @@ class ImgToSensorCNN:
     def cnn_model(self):
         # loss= mean_squared_error, metrics=mean_absolute_error
         self.model = Sequential()
-        self.model.add(C:Donv2D(32, kernel_size=(3, 3), strides=(1, 1), 
+        self.model.add(Conv2D(32, kernel_size=(3, 3), strides=(1, 1), 
                     padding="same", 
                     input_shape=(self.img_height, self.img_width, 3)))
         self.model.add(LeakyReLU(alpha=0.1))
@@ -219,13 +228,13 @@ class ImgToSensorCNN:
         train_target_vals[:, 1] = self.train_distance_array
 
         cbs = []
-        loss_hist = LossHistory()
-        cbs.append(loss_hist)
+        self.loss_hist = LossHistory()
+        cbs.append(self.loss_hist)
         es = EarlyStopping(monitor='mean_absolute_error', min_delta=0.04)
         #cbs.append(es)
 
         # other good optimiser: adam, rmsprop
-        self.model.compile(loss="mean_squared_error", optimizer="adam", metrics=["mae"])
+        self.model.compile(loss=self.loss_function, optimizer="adam", metrics=[self.metrics])
         self.model.fit(x=data, y=train_target_vals, 
                         batch_size=self.batch_size, epochs=self.num_epochs, 
                         callbacks=cbs)
@@ -266,6 +275,7 @@ class LossHistory(Callback):
         self.epochs = 0
 
     def on_epoch_end(self, batch, logs={}):
+        """ Logs after each epoch; ATTENTION, log property has to be updated manually """
         self.loss.append(logs.get("mean_squared_error"))
         self.metric.append(logs.get("mae"))
         self.epochs += 1
