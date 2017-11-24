@@ -48,7 +48,7 @@ class ImgToSensorCNN:
         self.num_epochs = 150
         self.loss_function = "mean_squared_error"
         self.metrics = "mae"
-        self.model_name = "learndrive-model"
+        self.model_name = model_name
 
     def set_test_set_in_percent(self, test_percent):
         """Set the test/training data size in percent of available img files
@@ -258,7 +258,7 @@ class ImgToSensorCNN:
             model: keras.model, filename"""
         if name:
             self.model_name = name
-        self.model = load_model(self.model_name)
+        self.model = load_model(self.model_name + ".hd5")
         print("Loaded model")
 
     def cnn_model(self):
@@ -364,7 +364,7 @@ if __name__ == "__main__":
         train = True
     elif "test" == sys.argv[1]:
         train = False
-    if sys.argv[1]:
+    if sys.argv[2]:
         cnn = ImgToSensorCNN(sys.argv[2])
     else:
         cnn = ImgToSensorCNN()
