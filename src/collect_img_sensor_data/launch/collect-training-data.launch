@@ -1,5 +1,5 @@
 <launch>
-    <node name="TrainingDataCollector" pkg="img_to_sensor_data" type="collect-training-data.py" output="screen">
+    <node name="TrainingDataCollector" pkg="collect_img_sensor_data" type="collect-training-data.py" output="screen">
         <param name="num_data_to_collect" value="10000"/>
     </node>
 </launch>
