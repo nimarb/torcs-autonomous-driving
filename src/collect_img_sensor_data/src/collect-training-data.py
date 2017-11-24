@@ -10,7 +10,7 @@ collect-training-data.py
 """
 
 import rospy
-import roslib; roslib.load_manifest('img_to_sensor_data')
+import roslib; roslib.load_manifest('collect_img_sensor_data')
 import os
 import os.path
 import cv2

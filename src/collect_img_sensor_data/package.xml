@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>img_to_sensor_data</name>
+  <name>collect_img_sensor_data</name>
   <version>0.0.0</version>
-  <description>The img_to_sensor_data package</description>
+  <description>The collect_img_sensor_data package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/img_to_sensor_data</url> -->
+  <!-- <url type="website">http://wiki.ros.org/collect_img_sensor_data</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
