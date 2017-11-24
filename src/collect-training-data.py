@@ -140,8 +140,9 @@ class training_data_collector(object):
     def shutdown(self):
         """When shutdown, save numpy arrays containing the sensor data"""
         rospy.loginfo("Saving numpy arrays...")
-        np.save(self.angle_path, self.angle_array)
-        np.save(self.distance_path, self.distance_array)
+        if 0 != self.counter:
+            np.save(self.angle_path, self.angle_array)
+            np.save(self.distance_path, self.distance_array)
         rospy.loginfo("Shutting down")
         for param in [self._data_collection_size_param]:
             if rospy.has_param(param):
