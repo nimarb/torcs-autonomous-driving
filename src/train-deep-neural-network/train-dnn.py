@@ -1,5 +1,6 @@
 import os
 import os.path
+import sys
 import glob
 import json
 import platform
@@ -25,13 +26,13 @@ if "DigitsBoxBMW2" == platform.node():
         "/", "raid", "student_data", "PP_TORCS_LearnDrive1", DATA_NAME)
 else: 
     DATA_DIR = os.path.join(
-        CURRENT_DIR, "..", "catkin_ws", "src", "img_to_sensor_data", DATA_NAME)
+        CURRENT_DIR, "..", "collect_img_sensor_data", DATA_NAME)
 
 
 class ImgToSensorCNN:
     """Guess distance, angle of a vehicle using deep learning"""
 
-    def __init__(self):
+    def __init__(self, model_name="learndrive-model"):
         self.img_width = 160
         self.img_height = 120
         self.resize_imgs = True
@@ -358,8 +359,14 @@ class LossHistory(Callback):
         
 
 if __name__ == "__main__":
-    train = True
-    cnn = ImgToSensorCNN()
+    if "train" == sys.argv[0]:
+        train = True
+    elif "test" == sys.argv[0]:
+        train = False
+    if sys.argv[1]:
+        cnn = ImgToSensorCNN(sys.argv[1])
+    else:
+        cnn = ImgToSensorCNN()
     cnn.set_test_set_in_percent(10)
     cnn.load_data()
     cnn.shuffle_data_arrays()
