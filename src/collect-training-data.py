@@ -5,29 +5,32 @@ collect-training-data.py
     parameters:
         ~num_data_to_collect
         ~
-    publications: 
-    services: 
+    publications:
+    services:
 """
 
 import rospy
 import roslib; roslib.load_manifest('img_to_sensor_data')
-import os, os.path
+import os
+import os.path
 import cv2
 import numpy as np
-from cv_bridge import CvBridge, CvBridgeError
+from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from torcs_msgs.msg import TORCSSensors
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 
+
 class training_data_collector(object):
-    """Collect img, angle and distance from road centre from TORCS through the ROS_TORCS node"""
+    """Collect and save TORCS img, angle and distance from road centre"""
 
     def __init__(self, collect_fix_num_of_samples=False):
         """Initialise the class
 
         Arguments:
-            collect_fix_num_of_samples: bool, collect until end of game or fix number of samples
+            collect_fix_num_of_samples: bool, collect until end of game or
+                                        a fix number of samples
         """
         self.collect_fix_num_of_samples = collect_fix_num_of_samples
         self.init_ros()
@@ -43,14 +46,17 @@ class training_data_collector(object):
         self.tmp_distance = 0.0
         self.img_path = os.path.join(CURRENT_DIR, "..", "data", "images")
         self.sensor_path = os.path.join(CURRENT_DIR, "..", "data", "sensor")
-        self.angle_path = os.path.join(CURRENT_DIR, "..", "data", "sensor", "angle")
-        self.distance_path = os.path.join(CURRENT_DIR, "..", "data", "sensor", "distance")
+        self.angle_path = os.path.join(
+            CURRENT_DIR, "..", "data", "sensor", "angle")
+        self.distance_path = os.path.join(
+            CURRENT_DIR, "..", "data", "sensor", "distance")
         self.get_data()
 
     def init_ros(self):
         """Initialise all ROS related variables and get the parametres"""
         self._data_collection_size_param = "~num_data_to_collect"
-        self.data_collection_size = rospy.get_param(self._data_collection_size_param, 2800)
+        self.data_collection_size = rospy.get_param(
+                                    self._data_collection_size_param, 2800)
         rospy.init_node("TrainingDataCollector", anonymous=True)
         rospy.on_shutdown(self.shutdown)
         self.bridge = CvBridge()
@@ -59,32 +65,49 @@ class training_data_collector(object):
         """Subscribe to the relevant ROS topics to get the data to collect"""
         print("Start getting data")
         if self.collect_fix_num_of_samples:
-            self.sub_sens = rospy.Subscriber("torcs_ros/sensors_state", TORCSSensors, self.get_sensor_data_fix_samples_cb)
-            self.sub_img = rospy.Subscriber("torcs_ros/pov_image", Image, self.get_img_data_fix_samples_cb)
+            self.sub_sens = rospy.Subscriber(
+                "torcs_ros/sensors_state",
+                TORCSSensors,
+                self.get_sensor_data_fix_samples_cb)
+            self.sub_img = rospy.Subscriber(
+                "torcs_ros/pov_image",
+                Image,
+                self.get_img_data_fix_samples_cb)
         elif not self.collect_fix_num_of_samples:
-            self.sub_sens = rospy.Subscriber("torcs_ros/sensors_state", TORCSSensors, self.get_sensor_data_all_samples_cb)
-            self.sub_img = rospy.Subscriber("torcs_ros/pov_image", Image, self.get_img_data_all_samples_cb)
+            self.sub_sens = rospy.Subscriber(
+                "torcs_ros/sensors_state",
+                TORCSSensors,
+                self.get_sensor_data_all_samples_cb)
+            self.sub_img = rospy.Subscriber(
+                "torcs_ros/pov_image",
+                Image,
+                self.get_img_data_all_samples_cb)
 
     def get_img_data_fix_samples_cb(self, data):
-        """ROS callback to record image data samples for a fixed amount of samples"""
+        """ROS callback to record image data for a fixed amount of samples"""
         if self.counter == self.data_collection_size:
             print("collected all samples, done")
             np.save(self.angle_path, self.angle_array)
             np.save(self.distance_path, self.distance_array)
             return
         else:
-            self.angle_array[self.counter] = self.tmp_angle_array[self.tmp_counter]
-            self.distance_array[self.counter] = self.tmp_distance_array[self.tmp_counter]
+            self.angle_array[self.counter] = \
+                self.tmp_angle_array[self.tmp_counter]
+            self.distance_array[self.counter] = \
+                self.tmp_distance_array[self.tmp_counter]
             self.counter += 1
 
         cvimg = self.bridge.imgmsg_to_cv2(data, "bgr8")
         if 1 != self.img_scale:
-            cvimg = cv2.resize(cvimg, None, fx=self.img_scale, fy=self.img_scale)
-        cv2.imwrite(self.img_path + "/" + str(data.header.seq) + self.img_data_type, cvimg)
+            cvimg = cv2.resize(
+                cvimg, None, fx=self.img_scale, fy=self.img_scale)
+        cv2.imwrite(
+            self.img_path + "/" + str(data.header.seq) + self.img_data_type,
+            cvimg)
         print("Last saved image: " + str(data.header.seq) + self.img_data_type)
 
     def get_img_data_all_samples_cb(self, data):
-        """ROS callback to record image data samples until the game is over"""
+        """ROS callback to record image data until the game is over"""
         if self.counter < self.data_collection_size:
             self.angle_array[self.counter] = self.tmp_angle
             self.distance_array[self.counter] = self.tmp_distance
@@ -96,7 +119,9 @@ class training_data_collector(object):
 
         cvimg = self.bridge.imgmsg_to_cv2(data, "bgr8")
         cvimg = cv2.resize(cvimg, None, fx=self.img_scale, fy=self.img_scale)
-        cv2.imwrite(self.img_path + "/" + str(data.header.seq) + self.img_data_type, cvimg)
+        cv2.imwrite(
+            self.img_path + "/" + str(data.header.seq) + self.img_data_type,
+            cvimg)
 
     def get_sensor_data_fix_samples_cb(self, data):
         """ROS callback to sensor data samples for a fixed amount of samples"""
@@ -113,7 +138,7 @@ class training_data_collector(object):
         self.tmp_distance = data.trackPos
 
     def shutdown(self):
-        """Called upon shutdown, saves the numpy arrays containing the sensor data"""
+        """When shutdown, save numpy arrays containing the sensor data"""
         rospy.loginfo("Saving numpy arrays...")
         np.save(self.angle_path, self.angle_array)
         np.save(self.distance_path, self.distance_array)
