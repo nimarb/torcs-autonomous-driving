@@ -2,3 +2,6 @@
 *.jpg
 *.npy
 .vscode
+src/torcs_ros
+devel
+build
