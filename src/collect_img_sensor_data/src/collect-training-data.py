@@ -114,8 +114,9 @@ class training_data_collector(object):
             self.counter += 1
         else:
             # slow af but works -> good to guess data_collection_size well
-            np.append(self.angle_array, self.tmp_angle)
-            np.append(self.distance_array, self.tmp_distance)
+            self.angle_array = np.append(self.angle_array, self.tmp_angle)
+            self.distance_array = np.append(
+                                    self.distance_array, self.tmp_distance)
 
         cvimg = self.bridge.imgmsg_to_cv2(data, "bgr8")
         cvimg = cv2.resize(cvimg, None, fx=self.img_scale, fy=self.img_scale)
