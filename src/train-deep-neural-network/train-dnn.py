@@ -251,12 +251,13 @@ class ImgToSensorCNN:
             f.write(json_str)
         print("Saved model")
 
-    def load_model(self, name):
+    def load_model(self, name=None):
         """Loads a previously saved keras model from disk
 
         Arguments:
             model: keras.model, filename"""
-        self.model_name = name
+        if name:
+            self.model_name = name
         self.model = load_model(self.model_name)
         print("Loaded model")
 
@@ -359,12 +360,12 @@ class LossHistory(Callback):
         
 
 if __name__ == "__main__":
-    if "train" == sys.argv[0]:
+    if "train" == sys.argv[1]:
         train = True
-    elif "test" == sys.argv[0]:
+    elif "test" == sys.argv[1]:
         train = False
     if sys.argv[1]:
-        cnn = ImgToSensorCNN(sys.argv[1])
+        cnn = ImgToSensorCNN(sys.argv[2])
     else:
         cnn = ImgToSensorCNN()
     cnn.set_test_set_in_percent(10)
