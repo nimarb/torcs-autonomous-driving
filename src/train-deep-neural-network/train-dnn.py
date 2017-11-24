@@ -364,8 +364,9 @@ if __name__ == "__main__":
         train = True
     elif "test" == sys.argv[1]:
         train = False
-    if sys.argv[2]:
-        cnn = ImgToSensorCNN(sys.argv[2])
+    if len(sys.argv) > 2:
+        if sys.argv[2]:
+            cnn = ImgToSensorCNN(sys.argv[2])
     else:
         cnn = ImgToSensorCNN()
     cnn.set_test_set_in_percent(10)
