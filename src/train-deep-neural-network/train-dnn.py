@@ -11,14 +11,14 @@ from keras.models import Sequential, load_model
 from keras.layers import Flatten, Dense, Activation, Dropout, LeakyReLU
 from keras.layers.pooling import MaxPooling2D
 from keras.layers.convolutional import Conv2D
-from keras.callbacks import EarlyStopping, Callback
+from keras.callbacks import EarlyStopping, Callback, CSVLogger, History
 
 import numpy as np
 import cv2
 # import matplotlib.pyplot as plt
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
-DATA_NAME = "data-cg_track_3-2laps-640x480"
+DATA_NAME = "data-olethros_road_1-2laps-640x480"
 
 if "DigitsBoxBMW2" == platform.node():
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
@@ -32,9 +32,9 @@ else:
 class ImgToSensorCNN:
     """Guess distance, angle of a vehicle using deep learning"""
 
-    def __init__(self, model_name="learndrive-model"):
-        self.img_width = 160
-        self.img_height = 120
+    def __init__(self, model_name="learndrive-model", w=160, h=120):
+        self.img_width = w
+        self.img_height = h
         self.resize_imgs = True
         self.num_train_set = 5400
         self.num_test_set = 100
@@ -220,8 +220,8 @@ class ImgToSensorCNN:
         """Saves all data"""
         stamp = str(time.time()).split(".")[0]
         self.model_name = self.model_name + "-" + stamp[5:]
-        self.save_metadata()
         self.save_model()
+        self.save_metadata()
 
     def save_metadata(self):
         """Saves metadata for the current training in a json file"""
@@ -237,6 +237,7 @@ class ImgToSensorCNN:
         metadata["loss_hist"] = self.loss_hist.loss
         metadata["metrics_hist"] = self.loss_hist.metric
         metadata["data_name"] = DATA_NAME
+        #metadata["fit_hist"] = self.fit_hist
         json_str = json.dumps(metadata)
         with open(self.model_name + "-metadata.json", "w") as f:
             f.write(json_str)
@@ -271,9 +272,11 @@ class ImgToSensorCNN:
                 input_shape=(self.img_height, self.img_width, 3)))
         self.model.add(LeakyReLU(alpha=0.1))
         # self.model.add(Activation("relu"))
+        self.model.add(Conv2D(64, kernel_size=(3, 3)))
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         self.model.add(Conv2D(64, kernel_size=(3, 3)))
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        self.model.add(Dropout(0.1))
         self.model.add(Flatten())
         self.model.add(Dense(512))
         self.model.add(Dense(2))
@@ -290,7 +293,10 @@ class ImgToSensorCNN:
 
         cbs = []
         self.loss_hist = LossHistory()
+        self.fit_hist = History()
+        cbs.append(self.fit_hist)
         cbs.append(self.loss_hist)
+        cbs.append(CSVLogger(self.model_name + ".csv", separator=','))
         es = EarlyStopping(monitor='mean_absolute_error', min_delta=0.04)
         # cbs.append(es)
 
@@ -354,7 +360,7 @@ class LossHistory(Callback):
 
     def on_epoch_end(self, batch, logs={}):
         """Logs after each epoch; ATTENTION, log property has to be updated manually"""
-        self.loss.append(logs.get("mean_squared_error"))
+        self.loss.append(logs.get("loss"))
         self.metric.append(logs.get("mae"))
         self.epochs += 1
         
@@ -364,11 +370,11 @@ if __name__ == "__main__":
         train = True
     elif "test" == sys.argv[1]:
         train = False
-    if len(sys.argv) > 2:
+    if len(sys.argv) == 2:
         if sys.argv[2]:
             cnn = ImgToSensorCNN(sys.argv[2])
     else:
-        cnn = ImgToSensorCNN()
+        cnn = ImgToSensorCNN(w=int(sys.argv[2]), h=int(sys.argv[3]))
     cnn.set_test_set_in_percent(10)
     cnn.load_data()
     cnn.shuffle_data_arrays()
@@ -379,3 +385,4 @@ if __name__ == "__main__":
         cnn.load_model()
     cnn.test_model()
     cnn.preditct_test_pics()
+    print(cnn.fit_hist)
