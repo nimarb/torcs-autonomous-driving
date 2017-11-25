@@ -17,7 +17,7 @@
  * [X] randomly select train/test data from total data set
  * [ ] ability to only use every xth data sample (i.e. only every third frame)
  * [X] ability set the train/test split in percent
- * [ ] 
+ * [ ] **record time needed per epoch**
 
 
  # Meeting 2017-11-23
@@ -31,6 +31,16 @@
   - Script different maps?
   - Which driver to model?
   - pytry nengo torcs uni waterloo
+
+
+# Things to vary
+ * colour/bw image
+ * image sizes
+ * batch sizes? 
+ * amount of training data
+ * mix training data from multiple tracks
+ * 
+
 
 
 
