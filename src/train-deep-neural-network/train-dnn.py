@@ -268,17 +268,26 @@ class ImgToSensorCNN:
         self.model = Sequential()
         self.model.add(
             Conv2D(
-                32, kernel_size=(3, 3), strides=(1, 1), padding="same",
+                96, kernel_size=(11, 11), strides=(4, 4), padding="same",
                 input_shape=(self.img_height, self.img_width, 3)))
-        self.model.add(LeakyReLU(alpha=0.1))
-        # self.model.add(Activation("relu"))
-        self.model.add(Conv2D(64, kernel_size=(3, 3)))
+        self.model.add(Activation("relu"))
+        self.model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
+        self.model.add(Conv2D(256, kernel_size=(5, 5), strides=(4, 4)))
+        self.model.add(Activation("relu"))
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        self.model.add(Conv2D(64, kernel_size=(3, 3)))
+        self.model.add(Conv2D(384, kernel_size=(3, 3)))
+        self.model.add(Activation("relu"))
+        self.model.add(Conv2D(384, kernel_size=(3, 3)))
+        self.model.add(Activation("relu"))
+        self.model.add(Conv2D(256, kernel_size=(3, 3)))
+        self.model.add(Activation("relu"))
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        self.model.add(Dropout(0.1))
         self.model.add(Flatten())
-        self.model.add(Dense(512))
+        self.model.add(Dense(4096))
+        self.model.add(Activation("relu"))
+        self.model.add(Dropout(0.5))
+        self.model.add(Dense(4096))
+        self.model.add(Activation("relu"))
         self.model.add(Dense(2))
 
         data = np.empty(
