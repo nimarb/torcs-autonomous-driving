@@ -203,7 +203,12 @@ class ImgToSensorCNN:
         x = np.arange(array.size)
         # plt.plot(x, array, linewidth=0.5)
         binwidth = 0.1
-        # plt.hist(array, bins=np.arange(min(array), max(array) + binwidth, binwidth), linewidth=0.5)
+        #plt.hist(
+        #    array,
+        #    bins=np.arange(min(array),
+        #    max(array) + binwidth,
+        #    binwidth),
+        #    linewidth=0.5)
         # plt.show()
 
     def sort_data_into_classes(self):
