@@ -13,7 +13,7 @@
  * [X] randomly select train/test data from total data set
  * [ ] ability to only use every xth data sample (i.e. only every third frame)
  * [X] ability set the train/test split in percent
- * [ ] **record time needed per epoch**
+ * [X] record time needed per epoch
 
 
  # Meeting 2017-11-23
