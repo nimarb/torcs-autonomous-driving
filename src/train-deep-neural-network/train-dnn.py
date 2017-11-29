@@ -8,7 +8,7 @@ from random import sample
 import time
 
 from keras.models import Sequential, load_model
-from keras.layers import Flatten, Dense, Activation, Dropout, LeakyReLU
+from keras.layers import Flatten, Dense, Activation, Dropout, LeakyReLU, ZeroPadding2D
 from keras.layers.pooling import MaxPooling2D
 from keras.layers.convolutional import Conv2D
 from keras.callbacks import EarlyStopping, Callback, CSVLogger, History
@@ -242,15 +242,21 @@ class ImgToSensorCNN:
         metadata["loss_hist"] = self.loss_hist.loss
         metadata["metrics_hist"] = self.loss_hist.metric
         metadata["data_name"] = DATA_NAME
+        metadata["time_hist"] = self.time_hist.times
         #metadata["fit_hist"] = self.fit_hist
         json_str = json.dumps(metadata)
-        with open(self.model_name + "-metadata.json", "w") as f:
+        save_data_dir = os.path.join(
+            "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
+        with open(
+                save_data_dir + self.model_name + "-metadata.json", "w") as f:
             f.write(json_str)
         print("Saved metadata")
 
     def save_model(self):
         """Saves the trained keras model to disk"""
-        self.model.save(self.model_name + ".hd5")
+        save_data_dir = os.path.join(
+            "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
+        self.model.save(save_data_dir + self.model_name + ".hd5")
         json_str = self.model.to_json()
         json_str = json.dumps(json_str, indent=4, sort_keys=True)
         with open(self.model_name + "-architecture.json", 'w') as f:
@@ -277,15 +283,20 @@ class ImgToSensorCNN:
                 input_shape=(self.img_height, self.img_width, 3)))
         self.model.add(Activation("relu"))
         self.model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
+        self.model.add(ZeroPadding2D(padding=(2, 2)))
         self.model.add(Conv2D(256, kernel_size=(5, 5), strides=(4, 4)))
         self.model.add(Activation("relu"))
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        self.model.add(ZeroPadding2D(padding=(1, 1)))
         self.model.add(Conv2D(384, kernel_size=(3, 3)))
         self.model.add(Activation("relu"))
+        self.model.add(ZeroPadding2D(padding=(1, 1)))
         self.model.add(Conv2D(384, kernel_size=(3, 3)))
         self.model.add(Activation("relu"))
+        self.model.add(ZeroPadding2D(padding=(1, 1)))
         self.model.add(Conv2D(256, kernel_size=(3, 3)))
         self.model.add(Activation("relu"))
+        self.model.add(ZeroPadding2D(padding=(1, 1)))
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         self.model.add(Flatten())
         self.model.add(Dense(4096))
@@ -293,6 +304,7 @@ class ImgToSensorCNN:
         self.model.add(Dropout(0.5))
         self.model.add(Dense(4096))
         self.model.add(Activation("relu"))
+        self.model.add(Dropout(0.5))
         self.model.add(Dense(2))
 
         data = np.empty(
@@ -308,8 +320,10 @@ class ImgToSensorCNN:
         cbs = []
         self.loss_hist = LossHistory()
         self.fit_hist = History()
+        self.time_hist = TimeHistory()
         cbs.append(self.fit_hist)
         cbs.append(self.loss_hist)
+        cbs.append(self.time_hist)
         cbs.append(CSVLogger(self.model_name + ".csv", separator=','))
         es = EarlyStopping(monitor='mean_absolute_error', min_delta=0.04)
         # cbs.append(es)
@@ -377,6 +391,17 @@ class LossHistory(Callback):
         self.loss.append(logs.get("loss"))
         self.metric.append(logs.get("mae"))
         self.epochs += 1
+
+
+class TimeHistory(Callback):
+    def on_train_begin(self, logs={}):
+        self.times = []
+
+    def on_epoch_begin(self, batch, logs={}):
+        self.epoch_time_start = time.time()
+
+    def on_epoch_end(self, batch, logs={}):
+        self.times.append(time.time() - self.epoch_time_start)
         
 
 if __name__ == "__main__":
