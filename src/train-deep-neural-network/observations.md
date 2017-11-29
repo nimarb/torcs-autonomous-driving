@@ -38,6 +38,8 @@
  * train only for one value
  * relu instead of leakyrelu
  * activation func for every conv2d
+ * **Learning rate erhöhen**
+ * **change optimiser** -> maybe caught up in a local minima?
 
 # Notes
  * kleine Zielwerte -> langsames lernen
