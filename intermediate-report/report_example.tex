@@ -1,0 +1,264 @@
+%
+% Example for a student report latex file. Adapt as necessary
+%
+
+% the following lines should stay as is
+\documentclass[10pt,a4paper,twoside,journal]{IEEEtran}
+\usepackage[nocompress]{cite}
+\usepackage[pdftex]{graphicx}
+
+% some packages that most people use or improve the result
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\interdisplaylinepenalty=2500
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsbsy}
+\usepackage{flushend}
+\usepackage{siunitx}
+\usepackage{array}
+\usepackage{xspace}
+\usepackage{algorithm}
+\usepackage{url}
+\usepackage[pagebackref=true,breaklinks=true,colorlinks,bookmarks=false]{hyperref}
+
+\usepackage[switch]{lineno}
+\makeatletter
+\@ifpackageloaded{lineno}{%
+	\newcommand*\patchAmsMathEnvironmentForLineno[1]{%
+	  \expandafter\let\csname old#1\expandafter\endcsname\csname #1\endcsname
+	  \expandafter\let\csname oldend#1\expandafter\endcsname\csname end#1\endcsname
+	  \renewenvironment{#1}%
+		 {\linenomath\csname old#1\endcsname}%
+		 {\csname oldend#1\endcsname\endlinenomath}}%
+	\newcommand*\patchBothAmsMathEnvironmentsForLineno[1]{%
+	  \patchAmsMathEnvironmentForLineno{#1}%
+	  \patchAmsMathEnvironmentForLineno{#1*}}%
+	\AtBeginDocument{%
+	\patchBothAmsMathEnvironmentsForLineno{equation}%
+	\patchBothAmsMathEnvironmentsForLineno{align}%
+	\patchBothAmsMathEnvironmentsForLineno{flalign}%
+	\patchBothAmsMathEnvironmentsForLineno{alignat}%
+	\patchBothAmsMathEnvironmentsForLineno{gather}%
+	\patchBothAmsMathEnvironmentsForLineno{multline}%
+	}}%
+	{}
+\makeatother
+
+
+
+% add your additional packages here
+\usepackage{lipsum}
+
+%
+% DOCUMENT starts here
+%
+\begin{document}
+
+%
+% When submitting the review, make sure to include the following line to enable
+% line numbering. When submitting the final report, disable the following line!
+\linenumbers
+%
+
+
+
+%
+% configure submission details
+%
+
+% here you can specify the day of submission
+\newcommand{\submissiondate}{\today}
+
+% please specify the type of your submission. E.g. Advanced Seminar or Practical
+% Laboratory
+\newcommand{\submissiontype}{Advanced Seminar}
+
+% give information about when your course happened in form of SEMESTER YEAR,
+% e.g. Winter Semester 2016. In addition, specify the "short version", e.g. WS
+% 2016
+\newcommand{\submissionterm}{Winter Semester 2016}
+\newcommand{\submissiontermshort}{WS 2016}
+
+% the full submission title
+\newcommand{\submissiontitle}{Student Report Example}
+% in case that you have a very long report title, make sure to provide a shorter
+% version that can be used in the \markboth command further below. In case your
+% topic is short, simply comment the next and uncommented the second line
+\newcommand{\submissiontitleshort}{Report Example}
+%\newcommand{\submissiontitleshort}{\submissiontitle}
+
+% author list. Make sure that you include your matriculation number in the
+% section starting with \thanks. In addition, specify your supervisor(s).
+\author{John~Doe, Jane~Roe, and Max~Mustermann%
+	\thanks{\textbf{Authors}:
+		John Doe (12345678, john.doe@tum.de),
+		Jane Roe (87654321, jane.roe@tum.de),
+		and Max Mustermann (56794321, max@mustermann.tld)
+		% the following includes additional information
+		\textbf{Course}: \submissiontype{} \submissionterm{}
+		\textbf{Submitted}: \submissiondate{}
+		\textbf{Supervisor}: Name Familyname.
+		Neuroscientific System Theory (Prof. Dr. J\"org Conradt), Technische
+		Universit\"at M\"unchen, Arcisstraße 21, 80333 M\"unchen, Germany.
+}}
+
+% both items should look alike and contain a short version of the type of work
+% and semester (e.g. Advanced Seminar WS 2016, Project Laboratory SS 2017) and
+% your report title. If your title is too long, find a shorter one.
+\markboth{\submissiontype{} \submissiontermshort{}: \submissiontitleshort{}}
+{\submissiontype{} \submissiontermshort{}: \submissiontitleshort{}}
+
+% this generates the paper title
+\title{\submissiontitle}
+\maketitle
+
+% write a short abstract to introduce the reader to your work
+\begin{abstract}
+	Write a short abstract about the topic here. The abstract usually includes a
+	very brief introduction to the topic and why it is interesting. This is
+	followed by a short description of your work and the conclusions that you
+	draw. The abstract is like a teaser to your work. If it is boring, readers
+	will stop reading your paper right away. Therefore the abstract should not
+	be too long but still include most of the interesting results that you
+	discovered.
+	The abstract needs to be self-contained. Hence you should not include
+	statements that require long explanation. In addition, use only few
+	technical terms. Bare in mind that your readers my not be specialists of
+	the subject area.
+\end{abstract}
+
+%
+% Main body follows here. Only capitalize the first word in any title
+%
+\section{Working with this report template}
+
+\IEEEPARstart{W}{riting} a report is almost straightforward as long as you are
+properly prepared. Make sure that you found a suitable structure for your
+report. For instance, you could split up a report into the following sections:
+
+\begin{enumerate}
+	\item Introduction
+	\item Related work
+	\item Implementation details
+	\item Experiments and evaluation
+	\item Conclusion.
+\end{enumerate}
+
+However you may have to adapt to the report you are writing. An advanced seminar
+usually does not contain experiments and evaluation, but you wish to show
+details about one references paper that you found.
+
+If you're unsure how to structure your report, contact your supervisor. Together
+with your supervisor you should be able to figure out how to best organize your
+manuscript.
+
+Then the remaining task mostly consists of writing. Writing a good paper only
+comes with experience, though, and an understanding how a good paper should be
+structures. An excellent overview about the latter issue can be found in
+\cite{katzoff1964}.
+
+\section{Additional \LaTeX{} packages}
+
+You are free to use any additional packages that you require. There are some
+caveats, though. Make sure to include packages that do not ship with standard
+\LaTeX{} distributions in your final submission. Most of the important packages
+are included already in the preamble of this document, though.
+
+
+\section{Spelling}
+
+Before handing in your thesis, even for an intermediate review, please perform a
+spellcheck and correct grammar mistakes. The report is not meant to be a
+narrative text. Please stick to neutral and technical style and avoid subjective
+or biased expressions or adjectives/adverbs such as \emph{obviously, always,
+very, especially well, actually, so-called etc}. Scientific writing is about
+precision and you should underpin your statements factually, not soften them
+with unnecessary qualifiers.
+
+Sometimes you have a wide figure or environment. Inclusion can be achieved using
+the \texttt{figure*} environment as used in Figure \ref{fig:twocolumnfigure}.
+\begin{figure*}
+	\centering
+	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
+	\caption{A wide figure.}
+	\label{fig:twocolumnfigure}
+\end{figure*}
+
+\section{Technical details}
+
+In the following we will give you some short information about how you should
+typeset mathematical equations and set tables or figures. If you require more
+information about the topics then first try to find answers on the Internet, and
+only if you did not figure out how to solve your issue, contact your supervisor.
+
+\subsection{Mathematical equations an}
+
+In case you have to typeset equations make sure that all equations are numbered.
+The following example shows how to do so
+
+\begin{equation}
+	E = mc^2
+\end{equation}
+
+Sometimes you wish to align equations. This is possible with the (already
+included) \texttt{align} package. The example in Equation \ref{eq:lotkavolterra}
+which gives the Lotka--Volterra, or predator-prey equations, shows how to use
+it.
+
+\begin{align}\label{eq:lotkavolterra}
+	\frac{dx}{dt} &= \alpha x - \beta x y \\
+	\frac{dy}{dt} &= \delta x y - \gamma y
+\end{align}
+
+\subsection{Figures, tables, algorithms}
+
+Most reports need to include one of the mentioned objects. There are suitable
+environments for each of them. If you are interested in typesetting algorithms,
+have a look at the packages \texttt{algorithmic} and \texttt{algorithmx}. Make
+sure that all algorithms are well formatted and clearly understandable!
+
+Figures are included using the \texttt{figure} environment. All graphics should
+be centered.  Please ensure that any point you wish to make is resolvable in a
+printed copy of the paper. Resize fonts in figures to match the font in the
+body text, and choose line widths which render effectively in print. An example
+is shown in Figure \ref{fig:onecolumnfigure}.
+\texttt{includegraphics} will include the respective file.
+\begin{figure}
+	\centering
+	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
+	\caption{Always add a short caption to your figures.}
+	\label{fig:onecolumnfigure}
+\end{figure}
+
+
+\section{Submission}
+
+When submitting your final report, make sure to include all files that are
+required to build the PDF from source. This includes all bibliography files and
+\LaTeX{} files. In addition, don't forget to include all figures. If you
+performed an evaluation on a dataset you should include this data as well. For
+project laboratories or seminars that produced source code, this should be
+shipped with your final submission as well. If you prefer to keep your code
+secret, contact your supervisor.
+
+%
+% If you wish to put your work under a specific license, your free to do so. You
+% are not obliged, so you can remove the following section if you wish to.
+%
+\section*{License}
+\markright{LICENSE}
+This work is licensed under the Creative Commons Attribution 3.0 Germany
+License. To view a copy of this license,
+visit \href{http://creativecommons.org/licenses/by/3.0/de/}{http://creativecommons.org} or send a letter
+to Creative Commons, 171 Second Street, Suite 300, San
+Francisco, California 94105, USA.
+
+
+% each report should include all references that you cite in the work. Make sure
+% that you include all references!
+\bibliographystyle{ieee}
+\bibliography{bibliography}
+
+\end{document}
