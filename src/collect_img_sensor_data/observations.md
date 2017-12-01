@@ -10,6 +10,11 @@
  - Currently saving as/working with jpg files -> loss -> artefacts present
    - Will using png images (not lossy) improve accuracy of model?
 
-
 # Data capture settings
  - ca. 600pictures/min -> ~10fps
+
+# Further Ideas
+ * collect training data from TORCS drivers -> a lot faster apparently
+ * collect data with different vehicle views: hood, 3rd person etc: possible simultaneously?
+ * make number of laps selectable during training
+ 
