@@ -5,3 +5,12 @@
 src/torcs_ros
 devel
 build
+
+# latex files
+*.log
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fdb_latexmk
+*.fls
