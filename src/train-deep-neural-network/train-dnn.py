@@ -19,14 +19,19 @@ import cv2
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 DATA_NAME = "data-olethros_road_1-2laps-640x480"
+TEST_DATA_NAME = ""
 
 if "DigitsBoxBMW2" == platform.node():
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     DATA_DIR = os.path.join(
         "/", "raid", "student_data", "PP_TORCS_LearnDrive1", DATA_NAME)
+    TEST_DATA_DIR = os.path.join(
+        "/", "raid", "student_data", "PP_TORCS_LearnDrive1", TEST_DATA_NAME)
 else: 
     DATA_DIR = os.path.join(
         CURRENT_DIR, "..", "collect_img_sensor_data", DATA_NAME)
+    TEST_DATA_DIR = os.path.join(
+        CURRENT_DIR, "..", "collect_img_sensor_data", TEST_DATA_NAME)
 
 
 class ImgToSensorCNN:
@@ -37,12 +42,12 @@ class ImgToSensorCNN:
         self.img_height = h
         self.resize_imgs = True
         self.num_train_set = 5400
-        self.num_test_set = 100
+        self.num_val_set = 100
         self.img_data_type = ".jpg"
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
-        self.test_imgs = np.empty(self.num_test_set, dtype=object)
+        self.val_imgs = np.empty(self.num_val_set, dtype=object)
         self.imgs = np.empty(
-            self.num_train_set + self.num_test_set, dtype=object)
+            self.num_train_set + self.num_val_set, dtype=object)
         self.model = object
         self.batch_size = 32
         self.num_epochs = 150
@@ -50,25 +55,26 @@ class ImgToSensorCNN:
         self.metrics = "mae"
         self.model_name = model_name
 
-    def set_test_set_in_percent(self, test_percent):
-        """Set the test/training data size in percent of available img files
+    def set_val_set_in_percent(self, val_percent):
+        """Set the training/validation data size in percent of available img files
         
         Arguments
-            test_percent: Integer, Test data size in percent of total data"""
+            val_percent: Integer, validation data size in percent of total data"""
         img_dir = os.path.join(DATA_DIR, "images")
         num_img = len([f for f in os.listdir(img_dir) if f.endswith(self.img_data_type) and os.path.isfile(os.path.join(img_dir, f))])
-        self.num_test_set = round(num_img * (test_percent * 0.01))
-        self.num_train_set = num_img - self.num_test_set
+        self.num_val_set = round(num_img * (val_percent * 0.01))
+        self.num_train_set = num_img - self.num_val_set
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
-        self.test_imgs = np.empty(self.num_test_set, dtype=object)
+        self.val_imgs = np.empty(self.num_val_set, dtype=object)
         self.imgs = np.empty(
-            self.num_train_set + self.num_test_set, dtype=object)
+            self.num_train_set + self.num_val_set, dtype=object)
 
     def load_data(self):
-        """Load img & sensor data and split into test/train set"""
+        """Load img & sensor data and split into train/val/test set"""
         self.load_imgs()
         self.load_labels()
-        self.split_into_test_train_set()
+        self.load_test_set()
+        self.split_into_train_val_set()
 
     def load_imgs(self):
         """Load all images into array, sorted by file name, pad with zeros!"""
@@ -92,11 +98,11 @@ class ImgToSensorCNN:
         print("All imgs loaded into np array")
 
     def load_imgs_with_rnd_split(self):
-        """Load all imgs into array and randomly split into test/tran
+        """Load all imgs into array and randomly split into train/val
         DEPRECATED!!!"""
         tests = sample(
-            range(0, (self.num_train_set + self.num_test_set) - 1),
-            self.num_test_set)
+            range(0, (self.num_train_set + self.num_val_set) - 1),
+            self.num_val_set)
         tests.sort()
         test_index = 0
         train_index = 0
@@ -106,8 +112,8 @@ class ImgToSensorCNN:
         for filename in sorted(img_name_filter):
             img = cv2.imread(filename)
             if tests[test_index] == img_iter:
-                self.test_imgs[test_index] = img
-                if self.num_test_set < test_index:
+                self.val_imgs[test_index] = img
+                if self.num_val_set < test_index:
                     test_index += 1
                 img_iter += 1
             else:
@@ -123,24 +129,27 @@ class ImgToSensorCNN:
         self.angle_array = np.load(DATA_DIR + "/sensor/angle.npy")
         print("Loaded label arrays into np array")
 
-    def split_into_test_train_set(self):
-        """Splits loaded imgs&sensor data randomly in test/train set"""
+    def load_test_set(self):
+        print("loading test set... to be implemented")
+
+    def split_into_train_val_set(self):
+        """Splits loaded imgs&sensor data randomly in train/validation set"""
         self.shuffle_three_arrays_in_unison(
             self.imgs, self.distance_array, self.angle_array)
 
-        total_set_size = self.num_test_set + self.num_train_set
+        total_set_size = self.num_val_set + self.num_train_set
 
         self.train_distance_array = self.distance_array[:self.num_train_set]
-        self.test_distance_array = self.distance_array[
+        self.val_distance_array = self.distance_array[
                                     self.num_train_set:total_set_size]
         self.train_angle_array = self.angle_array[:self.num_train_set]
-        self.test_angle_array = self.angle_array[
+        self.val_angle_array = self.angle_array[
                                     self.num_train_set:total_set_size]
         self.distance_array = None
         self.angle_array = None
 
         self.train_imgs = self.imgs[:self.num_train_set]
-        self.test_imgs = self.imgs[self.num_train_set:total_set_size]
+        self.val_imgs = self.imgs[self.num_train_set:total_set_size]
         self.imgs = None
 
     def test_shuffle_methods(self):
@@ -172,15 +181,15 @@ class ImgToSensorCNN:
         np.random.shuffle(c)
 
     def shuffle_data_arrays(self):
-        """Shuffles all 3 data arrays (test and train)"""
+        """Shuffles all 3 data arrays (validation and train)"""
         self.shuffle_three_arrays_in_unison(
                     self.train_angle_array,
                     self.train_distance_array,
                     self.train_imgs)
         self.shuffle_three_arrays_in_unison(
-                    self.test_angle_array,
-                    self.test_distance_array,
-                    self.test_imgs)
+                    self.val_angle_array,
+                    self.val_distance_array,
+                    self.val_imgs)
         print("Shuffled all data arrays!")
 
     def check_equal_occurances(self, array):
@@ -211,16 +220,6 @@ class ImgToSensorCNN:
         #    linewidth=0.5)
         # plt.show()
 
-    def sort_data_into_classes(self):
-        """Not really needed as this class is for a regression problem"""
-        class_round_precision = 3
-        num_classes_angles = np.around(
-                                    self.train_angle_array,
-                                    decimals=class_round_precision)
-        num_classes_distances = np.around(
-                                    self.train_distance_array,
-                                    decimals=class_round_precision)
-
     def save(self):
         """Saves all data"""
         stamp = str(time.time()).split(".")[0]
@@ -234,7 +233,7 @@ class ImgToSensorCNN:
         metadata["img_width"] = self.img_width
         metadata["img_height"] = self.img_height
         metadata["img_data_type"] = self.img_data_type
-        metadata["num_test_set"] = self.num_test_set
+        metadata["num_val_set"] = self.num_val_set
         metadata["num_train_set"] = self.num_train_set
         metadata["num_epochs"] = self.num_epochs
         metadata["loss_function"] = self.loss_function
@@ -243,7 +242,8 @@ class ImgToSensorCNN:
         metadata["metrics_hist"] = self.loss_hist.metric
         metadata["data_name"] = DATA_NAME
         metadata["time_hist"] = self.time_hist.times
-        #metadata["fit_hist"] = self.fit_hist
+        metadata["train_loss_hist"] = self.fit_hist.history["loss"][-1]
+        metadata["train_mae_hist"] = self.fit_hist.history["mean_absolute_error"][-1]
         json_str = json.dumps(metadata)
         save_data_dir = os.path.join(
             "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
@@ -277,6 +277,39 @@ class ImgToSensorCNN:
         """Creates a keras ConvNet model"""
         # loss= mean_squared_error, metrics=mean_absolute_error
         self.model = Sequential()
+        self.cnn_alexnet()
+
+        data = np.empty(
+                (self.num_train_set, self.img_height, self.img_width, 3),
+                dtype=object)
+        for i in range(self.num_train_set):
+            data[i, :, :, :] = self.train_imgs[i]
+
+        train_target_vals = np.empty((self.num_train_set, 2))
+        train_target_vals[:, 0] = self.train_angle_array
+        train_target_vals[:, 1] = self.train_distance_array
+
+        cbs = []
+        self.loss_hist = LossHistory()
+        self.fit_hist = History()
+        self.time_hist = TimeHistory()
+        cbs.append(self.fit_hist)
+        cbs.append(self.loss_hist)
+        cbs.append(self.time_hist)
+        cbs.append(CSVLogger(self.model_name + ".csv", separator=','))
+        es = EarlyStopping(monitor='mean_absolute_error', min_delta=0.04)
+        # cbs.append(es)
+
+        # other good optimiser: adam, rmsprop
+        self.model.compile(
+            loss=self.loss_function, optimizer="adam", metrics=[self.metrics])
+        self.model.fit(
+            x=data, y=train_target_vals, batch_size=self.batch_size,
+            epochs=self.num_epochs, callbacks=cbs)
+                        # validation_data=[self.val_angle_array, self.val_distance_array])
+
+    def cnn_alexnet(self):
+        """Uses the AlexNet network topology for the cnn model"""
         self.model.add(
             Conv2D(
                 96, kernel_size=(11, 11), strides=(4, 4), padding="same",
@@ -307,46 +340,21 @@ class ImgToSensorCNN:
         self.model.add(Dropout(0.5))
         self.model.add(Dense(2))
 
-        data = np.empty(
-                (self.num_train_set, self.img_height, self.img_width, 3),
-                dtype=object)
-        for i in range(self.num_train_set):
-            data[i, :, :, :] = self.train_imgs[i]
-
-        train_target_vals = np.empty((self.num_train_set, 2))
-        train_target_vals[:, 0] = self.train_angle_array
-        train_target_vals[:, 1] = self.train_distance_array
-
-        cbs = []
-        self.loss_hist = LossHistory()
-        self.fit_hist = History()
-        self.time_hist = TimeHistory()
-        cbs.append(self.fit_hist)
-        cbs.append(self.loss_hist)
-        cbs.append(self.time_hist)
-        cbs.append(CSVLogger(self.model_name + ".csv", separator=','))
-        es = EarlyStopping(monitor='mean_absolute_error', min_delta=0.04)
-        # cbs.append(es)
-
-        # other good optimiser: adam, rmsprop
-        self.model.compile(
-            loss=self.loss_function, optimizer="adam", metrics=[self.metrics])
-        self.model.fit(
-            x=data, y=train_target_vals, batch_size=self.batch_size,
-            epochs=self.num_epochs, callbacks=cbs)
-                        # validation_data=[self.test_angle_array, self.test_distance_array])
+    def cnn_simple(self):
+        """Uses own simple model as cnn topology"""
+        print("hi")
 
     def test_model(self):
         """Evaluate the loaded / trained model"""
         data = np.empty(
-            (self.num_test_set, self.img_height, self.img_width, 3),
+            (self.num_val_set, self.img_height, self.img_width, 3),
             dtype=object)
-        for i in range(self.num_test_set):
-            data[i, :, :, :] = self.test_imgs[i]
+        for i in range(self.num_val_set):
+            data[i, :, :, :] = self.val_imgs[i]
 
-        train_target_vals = np.empty((self.num_test_set, 2))
-        train_target_vals[:, 0] = self.test_angle_array
-        train_target_vals[:, 1] = self.test_distance_array
+        train_target_vals = np.empty((self.num_val_set, 2))
+        train_target_vals[:, 0] = self.val_angle_array
+        train_target_vals[:, 1] = self.val_distance_array
 
         score = self.model.evaluate(
                     x=data, y=train_target_vals, batch_size=self.batch_size)
@@ -355,10 +363,10 @@ class ImgToSensorCNN:
     def preditct_test_pics(self):
         """Use model to predict values for image data from the test set"""
         data = np.empty(
-                (self.num_test_set, self.img_height, self.img_width, 3),
+                (self.num_val_set, self.img_height, self.img_width, 3),
                 dtype=object)
-        for i in range(self.num_test_set):
-            data[i, :, :, :] = self.test_imgs[i]
+        for i in range(self.num_val_set):
+            data[i, :, :, :] = self.val_imgs[i]
 
         prediction = self.model.predict(x=data)
         i = 0
@@ -366,12 +374,12 @@ class ImgToSensorCNN:
         for val in prediction:
             print(
                 "angle val: "
-                + str(self.test_angle_array[i])
+                + str(self.val_angle_array[i])
                 + "; pred: "
                 + str(val[0]))
             print(
                 "dist val: "
-                + str(self.test_distance_array[i])
+                + str(self.val_distance_array[i])
                 + "; pred: "
                 + str(val[1]))
             i += 1
@@ -414,7 +422,7 @@ if __name__ == "__main__":
             cnn = ImgToSensorCNN(sys.argv[2])
     else:
         cnn = ImgToSensorCNN(w=int(sys.argv[2]), h=int(sys.argv[3]))
-    cnn.set_test_set_in_percent(10)
+    cnn.set_val_set_in_percent(10)
     cnn.load_data()
     cnn.shuffle_data_arrays()
     if train:
