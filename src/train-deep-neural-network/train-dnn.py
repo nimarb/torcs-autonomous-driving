@@ -71,11 +71,11 @@ class ImgToSensorCNN:
         self.split_into_test_train_set()
 
     def load_imgs(self):
-        """Load all images into array, sorted by last modified time"""
+        """Load all images into array, sorted by file name, pad with zeros!"""
         img_iter = 0
         img_name_filter = glob.glob(
                             DATA_DIR + "/images/*" + self.img_data_type)
-        for filename in sorted(img_name_filter, key=os.path.getmtime):
+        for filename in sorted(img_name_filter):
             img = cv2.imread(filename)
             if self.resize_imgs:
                 (h, w, _) = img.shape
@@ -103,7 +103,7 @@ class ImgToSensorCNN:
         img_iter = 0
         img_name_filter = glob.glob(
                                 DATA_DIR + "/images/*" + self.img_data_type)
-        for filename in sorted(img_name_filter, key=os.path.getmtime):
+        for filename in sorted(img_name_filter):
             img = cv2.imread(filename)
             if tests[test_index] == img_iter:
                 self.test_imgs[test_index] = img
