@@ -102,9 +102,9 @@ class training_data_collector(object):
             cvimg = cv2.resize(
                 cvimg, None, fx=self.img_scale, fy=self.img_scale)
         cv2.imwrite(
-            self.img_path + "/" + str(data.header.seq) + self.img_data_type,
+            self.img_path + "/" + str(data.header.seq).zfill(4) + self.img_data_type,
             cvimg)
-        print("Last saved image: " + str(data.header.seq) + self.img_data_type)
+        print("Last saved image: " + str(data.header.seq).zfill(4) + self.img_data_type)
 
     def get_img_data_all_samples_cb(self, data):
         """ROS callback to record image data until the game is over"""
@@ -121,7 +121,7 @@ class training_data_collector(object):
         cvimg = self.bridge.imgmsg_to_cv2(data, "bgr8")
         cvimg = cv2.resize(cvimg, None, fx=self.img_scale, fy=self.img_scale)
         cv2.imwrite(
-            self.img_path + "/" + str(data.header.seq) + self.img_data_type,
+            self.img_path + "/" + str(data.header.seq).zfill(4) + self.img_data_type,
             cvimg)
 
     def get_sensor_data_fix_samples_cb(self, data):
