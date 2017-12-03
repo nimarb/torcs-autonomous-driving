@@ -19,7 +19,7 @@ import cv2
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 DATA_NAME = "data-olethros_road_1-2laps-640x480"
-TEST_DATA_NAME = ""
+TEST_DATA_NAME = "data-cg_track_3-2laps-640x480"
 
 if "DigitsBoxBMW2" == platform.node():
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
@@ -43,6 +43,7 @@ class ImgToSensorCNN:
         self.resize_imgs = True
         self.num_train_set = 5400
         self.num_val_set = 100
+        self.num_test_set = 100
         self.img_data_type = ".jpg"
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
         self.val_imgs = np.empty(self.num_val_set, dtype=object)
@@ -279,15 +280,25 @@ class ImgToSensorCNN:
         self.model = Sequential()
         self.cnn_alexnet()
 
-        data = np.empty(
+        train_data = np.empty(
                 (self.num_train_set, self.img_height, self.img_width, 3),
                 dtype=object)
         for i in range(self.num_train_set):
-            data[i, :, :, :] = self.train_imgs[i]
+            train_data[i, :, :, :] = self.train_imgs[i]
+
+        val_data = np.empty(
+                (self.num_val_set, self.img_height, self.img_width, 3),
+                dtype=object)
+        for i in range(self.num_val_set):
+            val_data[i, :, :, :] = self.val_imgs[i]
 
         train_target_vals = np.empty((self.num_train_set, 2))
         train_target_vals[:, 0] = self.train_angle_array
         train_target_vals[:, 1] = self.train_distance_array
+
+        val_target_vals = np.empty((self.num_val_set, 2))
+        val_target_vals[:, 0] = self.val_angle_array
+        val_target_vals[:, 1] = self.val_distance_array
 
         cbs = []
         self.loss_hist = LossHistory()
@@ -304,9 +315,9 @@ class ImgToSensorCNN:
         self.model.compile(
             loss=self.loss_function, optimizer="adam", metrics=[self.metrics])
         self.model.fit(
-            x=data, y=train_target_vals, batch_size=self.batch_size,
+            x=train_data, y=train_target_vals, batch_size=self.batch_size,
+            validation_data=(val_data, val_target_vals),
             epochs=self.num_epochs, callbacks=cbs)
-                        # validation_data=[self.val_angle_array, self.val_distance_array])
 
     def cnn_alexnet(self):
         """Uses the AlexNet network topology for the cnn model"""
