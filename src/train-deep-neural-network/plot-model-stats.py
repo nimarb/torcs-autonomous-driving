@@ -29,7 +29,7 @@ PGF_WITH_LATEX = {
     }
 
 
-def plots_train_model_json(filenames, labels):
+def plots_train_model_json(filenames, labels, yaxis_to_plot):
     matplotlib.rcParams.update(PGF_WITH_LATEX)
     json_strs = []
     json_str = {}
@@ -40,21 +40,21 @@ def plots_train_model_json(filenames, labels):
     i = 0
     for item in json_strs:
         plt.plot(
-            np.arange(item["num_epochs"]), item["loss_hist"], label=labels[i])
+            np.arange(item["num_epochs"]), item[yaxis_to_plot[1]], label=labels[i])
         i += 1
 
     legend = plt.legend(loc='upper center', shadow=False, fontsize='large')
 
     plt.yscale('log')
     plt.title("\n".join(wrap(
-        json_strs[0]["loss_function"]
+        json_strs[0][yaxis_to_plot[0]]
         + " of DNN on map: "
         + json_strs[0]["data_name"]
         + ".")))
-    plt.ylabel(json_strs[0]["loss_function"])
+    plt.ylabel(json_strs[0][yaxis_to_plot[0]])
     plt.xlabel("num_epochs")
     plt.tight_layout()
-    save_fig(file_names[0])
+    save_plots(file_names)
     plt.show()
 
 
@@ -97,24 +97,37 @@ def plot_model_json(filename):
     plt.ylabel(json_str["loss_function"])
     plt.xlabel("num_epochs")
     plt.tight_layout()
-    save_fig(file_name)
+    save_plots(file_name)
     plt.show()
 
 
-def save_fig(filename):
-    #plt.savefig('{}.pgf'.format(filename))
-    plt.savefig('{}.pdf'.format(filename))
+def save_plots(file_names):
+    unified_file_name_list = ["learndrive-model"]
+    for name in file_names:
+        fname = name.split(sep='/')[-1]
+        fnumber = str(fname.split(sep='-')[-2])
+        unified_file_name_list.append("-" + fnumber)
+
+    print("Saving as: " + "".join(unified_file_name_list))
+
+    unified_file_names = "".join(unified_file_name_list)
+    fname_with_path = "/".join(file_names[0].split(sep="/")[:-1]) \
+                        + "/" \
+                        + unified_file_names
+    #plt.savefig('{}.pgf'.format(fname_with_path))
+    plt.savefig('{}.pdf'.format(fname_with_path))
 
 
 if __name__ == "__main__":
     labels = []
     versions = ["48493", "52163", "61302"]
     file_names = []
+    yaxis_to_plot = ["loss_function", "loss_hist"]
     for ver in versions:
         file_names.append(
             "../models/learndrive-model-" + ver + "-metadata.json")
 
     labels = get_img_size_labels(file_names)
 
-    plots_train_model_json(file_names, labels)
+    plots_train_model_json(file_names, labels, yaxis_to_plot)
 
