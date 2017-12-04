@@ -75,40 +75,12 @@ def get_img_size_labels(file_names):
 
     return labels
 
-def plot_model_json(filename):
-    matplotlib.rcParams.update({'font.size': 14})
-    json_str = {}
-    json_str = json.load(open(filename))
-    loss_hist = json_str["loss_hist"]
-    mae_hist = json_str["train_mae_hist"]
-    plt.plot(np.arange(json_str["num_epochs"]), loss_hist)
-    plt.plot(np.arange(json_str["num_epochs"]), mae_hist)
-    plt.yscale('log')
-    plt.title("\n".join(wrap(
-        json_str["loss_function"]
-        + " of CNN on map: "
-        + json_str["data_name"]
-        + ". "
-        + "Image size: "
-        + str(json_str["img_width"])
-        + " by "
-        + str(json_str["img_height"])
-        + "px.")))
-    plt.ylabel(json_str["loss_function"])
-    plt.xlabel("num_epochs")
-    plt.tight_layout()
-    save_plots(file_name)
-    plt.show()
-
-
 def save_plots(file_names):
     unified_file_name_list = ["learndrive-model"]
     for name in file_names:
         fname = name.split(sep='/')[-1]
         fnumber = str(fname.split(sep='-')[-2])
         unified_file_name_list.append("-" + fnumber)
-
-    print("Saving as: " + "".join(unified_file_name_list))
 
     unified_file_names = "".join(unified_file_name_list)
     fname_with_path = "/".join(file_names[0].split(sep="/")[:-1]) \
