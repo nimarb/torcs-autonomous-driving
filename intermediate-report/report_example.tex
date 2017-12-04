@@ -16,7 +16,10 @@
 \usepackage{amsfonts}
 \usepackage{amsbsy}
 \usepackage{flushend}
-\usepackage{siunitx}
+% properly print units, enable compact product between units
+\usepackage[inter-unit-product =\cdot]{siunitx}
+% load units \bit, \byte usw
+\sisetup{detect-weight=true, binary-units=true}
 \usepackage{array}
 \usepackage{xspace}
 \usepackage{algorithm}
@@ -46,14 +49,9 @@
 	{}
 \makeatother
 
-
-
 % add your additional packages here
 \usepackage{lipsum}
 
-%
-% DOCUMENT starts here
-%
 \begin{document}
 
 %
@@ -61,8 +59,6 @@
 % line numbering. When submitting the final report, disable the following line!
 \linenumbers
 %
-
-
 
 %
 % configure submission details
@@ -127,22 +123,19 @@ in The Open Racing Car Simulator (TORCS)}
 	unseen test track.
 \end{abstract}
 
+\begin{IEEEkeywords}
+	deep learning, TORCS, convolutional neural network, spiking neural network, autonomous driving
+\end{IEEEkeywords}
+
 %
 % Main body follows here. Only capitalize the first word in any title
 %
-\section{Working with this report template}
+\section{Introduction}
+\label{sc:intro}
 
 \IEEEPARstart{W}{riting} a report is almost straightforward as long as you are
 properly prepared. Make sure that you found a suitable structure for your
 report. For instance, you could split up a report into the following sections:
-
-\begin{enumerate}
-	\item Introduction
-	\item Related work
-	\item Implementation details
-	\item Experiments and evaluation
-	\item Conclusion.
-\end{enumerate}
 
 However you may have to adapt to the report you are writing. An advanced seminar
 usually does not contain experiments and evaluation, but you wish to show
@@ -157,7 +150,8 @@ comes with experience, though, and an understanding how a good paper should be
 structures. An excellent overview about the latter issue can be found in
 \cite{katzoff1964}.
 
-\section{Additional \LaTeX{} packages}
+\section{State of the art}
+\label{sc:sota}
 
 You are free to use any additional packages that you require. There are some
 caveats, though. Make sure to include packages that do not ship with standard
@@ -165,7 +159,11 @@ caveats, though. Make sure to include packages that do not ship with standard
 are included already in the preamble of this document, though.
 
 
-\section{Spelling}
+\section{Implementation details}
+\subsection{DNN: Keras}
+\label{ssc:keras}
+\subsection{SNN: Nengo}
+\label{ssc:nengo}
 
 Before handing in your thesis, even for an intermediate review, please perform a
 spellcheck and correct grammar mistakes. The report is not meant to be a
@@ -184,7 +182,8 @@ the \texttt{figure*} environment as used in Figure \ref{fig:twocolumnfigure}.
 	\label{fig:twocolumnfigure}
 \end{figure*}
 
-\section{Technical details}
+\section{Experiments and evaluation}
+\label{sc:evaluation}
 
 In the following we will give you some short information about how you should
 typeset mathematical equations and set tables or figures. If you require more
@@ -231,7 +230,8 @@ is shown in Figure \ref{fig:onecolumnfigure}.
 \end{figure}
 
 
-\section{Submission}
+\section{Conclusion}
+\label{sc:conclusion}
 
 When submitting your final report, make sure to include all files that are
 required to build the PDF from source. This includes all bibliography files and
