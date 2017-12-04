@@ -30,6 +30,12 @@ PGF_WITH_LATEX = {
 
 
 def plots_train_model_json(filenames, labels, yaxis_to_plot):
+    """Plots data from the model metadata
+
+    Arguments:
+        filenames: list, paths of metadata files
+        labels: list, legend name for each plot
+        yaxis_to_plot: list, name of func to plot and value to plot"""
     matplotlib.rcParams.update(PGF_WITH_LATEX)
     json_strs = []
     json_str = {}
@@ -40,11 +46,11 @@ def plots_train_model_json(filenames, labels, yaxis_to_plot):
     i = 0
     for item in json_strs:
         plt.plot(
-            np.arange(item["num_epochs"]), item[yaxis_to_plot[1]], label=labels[i])
+            np.arange(
+                item["num_epochs"]), item[yaxis_to_plot[1]], label=labels[i])
         i += 1
 
-    legend = plt.legend(loc='upper center', shadow=False, fontsize='large')
-
+    plt.legend(loc='upper center', shadow=False, fontsize='large')
     plt.yscale('log')
     plt.title("\n".join(wrap(
         json_strs[0][yaxis_to_plot[0]]
@@ -59,6 +65,10 @@ def plots_train_model_json(filenames, labels, yaxis_to_plot):
 
 
 def get_img_size_labels(file_names):
+    """Returns the image sizes in a list from a file name list
+
+    Arguments:
+        file_names: list, paths of metadata files"""
     labels = []
     json_strs = []
     json_str = {}
@@ -75,7 +85,12 @@ def get_img_size_labels(file_names):
 
     return labels
 
+
 def save_plots(file_names):
+    """Saves the current plot in the current dir
+
+    Arguments:
+        file_names: list, paths of metadata files"""
     unified_file_name_list = ["learndrive-model"]
     for name in file_names:
         fname = name.split(sep='/')[-1]
@@ -102,4 +117,3 @@ if __name__ == "__main__":
     labels = get_img_size_labels(file_names)
 
     plots_train_model_json(file_names, labels, yaxis_to_plot)
-
