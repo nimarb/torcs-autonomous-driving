@@ -139,10 +139,12 @@ class ImgToSensorCNN:
         print("Loaded label arrays into np array")
 
     def load_test_set(self):
+        """Load test set from a different track"""
         _imgs = np.empty(self.num_test_set, dtype=object)
         self.load_imgs(_imgs, TEST_DATA_DIR)
         _distance_array = np.load(TEST_DATA_DIR + "/sensor/distance.npy")
         _angle_array = np.load(TEST_DATA_DIR + "/sensor/angle.npy")
+        # Test data is from a different track but always a rnd subset
         self.shuffle_three_arrays_in_unison(
             _imgs, _angle_array, _distance_array)
         _imgs = _imgs[:self.num_test_set]
