@@ -73,33 +73,33 @@
 
 % please specify the type of your submission. E.g. Advanced Seminar or Practical
 % Laboratory
-\newcommand{\submissiontype}{Advanced Seminar}
+\newcommand{\submissiontype}{Practical course: Computational Neuro Engineering}
 
 % give information about when your course happened in form of SEMESTER YEAR,
 % e.g. Winter Semester 2016. In addition, specify the "short version", e.g. WS
 % 2016
-\newcommand{\submissionterm}{Winter Semester 2016}
-\newcommand{\submissiontermshort}{WS 2016}
+\newcommand{\submissionterm}{Winter Semester 2017/2018}
+\newcommand{\submissiontermshort}{WS 2017/2018}
 
 % the full submission title
-\newcommand{\submissiontitle}{Student Report Example}
+\newcommand{\submissiontitle}{Learning to drive based on multiple sensor cues
+in The Open Racing Car Simulator (TORCS)}
 % in case that you have a very long report title, make sure to provide a shorter
 % version that can be used in the \markboth command further below. In case your
 % topic is short, simply comment the next and uncommented the second line
-\newcommand{\submissiontitleshort}{Report Example}
+\newcommand{\submissiontitleshort}{Autonomous driving in TORCS with multiple sensors}
 %\newcommand{\submissiontitleshort}{\submissiontitle}
 
 % author list. Make sure that you include your matriculation number in the
 % section starting with \thanks. In addition, specify your supervisor(s).
-\author{John~Doe, Jane~Roe, and Max~Mustermann%
+\author{Tim~Bicker, and Nimar~Blume%
 	\thanks{\textbf{Authors}:
-		John Doe (12345678, john.doe@tum.de),
-		Jane Roe (87654321, jane.roe@tum.de),
-		and Max Mustermann (56794321, max@mustermann.tld)
+		Tim Bicker (12345678, tim.bicker@tum.de),
+		and Nimar Blume (03638934, nimar.blume@tum.de)
 		% the following includes additional information
 		\textbf{Course}: \submissiontype{} \submissionterm{}
 		\textbf{Submitted}: \submissiondate{}
-		\textbf{Supervisor}: Name Familyname.
+		\textbf{Supervisor}: Florian Mirus.
 		Neuroscientific System Theory (Prof. Dr. J\"org Conradt), Technische
 		Universit\"at M\"unchen, Arcisstraße 21, 80333 M\"unchen, Germany.
 }}
@@ -116,17 +116,15 @@
 
 % write a short abstract to introduce the reader to your work
 \begin{abstract}
-	Write a short abstract about the topic here. The abstract usually includes a
-	very brief introduction to the topic and why it is interesting. This is
-	followed by a short description of your work and the conclusions that you
-	draw. The abstract is like a teaser to your work. If it is boring, readers
-	will stop reading your paper right away. Therefore the abstract should not
-	be too long but still include most of the interesting results that you
-	discovered.
-	The abstract needs to be self-contained. Hence you should not include
-	statements that require long explanation. In addition, use only few
-	technical terms. Bare in mind that your readers my not be specialists of
-	the subject area.
+	To implement an autonomous driver in The Open Racing Car Simulator (TORCS)
+	based on a deep neural network (DNN) and spiking neural network (SNN) multiple
+	sensor cues are used. Specifically, the DNN predicts the current car displacement
+	and angle to the road centre from a driver's view image. Based on the two values
+	a SNN generates driving commands for the car. Subsequently, the car is put onto a 
+	new track and the driving performance is evaluated.\
+	The DNN is based on a Convolutional Neural Network and after training the mean 
+	absolute error for the displacement is XXXX and for the angle is XXX on an
+	unseen test track.
 \end{abstract}
 
 %
