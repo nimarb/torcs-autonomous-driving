@@ -1,5 +1,6 @@
 import os
 import os.path
+import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -106,14 +107,17 @@ def save_plots(file_names):
 
 
 if __name__ == "__main__":
-    labels = []
-    versions = ["48493", "52163", "61302"]
-    file_names = []
     yaxis_to_plot = ["loss_function", "loss_hist"]
-    for ver in versions:
-        file_names.append(
-            "../models/learndrive-model-" + ver + "-metadata.json")
+    if len(sys.argv) == 1:
+        labels = []
+        versions = ["48493", "52163", "61302"]
+        file_names = []
+        for ver in versions:
+            file_names.append(
+                "../models/learndrive-model-" + ver + "-metadata.json")
+
+    if len(sys.argv) >= 2:
+        file_names = sys.argv[1:]
 
     labels = get_img_size_labels(file_names)
-
     plots_train_model_json(file_names, labels, yaxis_to_plot)
