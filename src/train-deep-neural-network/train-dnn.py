@@ -287,7 +287,10 @@ class ImgToSensorCNN:
         self.model.save(save_data_dir + self.model_name + ".hd5")
         json_str = self.model.to_json()
         json_str = json.dumps(json_str, indent=4, sort_keys=True)
-        with open(self.model_name + "-architecture.json", 'w') as f:
+        with open(
+                save_data_dir
+                + self.model_name
+                + "-architecture.json", 'w') as f:
             f.write(json_str)
         print("Saved model")
 
