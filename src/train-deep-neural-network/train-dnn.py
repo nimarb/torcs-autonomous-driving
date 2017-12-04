@@ -43,7 +43,7 @@ class ImgToSensorCNN:
         self.resize_imgs = True
         self.num_train_set = 5400
         self.num_val_set = 100
-        self.num_test_set = 100
+        self.num_test_set = 200
         self.img_data_type = ".jpg"
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
         self.val_imgs = np.empty(self.num_val_set, dtype=object)
@@ -72,16 +72,19 @@ class ImgToSensorCNN:
 
     def load_data(self):
         """Load img & sensor data and split into train/val/test set"""
-        self.load_imgs()
+        self.load_imgs(self.imgs, DATA_DIR)
         self.load_labels()
-        self.load_test_set()
         self.split_into_train_val_set()
 
-    def load_imgs(self):
-        """Load all images into array, sorted by file name, pad with zeros!"""
+    def load_imgs(self, img_array, data_dir):
+        """Load all images into array, sorted by file name (pad with zeros!)
+        
+        Arguments:
+            img_array: 
+            data_dir: """
         img_iter = 0
         img_name_filter = glob.glob(
-                            DATA_DIR + "/images/*" + self.img_data_type)
+                            data_dir + "/images/*" + self.img_data_type)
         for filename in sorted(img_name_filter):
             img = cv2.imread(filename)
             if self.resize_imgs:
@@ -94,7 +97,12 @@ class ImgToSensorCNN:
                             "Resizing imgs; src width="
                             + str(w) + "; dest w=" + str(w*factor))
                         print("Factor = " + str(factor))
-            self.imgs[img_iter] = img
+            if img_iter < img_array.size:
+                img_array[img_iter] = img
+            else:
+                np.append(img_array, img)
+                if img_iter == img_array.size:
+                    print("load_imgs: now appending imgs to array, slow af")
             img_iter += 1
         print("All imgs loaded into np array")
 
@@ -131,7 +139,22 @@ class ImgToSensorCNN:
         print("Loaded label arrays into np array")
 
     def load_test_set(self):
-        print("loading test set... to be implemented")
+        _imgs = np.empty(self.num_test_set, dtype=object)
+        self.load_imgs(_imgs, TEST_DATA_DIR)
+        _distance_array = np.load(TEST_DATA_DIR + "/sensor/distance.npy")
+        _angle_array = np.load(TEST_DATA_DIR + "/sensor/angle.npy")
+        self.shuffle_three_arrays_in_unison(
+            _imgs, _angle_array, _distance_array)
+        _imgs = _imgs[:self.num_test_set]
+        self.test_imgs = np.empty(
+            (self.num_test_set, self.img_height, self.img_width, 3),
+            dtype=object)
+        for i in range(self.num_test_set):
+            self.test_imgs[i, :, :, :] = _imgs[i]
+
+        self.test_vals = np.empty((self.num_test_set, 2))
+        self.test_vals[:, 0] = _angle_array[:self.num_test_set]
+        self.test_vals[:, 1] = _distance_array[:self.num_test_set]
 
     def split_into_train_val_set(self):
         """Splits loaded imgs&sensor data randomly in train/validation set"""
@@ -235,6 +258,7 @@ class ImgToSensorCNN:
         metadata["img_height"] = self.img_height
         metadata["img_data_type"] = self.img_data_type
         metadata["num_val_set"] = self.num_val_set
+        metadata["num_test_set"] = self.num_test_set
         metadata["num_train_set"] = self.num_train_set
         metadata["num_epochs"] = self.num_epochs
         metadata["loss_function"] = self.loss_function
@@ -242,9 +266,12 @@ class ImgToSensorCNN:
         metadata["loss_hist"] = self.loss_hist.loss
         metadata["metrics_hist"] = self.loss_hist.metric
         metadata["data_name"] = DATA_NAME
+        metadata["test_data_name"] = TEST_DATA_NAME
         metadata["time_hist"] = self.time_hist.times
         metadata["train_loss_hist"] = self.fit_hist.history["loss"][-1]
         metadata["train_mae_hist"] = self.fit_hist.history["mean_absolute_error"][-1]
+        metadata["test_loss"] = self.score[0]
+        metadata["test_mae"] = self.score[1]
         json_str = json.dumps(metadata)
         save_data_dir = os.path.join(
             "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
@@ -357,19 +384,12 @@ class ImgToSensorCNN:
 
     def test_model(self):
         """Evaluate the loaded / trained model"""
-        data = np.empty(
-            (self.num_val_set, self.img_height, self.img_width, 3),
-            dtype=object)
-        for i in range(self.num_val_set):
-            data[i, :, :, :] = self.val_imgs[i]
-
-        train_target_vals = np.empty((self.num_val_set, 2))
-        train_target_vals[:, 0] = self.val_angle_array
-        train_target_vals[:, 1] = self.val_distance_array
-
-        score = self.model.evaluate(
-                    x=data, y=train_target_vals, batch_size=self.batch_size)
-        print(score)
+        self.load_test_set()
+        self.score = self.model.evaluate(
+                                    x=self.test_imgs,
+                                    y=self.test_vals,
+                                    batch_size=self.batch_size)
+        print(self.score)
 
     def preditct_test_pics(self):
         """Use model to predict values for image data from the test set"""
@@ -438,9 +458,10 @@ if __name__ == "__main__":
     cnn.shuffle_data_arrays()
     if train:
         cnn.cnn_model()
+        cnn.test_model()
+        #cnn.preditct_test_pics()
         cnn.save()
     else:
         cnn.load_model()
-    cnn.test_model()
-    cnn.preditct_test_pics()
-    print(cnn.fit_hist)
+        cnn.test_model()
+        cnn.preditct_test_pics()
