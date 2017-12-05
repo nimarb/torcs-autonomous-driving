@@ -20,6 +20,7 @@
 \usepackage[inter-unit-product =\cdot]{siunitx}
 % load units \bit, \byte usw
 \sisetup{detect-weight=true, binary-units=true}
+\DeclareSIUnit\px{px}
 \usepackage{array}
 \usepackage{xspace}
 \usepackage{algorithm}
@@ -144,9 +145,47 @@ to simulate a car on a race track and provides relevant sensor data.
 \section{Implementation details}
 
 \section{Deep neural network architecture choice}
+\subsection{The testing deep neural network}
+\label{ssc:testing-dnn}
+AlexNet\cite{alexnet2012imagenet}
 \subsection{Convolutional neural network}
 
-\subsection{Building a Deep Neural Network with Keras}
+\subsection{Tuning the hyperparametres}
+\subsubsection{Input images}
+The image data is acquired from TORCS \cite{TORCS} using ROS via the TORCS-ROS node \cite{mirus_torcs-ros_2017}. 
+TORCS provides several camera perspectives: 
+\begin{enumerate}
+	\item Driver's view with hood
+	\item Driver's view without hood
+	\item Third person perspective: far
+	\item Third person perspective: close
+	\item ...
+\end{enumerate}
+All perspectives were evaluated based on the DNN described in \autoref{ssc:testing-dnn} 
+and as final perspective XX was chosen. The basis for that decision can be seen in 
+\autoref{fig:camera-evaluation}, which shows the mean absolute error for each view.
+\begin{figure}
+	\centering
+	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
+	\caption{Mean absolute error of the same DNN trained with multiple camera views}
+	\label{fig:camera-evaluation}
+\end{figure}
+
+The images are provided by TORCS ROS \cite{mirus_torcs} at a rate of 10 frames per second (fps) 
+at a resoultion of $ \SI{640}{\px} \times \SI{480}{\px} $. Because that image size is too large
+to train a reasonably deep network in a reasonable time, the images are down-scaled prior to training 
+and using them. To find the best scale for the image, four different sizes have been tested: 
+$ \SI{320}{\px} \times \SI{240}{\px}, \SI{160}{\px} \times \SI{120}{\px}, \SI{80}{\px} \times \SI{60}{\px}$ and $ \SI{40}{\px} \times \SI{30}{\px}$.
+The testing DNN was trained with the same images at the mentioned resolutions and the mean absolute error 
+for the validation set was recorded, which can be seen in \autoref{fig:img-res-evaluation}.
+\begin{figure}
+	\centering
+	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
+	\caption{Mean absolute error of the same DNN trained with multiple image resolutions}
+	\label{fig:img-res-evaluation}
+\end{figure}
+
+\subsection{Building a deep neural network with keras}
 \label{ssc:keras}
 Keras is a python library 
 
@@ -157,7 +196,7 @@ hello keras \cite{Toshev_2014_CVPR}
 
 
 Sometimes you have a wide figure or environment. Inclusion can be achieved using
-the \texttt{figure*} environment as used in Figure \ref{fig:twocolumnfigure}.
+the \texttt{figure*} environment as used in Figure \autoref{fig:twocolumnfigure}.
 \begin{figure*}
 	\centering
 	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
@@ -178,7 +217,7 @@ The following example shows how to do so
 \end{equation}
 
 Sometimes you wish to align equations. This is possible with the (already
-included) \texttt{align} package. The example in Equation \ref{eq:lotkavolterra}
+included) \texttt{align} package. The example in Equation \autoref{eq:lotkavolterra}
 which gives the Lotka--Volterra, or predator-prey equations, shows how to use
 it.
 
@@ -198,7 +237,7 @@ Figures are included using the \texttt{figure} environment. All graphics should
 be centered.  Please ensure that any point you wish to make is resolvable in a
 printed copy of the paper. Resize fonts in figures to match the font in the
 body text, and choose line widths which render effectively in print. An example
-is shown in Figure \ref{fig:onecolumnfigure}.
+is shown in Figure \autoref{fig:onecolumnfigure}.
 \texttt{includegraphics} will include the respective file.
 \begin{figure}
 	\centering
