@@ -51,7 +51,7 @@ class ImgToSensorCNN:
             self.num_train_set + self.num_val_set, dtype=object)
         self.model = object
         self.batch_size = 32
-        self.num_epochs = 150
+        self.num_epochs = 100
         self.loss_function = "mean_squared_error"
         self.metrics = "mae"
         self.model_name = model_name
