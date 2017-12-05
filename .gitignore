@@ -5,6 +5,7 @@
 src/torcs_ros
 devel
 build
+src/models/*
 
 # latex files
 *.log
