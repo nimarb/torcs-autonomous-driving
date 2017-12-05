@@ -7,6 +7,18 @@ import matplotlib.pyplot as plt
 import matplotlib
 import json
 from textwrap import wrap
+#matplotlib.use('pgf')
+
+
+"""from: http://bkanuka.com/articles/native-latex-plots/"""
+def figsize(scale):
+    fig_width_pt = 516                          # Get this from LaTeX using \the\textwidth
+    inches_per_pt = 1.0/72.27                       # Convert pt to inch
+    golden_mean = (np.sqrt(5.0)-1.0)/2.0            # Aesthetic ratio (you could change this)
+    fig_width = fig_width_pt*inches_per_pt*scale    # width in inches
+    fig_height = fig_width*golden_mean              # height in inches
+    fig_size = [fig_width,fig_height]
+    return fig_size
 
 
 PGF_WITH_LATEX = {
@@ -21,8 +33,8 @@ PGF_WITH_LATEX = {
     "legend.fontsize": 8,
     "xtick.labelsize": 8,
     "ytick.labelsize": 8,
-    #"figure.figsize": figsize(0.9),     # default fig size of 0.9 textwidth
-    #"figure.figsize": 1,
+    "figure.figsize": figsize(0.9),     # default fig size of 0.9 textwidth
+    #"figure.figsize": 464,
     "pgf.preamble": [
         r"\usepackage[utf8x]{inputenc}",
         r"\usepackage[T1]{fontenc}",        # plots will be generated using this preamble
