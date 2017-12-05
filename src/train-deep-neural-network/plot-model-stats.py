@@ -10,8 +10,8 @@ from textwrap import wrap
 
 
 PGF_WITH_LATEX = {
-    #"pgf.texsystem": "pdflatex",
-    #"text.usetex": True,
+    "pgf.texsystem": "pdflatex",
+    "text.usetex": True,
     "font.family": "serif",
     "font.serif": [],
     "font.sans-serif": [],
@@ -56,10 +56,10 @@ def plots_train_model_json(filenames, labels, yaxis_to_plot):
     plt.title("\n".join(wrap(
         json_strs[0][yaxis_to_plot[0]]
         + " of DNN on map: "
-        + json_strs[0]["data_name"]
+        + json_strs[0]["data_name"].replace("_", " ")
         + ".")))
     plt.ylabel(json_strs[0][yaxis_to_plot[0]])
-    plt.xlabel("num_epochs")
+    plt.xlabel("num_epochs".replace("_", " "))
     plt.tight_layout()
     save_plots(file_names)
     plt.show()
@@ -102,7 +102,7 @@ def save_plots(file_names):
     fname_with_path = "/".join(file_names[0].split(sep="/")[:-1]) \
                         + "/" \
                         + unified_file_names
-    #plt.savefig('{}.pgf'.format(fname_with_path))
+    plt.savefig('{}.pgf'.format(fname_with_path))
     plt.savefig('{}.pdf'.format(fname_with_path))
 
 
