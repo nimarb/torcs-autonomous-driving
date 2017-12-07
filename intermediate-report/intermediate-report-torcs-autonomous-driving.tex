@@ -26,6 +26,7 @@
 \usepackage{algorithm}
 \usepackage{url}
 \usepackage[pagebackref=true,breaklinks=true,colorlinks,bookmarks=false]{hyperref}
+\usepackage{pgf}
 
 \usepackage[switch]{lineno}
 \makeatletter
@@ -137,32 +138,52 @@ in The Open Racing Car Simulator (TORCS)}
 \IEEEPARstart{A}{utonomous} driving is currently the subject of much controversy, especially
 its feasibility and performance. TODO: INSERT MORE BACKGROUND INFO! 
 In this paper The Open Racing Car Simulator (TORCS) is used
-to simulate a car on a race track and provides relevant sensor data. 
+to simulate a car on a race track and provides relevant sensor data. The goal is to use multiple sensor cues to drive the car safely around the defined test tracks. Through a Robot Operating System (ROS) the following sensors can be read from TORCS: 
+\begin{enumerate}
+	\item range finder
+	\item driver point of view (POV) image
+	\item displacement (distance from road centre to car centre)
+	\item angle (rotation angle between car and road)
+\end{enumerate}
+Then, a deep neural network will be trained on the ground truth data to infer the angle and displacement from the provided POV image. Subsequently, a spiking neural network will be first trained on TORCS driver commands to then use the angle, displacement and range finder as input to drive the car safely as quickly as possible around the track. In the end, only the range finder and the POV image will be used as input data to drive the car.
+
+As a competing group is working on the same task, a race will be carried out at the end and the winner will be determined. Thus, the goal is to drive the car around the track as quickly as possible.
 
 \section{State of the art}
 \label{sc:sota}
+\the\textwidth
+
+\subsection{Using deep neural networks for regression}
 
 \section{Implementation details}
 
 \section{Deep neural network architecture choice}
+The implementation of the deep neural network was done in \texttt{python} version 3.6.3. To facilitate development, the library \texttt{keras} TODO: CITE KERAS SOURCE was used with the backend \texttt{tensorflow} TODO: CITE TENSORFLOW. To manipulate image data \texttt{openCV3} TODO: CITE OPENCV was used and finally to load and manipulate data the library \texttt{numpy} TODO: CITE NUMPY was utilised. 
 \subsection{The testing deep neural network}
 \label{ssc:testing-dnn}
-AlexNet\cite{alexnet2012imagenet}
+To be able to chose hyperparametres for the convolutional neural network (CNN) at an early point, a basic CNN network architecture was chose which has been proven before. The criteria for chosing the network architecture was, that it has to provide reasonable performance while being quick to train. The focus was rather on good training performance, as the available resources are limited to us. Thus, after studying the architectures' training performances as seen here TODO: CITE TRAINING PERF GITHUB, AlexNet \cite{alexnet2012imagenet} was chosen.\\
+AlexNet is a network designed for image classification tasks, such as the ImageNet challenge TODO: CITE IMAGENET CHALLENGE!. Therefore, the last layer of AlexNet was altered to use it for multidimensional regression problems such as guessing the angle and displacement from an image. To achieve that, the number of output neurons of the last fully connected layer (FCL) was reduced from 1000 to 2, as there are two numbers to guess. Furthermore, the last FCL used a rectified linear unit (ReLU) as activation function. 
+\begin{equation}
+	y = RELU
+\end{equation}
+To prevent the activation function from cropping the output to values greater than zero, a linear activation function was used: $ y = x $.
+
+
 \subsection{Convolutional neural network}
 
-\subsection{Tuning the hyperparametres}
-\subsubsection{Input images}
+\subsection{Input images}
 The image data is acquired from TORCS \cite{TORCS} using ROS via the TORCS-ROS node \cite{mirus_torcs-ros_2017}. 
+
+\subsubsection{Choosing a camera angle}
 TORCS provides several camera perspectives: 
 \begin{enumerate}
 	\item Driver's view with hood
 	\item Driver's view without hood
 	\item Third person perspective: far
 	\item Third person perspective: close
-	\item ...
 \end{enumerate}
 All perspectives were evaluated based on the DNN described in \autoref{ssc:testing-dnn} 
-and as final perspective XX was chosen. The basis for that decision can be seen in 
+and as final perspective TODO:XX was chosen. The basis for that decision can be seen in 
 \autoref{fig:camera-evaluation}, which shows the mean absolute error for each view.
 \begin{figure}
 	\centering
@@ -171,16 +192,20 @@ and as final perspective XX was chosen. The basis for that decision can be seen 
 	\label{fig:camera-evaluation}
 \end{figure}
 
-The images are provided by TORCS ROS \cite{mirus_torcs} at a rate of 10 frames per second (fps) 
-at a resoultion of $ \SI{640}{\px} \times \SI{480}{\px} $. Because that image size is too large
-to train a reasonably deep network in a reasonable time, the images are down-scaled prior to training 
-and using them. To find the best scale for the image, four different sizes have been tested: 
-$ \SI{320}{\px} \times \SI{240}{\px}, \SI{160}{\px} \times \SI{120}{\px}, \SI{80}{\px} \times \SI{60}{\px}$ and $ \SI{40}{\px} \times \SI{30}{\px}$.
-The testing DNN was trained with the same images at the mentioned resolutions and the mean absolute error 
+\subsubsection{Choosing the image size}
+The images are provided by TORCS ROS \cite{mirus_torcs} at a rate of 10 frames per second (fps) at a resoultion of $ \SI{640}{\px} \times \SI{480}{\px} $. Because that image size is too large
+to train a reasonably deep network in a reasonable time, the images are down-scaled prior to training as well as in the final application. To determine the image providing the best result, four different sizes were evaluated with the DNN described in \autoref{ssc:testing-dnn}: 
+\begin{enumerate}
+	\item $ \SI{320}{\px} \times \SI{240}{\px} $
+	\item $ \SI{160}{\px} \times \SI{120}{\px} $
+	\item $ \SI{80}{\px} \times \SI{60}{\px} $
+	\item $ \SI{40}{\px} \times \SI{30}{\px} $
+\end{enumerate}
+First, the training images were collected from TORCS ROS at a resolution of $ \SI{640}{\px}\times \SI{480}{\px}$. Upong loading the images, \texttt{openCV} based downscaling was applied using the TODO: CHECK OPENCV SCALING ALGO algorithm. Second, the testing DNN was trained with the images at the mentioned resolutions and the mean absolute error 
 for the validation set was recorded, which can be seen in \autoref{fig:img-res-evaluation}.
 \begin{figure}
 	\centering
-	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
+	\input{attachments/alexnet-val_mae-img_size_compare-09042-12547-22111.pgf}
 	\caption{Mean absolute error of the same DNN trained with multiple image resolutions}
 	\label{fig:img-res-evaluation}
 \end{figure}
@@ -188,13 +213,10 @@ for the validation set was recorded, which can be seen in \autoref{fig:img-res-e
 \subsection{Building a deep neural network with keras}
 \label{ssc:keras}
 Keras is a python library 
-
 hello keras \cite{Toshev_2014_CVPR}
 
 \subsection{SNN: Nengo}
 \label{ssc:nengo}
-
-
 Sometimes you have a wide figure or environment. Inclusion can be achieved using
 the \texttt{figure*} environment as used in Figure \autoref{fig:twocolumnfigure}.
 \begin{figure*}
@@ -208,7 +230,6 @@ the \texttt{figure*} environment as used in Figure \autoref{fig:twocolumnfigure}
 \label{sc:evaluation}
 
 \subsection{Mathematical equations an}
-
 In case you have to typeset equations make sure that all equations are numbered.
 The following example shows how to do so
 
@@ -239,13 +260,6 @@ printed copy of the paper. Resize fonts in figures to match the font in the
 body text, and choose line widths which render effectively in print. An example
 is shown in Figure \autoref{fig:onecolumnfigure}.
 \texttt{includegraphics} will include the respective file.
-\begin{figure}
-	\centering
-	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
-	\caption{Always add a short caption to your figures.}
-	\label{fig:onecolumnfigure}
-\end{figure}
-
 
 \section{Conclusion}
 \label{sc:conclusion}
