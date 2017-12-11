@@ -162,9 +162,9 @@ The implementation of the deep neural network was done in \texttt{python} versio
 To be able to chose hyperparametres for the convolutional neural network (CNN) at an early point, a basic CNN network architecture was chose which has been proven before. The criteria for chosing the network architecture was, that it has to provide reasonable performance while being quick to train. The focus was rather on good training performance, as the available resources are limited to us. Thus, after studying the architectures' training performances as seen here TODO: CITE TRAINING PERF GITHUB, AlexNet \cite{alexnet2012imagenet} was chosen.\\
 AlexNet is a network designed for image classification tasks, such as the ImageNet challenge TODO: CITE IMAGENET CHALLENGE!. Therefore, the last layer of AlexNet was altered to use it for multidimensional regression problems such as guessing the angle and displacement from an image. To achieve that, the number of output neurons of the last fully connected layer (FCL) was reduced from 1000 to 2, as there are two numbers to guess. Furthermore, the last FCL used a rectified linear unit (ReLU) as activation function. 
 \begin{equation}
-	y = RELU
+	f(x) = max(x, 0)
 \end{equation}
-To prevent the activation function from cropping the output to values greater than zero, a linear activation function was used: $ y = x $.
+To prevent the activation function from cropping the output to values greater than zero, a linear activation function was used: $ f(x) = x $.
 
 
 \subsection{Convolutional neural network}
@@ -214,7 +214,7 @@ Keras is a python library
 hello keras \cite{Toshev_2014_CVPR}
 
 \section{Controller Architecture}
-\label{ssc:controller}
+\label{sc:controller}
 
 The controller of the car is designed based on Spiking Neural Networks (SNN) which are implemented with nengo \cite{nengo}, a python framework for building large-scale neural systems that is based on the Neural Engineering Framework (NEF) \cite{nef}. \\
 The controller is divided in several modular parts: acceleration / breaking, steering, gear changing, clutching. TODO: why modular approach? \\
@@ -223,13 +223,6 @@ The controller is divided in several modular parts: acceleration / breaking, ste
 \section{Experiments and evaluation}
 \label{sc:evaluation}
 
-\subsection{Mathematical equations an}
-In case you have to typeset equations make sure that all equations are numbered.
-The following example shows how to do so
-
-\begin{equation}
-	E = mc^2
-\end{equation}
 
 Sometimes you wish to align equations. This is possible with the (already
 included) \texttt{align} package. The example in Equation \autoref{eq:lotkavolterra}
@@ -241,34 +234,8 @@ it.
 	\frac{dy}{dt} &= \delta x y - \gamma y
 \end{align}
 
-\subsection{Figures, tables, algorithms}
-
-Most reports need to include one of the mentioned objects. There are suitable
-environments for each of them. If you are interested in typesetting algorithms,
-have a look at the packages \texttt{algorithmic} and \texttt{algorithmx}. Make
-sure that all algorithms are well formatted and clearly understandable!
-
-Figures are included using the \texttt{figure} environment. All graphics should
-be centered.  Please ensure that any point you wish to make is resolvable in a
-printed copy of the paper. Resize fonts in figures to match the font in the
-body text, and choose line widths which render effectively in print. An example
-is shown in Figure \autoref{fig:onecolumnfigure}.
-\texttt{includegraphics} will include the respective file.
-
 \section{Conclusion}
 \label{sc:conclusion}
-
-%
-% If you wish to put your work under a specific license, your free to do so. You
-% are not obliged, so you can remove the following section if you wish to.
-%
-\section*{License}
-\markright{LICENSE}
-This work is licensed under the Creative Commons Attribution 3.0 Germany
-License. To view a copy of this license,
-visit \href{http://creativecommons.org/licenses/by/3.0/de/}{http://creativecommons.org} or send a letter
-to Creative Commons, 171 Second Street, Suite 300, San
-Francisco, California 94105, USA.
 
 
 % each report should include all references that you cite in the work. Make sure
