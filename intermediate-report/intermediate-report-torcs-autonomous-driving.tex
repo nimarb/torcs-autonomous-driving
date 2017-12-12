@@ -169,6 +169,17 @@ To prevent the activation function from cropping the output to values greater th
 
 \subsection{Convolutional neural network}
 
+\subsection{Data set splitting}
+\label{ssc:data-set-split}
+TORCS provides XXXX tracks of which XXXX were deemed to be relevant. Therefore, the recorded data set was split into three parts: 
+\begin{enumerate}
+	\item Training set
+	\item Validataion set
+	\item Test set
+\end{enumerate}
+First, the two tracks XXX were determined to be used for testing later on. As the goal is to train a general model, a prerequisite is that data recorded on either of the two test tracks is not used during training. In total XXX data points were recorded on the two test tracks. \\
+The remaining tracks were used to train the DNN and determine its hyperparametres. Therefore, the data set was randomly split into \texttt{train} and \texttt{val} (validataion) at a ratio of 90\% to 10\%. The exact validation set data itself was thus not used for traning, but it was taken from tracks which were trained on.
+
 \subsection{Input images}
 The image data is acquired from TORCS \cite{TORCS} using ROS via the TORCS-ROS node \cite{mirus_torcs-ros_2017}. 
 
@@ -179,6 +190,7 @@ TORCS provides several camera perspectives:
 	\item Driver's view without hood
 	\item Third person perspective: far
 	\item Third person perspective: close
+	\item TODO: CHECK ALL TORCS VIEWS
 \end{enumerate}
 All perspectives were evaluated based on the DNN described in \autoref{ssc:testing-dnn} 
 and as final perspective TODO:XX was chosen. The basis for that decision can be seen in 
@@ -223,19 +235,24 @@ The controller is divided in several modular parts: acceleration / breaking, ste
 \section{Experiments and evaluation}
 \label{sc:evaluation}
 
+\subsection{Performance comparison between guessing angles vs. guessing displacement}
+For the final application, the same model is used to guess the car's displacement and its angle. During training, the loss function (MSE) and the metrics (MAE) are continueally evaluating the ZUSAMMENGEFASSTE (totAL) training performance. However, to determine the performance of predicting the individual values, two models were trained on each either predicting the angle or predicting the displacement. In \autoref{fig:mae-distance-vs-angle} the difference between angle and displacement prediction is shown. In training and validation set, the value of the displacement is in the range of -0.9 to 1.1 and the angle is in the range of -0.9 to 1.1. Thus, it can be concluded that the displacement prediction performance is better than the angle prediction performance. 
 
-Sometimes you wish to align equations. This is possible with the (already
-included) \texttt{align} package. The example in Equation \autoref{eq:lotkavolterra}
-which gives the Lotka--Volterra, or predator-prey equations, shows how to use
-it.
+\begin{figure}
+	\centering
+	%\input{attachments/alexnet-val_mae-distance_angle_error-84095-86589-98073_-.pgf}
+	\caption{Mean absolute error of the test network trained only to predict the displacement of the car}
+	\label{fig:mae-distance-vs-angle}
+\end{figure}
 
-\begin{align}\label{eq:lotkavolterra}
-	\frac{dx}{dt} &= \alpha x - \beta x y \\
-	\frac{dy}{dt} &= \delta x y - \gamma y
-\end{align}
+
 
 \section{Conclusion}
 \label{sc:conclusion}
+
+\subsection{Outlook}
+\label{ssc:outlook}
+Change training data/camera view/angle etc to improve angle prediction performance.
 
 
 % each report should include all references that you cite in the work. Make sure
