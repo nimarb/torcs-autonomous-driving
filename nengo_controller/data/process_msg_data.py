@@ -7,31 +7,34 @@ from torcs_msgs.msg import TORCSSensors, TORCSCtrl
 from geometry_msgs.msg import TwistStamped
 from sensor_msgs.msg import LaserScan, Image
 
+
 def has_None_msg(sample):
-    if sample['sensor'] is None or sample['speed'] is None or\
+    if sample['sensor'] is None or sample['speed'] is None or \
                     sample['laser'] is None or sample['ctrl'] is None:
         return True
     else:
         return False
 
+
 def extract_data(sample):
     import math
     input_data = list()
     output = list()
-    input_data.append(math.sqrt(sample['speed'].twist.linear.x**2 + sample['speed'].twist.linear.y**2))
     input_data.append(sample['sensor'].angle)
     input_data.append(sample['sensor'].trackPos)
-    input_data.extend(list(sample['laser'].ranges))
+    input_data.append(math.sqrt(sample['speed'].twist.linear.x ** 2 + sample['speed'].twist.linear.y ** 2))
+    input_data.extend([s/200. for s in sample['laser'].ranges])
     output.append(sample['ctrl'].accel)
     output.append(sample['ctrl'].brake)
     output.append(sample['ctrl'].steering)
+    output.append(sample['ctrl'].clutch)
 
     return np.hstack(input_data), np.hstack(output)
-    
+
 
 class DataProcessor:
     def __init__(self, map_name):
-        self.path = '/home/tim/torcs_project/data/msg_data'
+        self.path = 'raw_data/'
         self.obj_path = self.path + map_name
         self.data = list()
         self.input_data = None
@@ -64,13 +67,14 @@ class DataProcessor:
             input_sample, output_sample = extract_data(sample)
             input_data.append(input_sample)
             output_data.append(output_sample)
-        #convert to numpy arrays
+        # convert to numpy arrays
         self.input_data = np.vstack(input_data)
         self.output_data = np.vstack(output_data)
 
     def save_data(self):
         np.save(self.obj_path + '_input', self.input_data)
         np.save(self.obj_path + '_output', self.output_data)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='process msg collections')
