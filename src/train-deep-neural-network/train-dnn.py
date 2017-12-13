@@ -266,12 +266,14 @@ class ImgToSensorCNN:
         metadata["loss_function"] = self.loss_function
         metadata["metrics"] = self.metrics
         metadata["loss_hist"] = self.loss_hist.loss
-        metadata["metrics_hist"] = self.loss_hist.metric
+        #metadata["metrics_hist"] = self.loss_hist.metric
         metadata["data_name"] = DATA_NAME
         metadata["test_data_name"] = TEST_DATA_NAME
         metadata["time_hist"] = self.time_hist.times
-        metadata["train_loss_hist"] = self.fit_hist.history["loss"][-1]
-        metadata["train_mae_hist"] = self.fit_hist.history["mean_absolute_error"][-1]
+        metadata["train_loss_hist"] = self.fit_hist.history["loss"]
+        metadata["train_mae_hist"] = self.fit_hist.history["mean_absolute_error"]
+        metadata["val_loss_hist"] = self.fit_hist.history["val_loss"]
+        metadata["val_mae_hist"] = self.fit_hist.history["val_mean_absolute_error"]
         metadata["test_loss"] = self.score[0]
         metadata["test_mae"] = self.score[1]
         json_str = json.dumps(metadata)
@@ -399,10 +401,10 @@ class ImgToSensorCNN:
     def preditct_test_pics(self):
         """Use model to predict values for image data from the test set"""
         data = np.empty(
-                (self.num_val_set, self.img_height, self.img_width, 3),
+                (self.num_test_set, self.img_height, self.img_width, 3),
                 dtype=object)
-        for i in range(self.num_val_set):
-            data[i, :, :, :] = self.val_imgs[i]
+        for i in range(self.num_test_set):
+            data[i, :, :, :] = self.test_imgs[i]
 
         prediction = self.model.predict(x=data)
         i = 0
@@ -410,12 +412,12 @@ class ImgToSensorCNN:
         for val in prediction:
             print(
                 "angle val: "
-                + str(self.val_angle_array[i])
+                + str(self.test_vals[i, 0])
                 + "; pred: "
                 + str(val[0]))
             print(
                 "dist val: "
-                + str(self.val_distance_array[i])
+                + str(self.test_vals[i, 1])
                 + "; pred: "
                 + str(val[1]))
             i += 1
