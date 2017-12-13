@@ -212,7 +212,7 @@ to train a reasonably deep network in a reasonable time, the images are down-sca
 	\item $ \SI{80}{\px} \times \SI{60}{\px} $
 	\item $ \SI{40}{\px} \times \SI{30}{\px} $
 \end{enumerate}
-First, the training images were collected from TORCS ROS at a resolution of $ \SI{640}{\px}\times \SI{480}{\px}$. Upong loading the images, \texttt{openCV} based downscaling was applied using the TODO: CHECK OPENCV SCALING ALGO algorithm. Second, the testing DNN was trained with the images at the mentioned resolutions and the mean absolute error 
+First, the training images were collected from TORCS ROS at a resolution of $ \SI{640}{\px}\times \SI{480}{\px}$. Upong loading the images, \texttt{openCV} based downscaling was applied using the bilinear interpolation algorithm. Second, the testing DNN was trained with the images at the mentioned resolutions and the mean absolute error 
 for the validation set was recorded, which can be seen in \autoref{fig:img-res-evaluation}.
 \begin{figure}
 	\centering
