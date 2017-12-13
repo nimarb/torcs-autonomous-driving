@@ -59,7 +59,7 @@
 %
 % When submitting the review, make sure to include the following line to enable
 % line numbering. When submitting the final report, disable the following line!
-\linenumbers
+% \linenumbers
 %
 
 %
@@ -237,7 +237,7 @@ The available input signals are as follows: The already mentioned lateral displa
 As control signals an acceleration, brake and clutch signal, as well as a steering and a gear signal are given.
 
 \section{Controller Training}
-In this course work we choose a supervised learning approach to train the controller. This leads to several variables, that may have a strong influence on the final controller performance. We discuss those variables in the following.
+In this work a supervised learning approach for training the controller is chosen. This leads to several variables, that strongly influence controller performance. Those variables are discussed in the following.
 
 \subsection{Acquiring Data}
 There are three possibilities to acquire data. The first and easiest to use is the default TORCS-ROS driver \cite{mirus_torcs-ros_2017}. The advantage of this driver is that he drives a maximum speed of 149 $km/h$ and drives very carefully. Which means, that he always tries to stick to the middle lane of the road and brakes heavily when he comes close to a turn. We believe that this is an easy to learn and robust driving style. However, this driver is very slow, as can be seen in \autoref{tab:torcs_laptime}. \\
@@ -255,7 +255,7 @@ Finally there is the option to drive by ourselves. As it turns out this is reall
 		\caption{\label{tab:torcs_laptime}This table compares the lap times of different driver types.}
 	\end{center}
 \end{table}
-Because of the above mentioned characteristics of the different driver styles, we first learn the TORCS-ROS default driver, because it seems to be the most robust one and data generation is the easiest.
+Because of the above mentioned characteristics of the different driver styles, it does make sense to first learn the TORCS-ROS default driver, because he seems to be the most robust one and data generation is the easiest.
 
 
 \subsection{Choosing the learning methods}
@@ -264,13 +264,13 @@ Besides the functionality of nengo to directly encode and decode hardcoded funct
 
 \paragraph{offline learning} can be used for the classical supervised learning approach. Feature data and corresponding labels are given and nengo uses a least squares approximation to solve for the neuron weights \cite{nef}.
 
-\paragraph{online learning} iteratively improves the initial neuron configuration in a supervised manner during runtime. However, this requires that for every timestep during runtime a goal value has to be known so nengo can solve for it. In our problem this is not the case. Therefore we won't consider online learning in this report.
+\paragraph{online learning} iteratively improves the initial neuron configuration in a supervised manner during runtime. However, this requires that for every timestep during runtime a goal value has to be known so nengo can solve for it. In our problem this is not the case. Therefore online learning is not further considered in this work.
 
 \paragraph{nengo deep learning} allows to train classical deep learning methods e.g. feedforward neural networks with backpropagation and then implement the learned nets into nengo. \\
-In this report we focus on a mixture between hard coded functionality and offline learning.
+This work focuses on a mixture between hard coded functionality and offline learning.
 
 \subsection{Evaluate the results}
-As a evaluation metric for the controller performance we use the following: First, we evaluate if the controller was able to finish one lap in a reasonable amount of time. Second, we consider the time necessary to complete one lap. We evaluate both criteria first on the trained tracks and in case the first criteria was successful, we measure how well the driver generalizes to unseen tracks.
+As a evaluation metric for the controller performance the following is used: First, it is evaluated if the controller is able to finish one lap in a reasonable amount of time. Second, the time necessary to complete one lap is considered. Both criteria are first evaluated on the trained tracks and in case the first criteria is successful, it is then measured how well the driver generalizes to unseen tracks.
 
 
 \section{Experiments and evaluation}
@@ -286,6 +286,10 @@ For the final application, the same model is used to guess the car's displacemen
 	\label{fig:mae-distance-vs-angle}
 \end{figure}
 
+\subsection{Performance of the controller}
+In a first setup the driver is trained on an easy track. It has only 3 big turns, one is steep. The track length is small compared to the other tracks. With ensemble sizes between 2000 and 5000 neurons, the controller drives the car safely around the first turn, but hits a wall in the second turn. \\
+For increasing the controller performance it is possible to further increase the number of neurons. However, the processor that is used for simulation is already at its peak with the above mentioned neuron sizes. Furthermore, a detailed comparison between the infered and original output signals can be made. 
+
 
 
 \section{Conclusion}
@@ -293,7 +297,8 @@ For the final application, the same model is used to guess the car's displacemen
 
 \subsection{Outlook}
 \label{ssc:outlook}
-Change training data/camera view/angle etc to improve angle prediction performance.
+Change training data/camera view/angle etc to improve angle prediction performance. \\
+The controller needs to be improved further and looked at more closely. Finally, the DNN and the controller will be connected in order to work together.
 
 
 % each report should include all references that you cite in the work. Make sure
