@@ -232,14 +232,10 @@ The controller of the car is designed based on Spiking Neural Networks (SNN) whi
 The controller is divided in several modular parts: acceleration, braking, steering, gear changing and clutching. We choose the modular approach, because it allows to test different modules independently from each other and also mix hard coded solutions with learned ones. \\
 
 \subsection{Signals}
-The available input signals are as follows. The already mentioned lateral displacement, rotation angle relative to the street center line and the 19-dimensional range finder signals are used. Furthermore, we calculate the car speed $ v $ as $ v = \sqrt{v_x^2 + v_y^2} $, with $ v_x $ and $ v_y $ as the car speed in the front and side directions relative to the car. \\
-As control signals we are provided with an acceleration, brake and clutch signal, as well as a steering and gear signal. TODO: which signals for driving
-
-\subsection{Nengo details}
-
+The available input signals are as follows: The already mentioned lateral displacement, rotation angle relative to the street center line and the 19-dimensional range finder signals are used. Furthermore, we calculate the car speed $ v $ as $ v = \sqrt{v_x^2 + v_y^2} $, with $ v_x $ and $ v_y $ as the car speed in the front and side directions relative to the car. \\
+As control signals an acceleration, brake and clutch signal, as well as a steering and a gear signal are given.
 
 \section{Controller Training}
-
 In this course work we choose a supervised learning approach to train the controller. This leads to several variables, that may have a strong influence on the final controller performance. We discuss those variables in the following.
 
 \subsection{Acquiring Data}
@@ -258,10 +254,22 @@ Finally there is the option to drive by ourselves. As it turns out this is reall
 		\caption{\label{tab:torcs_laptime}This table compares the lap times of different driver types.}
 	\end{center}
 \end{table}
+Because of the above mentioned characteristics of the different driver styles, we first learn the TORCS-ROS default driver, because it seems to be the most robust one and data generation is the easiest.
 
 
 \subsection{Choosing the learning methods}
+
+Besides the functionality of nengo to directly encode and decode hardcoded functions according to the NEF \cite{nef}, nengo provides two different learning strategies: offline and online learning. With nengo deep learning \cite{nengo_dl} an extension to implement classic deep learning methods exists as well.
+
+\paragraph{offline learning} can be used for the classical supervised learning approach. Feature data and corresponding labels are given and nengo uses a least squares approximation to solve for the neuron weights \cite{nef}.
+
+\paragraph{online learning} iteratively improves the initial neuron configuration in a supervised manner during runtime. However, this requires that for every timestep during runtime a goal value has to be known so nengo can solve for it. In our problem this is not the case. Therefore we won't consider online learning in this report.
+
+\paragraph{nengo deep learning} allows to train classical deep learning methods e.g. feedforward neural networks with backpropagation and then implement the learned nets into nengo. \\
+In this report we focus on a mixture between hard coded functionality and offline learning.
+
 \subsection{Evaluate the results}
+As a evaluation metric for the controller performance we use the following: First, we evaluate if the controller was able to finish one lap in a reasonable amount of time. Second, we consider the time necessary to complete one lap. We evaluate both criteria first on the trained tracks and in case the first criteria was successful, we measure how well the driver generalizes to unseen tracks.
 
 
 \section{Experiments and evaluation}
