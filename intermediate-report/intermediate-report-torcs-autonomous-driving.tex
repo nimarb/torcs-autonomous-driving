@@ -152,6 +152,7 @@ Then, a deep neural network will be trained on the ground truth data to infer th
 \section{State of the art}
 \label{sc:sota}
 \the\textwidth
+\the\columnwidth
 
 \subsection{Using deep neural networks for regression}
 
@@ -216,9 +217,19 @@ First, the training images were collected from TORCS ROS at a resolution of $ \S
 for the validation set was recorded, which can be seen in \autoref{fig:img-res-evaluation}.
 \begin{figure}
 	\centering
-	%\input{attachments/alexnet-val_mae-img_size_compare-09042-12547-22111.pgf}
+	\input{attachments/alexnet-val_mae-img_size_compare-09042-12547-22111.pgf}
 	\caption{Mean absolute error of the same DNN trained with multiple image resolutions}
 	\label{fig:img-res-evaluation}
+\end{figure}
+
+\subsection{Choosing the optimiser}
+\label{sc:optimiser-choice}
+
+\begin{figure}
+	\centering
+	\input{attachments/alexnet-val_mae-optimiser_comp-76023-78342-79233-81479-82251.pgf}
+	\caption{Optimiser comparison}
+	\label{fig:optimiser-evaluation}
 \end{figure}
 
 \subsection{Building a deep neural network with keras}
