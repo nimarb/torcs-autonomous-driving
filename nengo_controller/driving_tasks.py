@@ -1,22 +1,22 @@
 import nengo
 import numpy as np
-import os
-import h5py
+from data_transformer import get_inputs, get_outputs
 
-
-# TODO: NonNeuralGear Node - Ensemble - Ensemble - Node statt Node - Node?
 
 class Steer(nengo.Network):
     def __init__(self, name, input_ensemble, output_node, mode='default'):
         super(Steer, self).__init__(label=name)
 
         with self:
-            steer_ensemble = nengo.Ensemble(n_neurons=200, dimensions=1)
+            steer_ensemble = nengo.Ensemble(n_neurons=4000, dimensions=1)
 
         nengo.Connection(steer_ensemble, output_node[4])
 
         if mode == 'default':
             nengo.Connection(input_ensemble, steer_ensemble, function=lambda x: x[0] - 0.5 * x[1])
+        elif mode == 'report':
+            nengo.Connection(input_ensemble, steer_ensemble, function=get_outputs('steering'),
+                             eval_points=get_inputs())
         else:
             raise NameError('wrong mode')
 
@@ -26,13 +26,34 @@ class Accelerate(nengo.Network):
         super(Accelerate, self).__init__(label=name)
 
         with self:
-            accel_ensemble = nengo.Ensemble(n_neurons=200, dimensions=1)
+            accel_ensemble = nengo.Ensemble(n_neurons=2000, dimensions=1)
 
         nengo.Connection(accel_ensemble, output_node[0])
 
         if mode == 'default':
             # TODO: implement default accelerate function
             nengo.Connection(input_ensemble, accel_ensemble, function=lambda x: 0)
+        elif mode == 'report':
+            nengo.Connection(input_ensemble, accel_ensemble, function=get_outputs('accel'),
+                             eval_points=get_inputs())
+        else:
+            raise NameError('wrong mode')
+
+
+class Brake(nengo.Network):
+    def __init__(self, name, input_ensemble, output_node, mode='default'):
+        super(Brake, self).__init__(label=name)
+
+        with self:
+            brake_ensemble = nengo.Ensemble(n_neurons=4000, dimensions=1)
+
+        nengo.Connection(brake_ensemble, output_node[1])
+
+        if mode == 'default':
+            nengo.Connection(input_ensemble, brake_ensemble, function=lambda x: x[0] - 0.5 * x[1])
+        elif mode == 'report':
+            nengo.Connection(input_ensemble, brake_ensemble, function=get_outputs('brake'),
+                             eval_points=get_inputs())
         else:
             raise NameError('wrong mode')
 

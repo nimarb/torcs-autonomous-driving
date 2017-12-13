@@ -38,7 +38,7 @@ class TORCSInputNode(nengo.Node):
         self.data[2] = math.sqrt(data.twist.linear.x ** 2 + data.twist.linear.y ** 2)
 
     def extract_laser(self, data):
-        self.data[3:22] = np.array(data.ranges) * 1.0/100
+        self.data[3:22] = np.array(data.ranges) * 1.0/200
 
     def extract_ctrl(self, data):
         pass
@@ -82,7 +82,8 @@ class TORCSOutputNode(nengo.Node):
         ctrl = TORCSCtrl()
         ctrl.accel = values[0]
         ctrl.brake = values[1]
-        ctrl.clutch = values[2]
+        # ctrl.clutch = values[2]
+        ctrl.clutch = 0
         ctrl.gear = int(np.round(values[3]))
         ctrl.steering = values[4]
         ctrl.focus = 0
