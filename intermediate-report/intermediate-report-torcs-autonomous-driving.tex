@@ -229,7 +229,39 @@ hello keras \cite{Toshev_2014_CVPR}
 \label{sc:controller}
 
 The controller of the car is designed based on Spiking Neural Networks (SNN) which are implemented with nengo \cite{nengo}, a python framework for building large-scale neural systems that is based on the Neural Engineering Framework (NEF) \cite{nef}. \\
-The controller is divided in several modular parts: acceleration / breaking, steering, gear changing, clutching. TODO: why modular approach? \\
+The controller is divided in several modular parts: acceleration, braking, steering, gear changing and clutching. We choose the modular approach, because it allows to test different modules independently from each other and also mix hard coded solutions with learned ones. \\
+
+\subsection{Signals}
+The available input signals are as follows. The already mentioned lateral displacement, rotation angle relative to the street center line and the 19-dimensional range finder signals are used. Furthermore, we calculate the car speed $ v $ as $ v = \sqrt{v_x^2 + v_y^2} $, with $ v_x $ and $ v_y $ as the car speed in the front and side directions relative to the car. \\
+As control signals we are provided with an acceleration, brake and clutch signal, as well as a steering and gear signal. TODO: which signals for driving
+
+\subsection{Nengo details}
+
+
+\section{Controller Training}
+
+In this course work we choose a supervised learning approach to train the controller. This leads to several variables, that may have a strong influence on the final controller performance. We discuss those variables in the following.
+
+\subsection{Acquiring Data}
+There are three possibilities to acquire data. The first and easiest to use is the default TORCS-ROS driver \cite{mirus_torcs-ros_2017}. The advantage of this driver is that he drives a maximum speed of 149 $km/h$ and drives very carefully. Which means, that he always tries to stick to the middle lane of the road and brakes heavily when he comes close to a turn. We believe that this is an easy to learn and robust driving style. However, this driver is very slow, as can be seen in \autoref{tab:torcs_laptime}. \\
+Then there are several drivers that are implemented in TORCS. Those drivers have no speed limit and their driving style approximates that of a real race. The cars drive very close to the edge of the road and drive very fast through turns. We think that this is a hard to learn and error-prone driving style, because small errors lead to disastrous effects. \\
+Finally there is the option to drive by ourselves. As it turns out this is really difficult with a keyboard. Because fractions of seconds on the left and right arrows lead to very strong steering behavior and almost every time lead to a full turn-around or a far deviation of the track. This leads to a manual driving style that comes close to the default driver: very slow through turns and sticking close to the road center. However, because it is possible to drive as fast as one wants and in general one achieves a smoother driving of the car, we achieve a faster time than the default driver. \\
+\begin{table}
+	\begin{center}
+		\begin{tabular}{ |c|c|c| } 
+			\hline
+			TORCS-ROS default & 85s \\
+			TORCS  & 43s  \\
+			manual & 69s \\
+			\hline
+		\end{tabular}
+		\caption{\label{tab:torcs_laptime}This table compares the lap times of different driver types.}
+	\end{center}
+\end{table}
+
+
+\subsection{Choosing the learning methods}
+\subsection{Evaluate the results}
 
 
 \section{Experiments and evaluation}
