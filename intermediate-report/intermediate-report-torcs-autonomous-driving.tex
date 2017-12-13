@@ -59,8 +59,7 @@
 %
 % When submitting the review, make sure to include the following line to enable
 % line numbering. When submitting the final report, disable the following line!
-% \linenumbers
-%
+\linenumbers
 
 %
 % configure submission details
@@ -136,7 +135,7 @@ in The Open Racing Car Simulator (TORCS)}
 \label{sc:intro}
 
 \IEEEPARstart{A}{utonomous} driving is currently the subject of much controversy, especially
-its feasibility and performance. TODO: INSERT MORE BACKGROUND INFO! 
+its feasibility and performance. To explore the details of autonomous driving, an abstract prototype is build focussing on the  implementation of deriving location data from images and using sensor inputs to drive a car.
 In this paper The Open Racing Car Simulator (TORCS) is used
 to simulate a car on a race track and provide relevant sensor data. The goal is to use multiple sensor cues to drive the car safely around the defined test tracks. Through the Robot Operating System (ROS) the following sensors can be read from TORCS: 
 \begin{enumerate}
@@ -147,17 +146,19 @@ to simulate a car on a race track and provide relevant sensor data. The goal is 
 \end{enumerate}
 Then, a deep neural network will be trained on the ground truth data to infer the angle and displacement from the provided POV image. Subsequently, a controller based on spiking neural networks (SNN) is trained to generate driving commands based on range finder, displacement and angle sensor inputs. Finally, the controller and the DNN are connected. So the overall model works only based on the POV image and the range finder data, which are directly taken from TORCS.
 
-%As a competing group is working on the same task, a race will be carried out at the end and the winner will be determined. Thus, the goal is to drive the car around the track as quickly as possible.
+As a competing group is working on the same task, a race will be carried out at the end and the winner will be determined. Thus, the goal is to drive the car around the track as quickly as possible while maintaining a safe driving style.
 
-\section{State of the art}
-\label{sc:sota}
-\the\textwidth
-\the\columnwidth
+%\section{State of the art}
+%\label{sc:sota}
+%\the\textwidth
+%\the\columnwidth
 
 \subsection{Using deep neural networks for regression}
+TODO
 
-\section{Deep neural network architecture choice}
+\section{A deep neural network for regression}
 The implementation of the deep neural network was done in \texttt{python} version 3.6.3. To facilitate development, the library \texttt{keras} \cite{chollet2015keras} was used with the backend \texttt{tensorflow} \cite{tensorflow2015-whitepaper}. To manipulate image data \texttt{openCV3} \cite{opencv_library} was used and finally to load and manipulate data the library \texttt{numpy} \cite{5725236} was utilised. 
+
 \subsection{The testing deep neural network}
 \label{ssc:testing-dnn}
 To be able to chose hyperparametres for the convolutional neural network (CNN) at an early point, a basic CNN network architecture was chose which has been proven before. The criteria for chosing the network architecture was, that it has to provide reasonable performance while being quick to train. The focus was rather on good training performance, as the available resources are limited to us. Thus, after studying the architectures' training performances as seen here \cite{jjohnson-cnn-benchmarks}, AlexNet \cite{alexnet2012imagenet} was chosen.\\
@@ -168,18 +169,18 @@ AlexNet is a network designed for image classification tasks, such as the ImageN
 \end{equation}
 To prevent the activation function from cropping the output to values greater than zero, a linear activation function was used: $ f(x) = x $.
 
-
 \subsection{Convolutional neural network}
+TODO: DESCRIBE BASICS OF CNN
 
 \subsection{Data set splitting}
 \label{ssc:data-set-split}
-TORCS provides XXXX tracks of which XXXX were deemed to be relevant. Therefore, the recorded data set was split into three parts: 
+TORCS provides 19 tracks of which all are relevant. Therefore, the recorded data set is split into three parts: 
 \begin{enumerate}
 	\item Training set
 	\item Validataion set
 	\item Test set
 \end{enumerate}
-First, the two tracks XXX were determined to be used for testing later on. As the goal is to train a general model, a prerequisite is that data recorded on either of the two test tracks is not used during training. In total XXX data points were recorded on the two test tracks. \\
+First, the two tracks TODO:FIX TEST TRACKS were determined to be used for testing later on. As the goal is to train a general model, a prerequisite is that data recorded on either of the two test tracks is not used during training. In total XXX data points were recorded on the two test tracks. \\
 The remaining tracks were used to train the DNN and determine its hyperparametres. Therefore, the data set was randomly split into \texttt{train} and \texttt{val} (validataion) at a ratio of 90\% to 10\%. The exact validation set data itself was thus not used for traning, but it was taken from tracks which were trained on.
 
 \subsection{Input images}
@@ -192,10 +193,10 @@ TORCS provides several camera perspectives:
 	\item Driver's view without hood
 	\item Third person perspective: far
 	\item Third person perspective: close
-	\item TODO: CHECK ALL TORCS VIEWS
+	%\item TODO: CHECK ALL TORCS VIEWS
 \end{enumerate}
 All perspectives were evaluated based on the DNN described in \autoref{ssc:testing-dnn} 
-and as final perspective TODO:XX was chosen. The basis for that decision can be seen in 
+and as final perspective the driver's view without hood was chosen. The basis for that decision can be seen in 
 \autoref{fig:camera-evaluation}, which shows the mean absolute error for each view.
 \begin{figure}
 	\centering
@@ -251,7 +252,7 @@ As control signals an acceleration, brake and clutch signal, as well as a steeri
 In this work a supervised learning approach for training the controller is chosen. This leads to several variables, that strongly influence controller performance. Those variables are discussed in the following.
 
 \subsection{Acquiring Data}
-There are three possibilities to acquire data. The first and easiest to use is the default TORCS-ROS driver \cite{mirus_torcs-ros_2017}. The advantage of this driver is that he drives a maximum speed of 149 $km/h$ and drives very carefully. Which means, that he always tries to stick to the middle lane of the road and brakes heavily when he comes close to a turn. We believe that this is an easy to learn and robust driving style. However, this driver is very slow, as can be seen in \autoref{tab:torcs_laptime}. \\
+There are three possibilities to acquire data. The first and easiest to use is the default TORCS-ROS driver \cite{mirus_torcs-ros_2017}. The advantage of this driver is that he drives a maximum speed of \SI{149}{\km\per\hour} and drives very carefully. Which means, that he always tries to stick to the middle lane of the road and brakes heavily when he comes close to a turn. We believe that this is an easy to learn and robust driving style. However, this driver is very slow, as can be seen in \autoref{tab:torcs_laptime}. \\
 Then there are several drivers that are implemented in TORCS. Those drivers have no speed limit and their driving style approximates that of a real race. The cars drive very close to the edge of the road and drive very fast through turns. We think that this is a hard to learn and error-prone driving style, because small errors lead to disastrous effects. \\
 Finally there is the option to drive by ourselves. As it turns out this is really difficult with a keyboard. Because fractions of seconds on the left and right arrows lead to very strong steering behavior and almost every time lead to a full turn-around or a far deviation of the track. This leads to a manual driving style that comes close to the default driver: very slow through turns and sticking close to the road center. However, because it is possible to drive as fast as one wants and in general one achieves a smoother driving of the car, we achieve a faster time than the default driver. \\
 \begin{table}
