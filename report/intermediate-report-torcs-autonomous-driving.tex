@@ -1,0 +1,327 @@
+%
+% Example for a student report latex file. Adapt as necessary
+%
+
+% the following lines should stay as is
+\documentclass[10pt,a4paper,twoside,journal]{IEEEtran}
+\usepackage[nocompress]{cite}
+\usepackage[pdftex]{graphicx}
+
+% some packages that most people use or improve the result
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\interdisplaylinepenalty=2500
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsbsy}
+\usepackage{flushend}
+% properly print units, enable compact product between units
+\usepackage[inter-unit-product =\cdot]{siunitx}
+% load units \bit, \byte usw
+\sisetup{detect-weight=true, binary-units=true}
+\DeclareSIUnit\px{px}
+\usepackage{array}
+\usepackage{xspace}
+\usepackage{algorithm}
+\usepackage{url}
+\usepackage[pagebackref=true,breaklinks=true,colorlinks,bookmarks=false]{hyperref}
+\usepackage{pgf}
+
+\usepackage[switch]{lineno}
+\makeatletter
+\@ifpackageloaded{lineno}{%
+	\newcommand*\patchAmsMathEnvironmentForLineno[1]{%
+	  \expandafter\let\csname old#1\expandafter\endcsname\csname #1\endcsname
+	  \expandafter\let\csname oldend#1\expandafter\endcsname\csname end#1\endcsname
+	  \renewenvironment{#1}%
+		 {\linenomath\csname old#1\endcsname}%
+		 {\csname oldend#1\endcsname\endlinenomath}}%
+	\newcommand*\patchBothAmsMathEnvironmentsForLineno[1]{%
+	  \patchAmsMathEnvironmentForLineno{#1}%
+	  \patchAmsMathEnvironmentForLineno{#1*}}%
+	\AtBeginDocument{%
+	\patchBothAmsMathEnvironmentsForLineno{equation}%
+	\patchBothAmsMathEnvironmentsForLineno{align}%
+	\patchBothAmsMathEnvironmentsForLineno{flalign}%
+	\patchBothAmsMathEnvironmentsForLineno{alignat}%
+	\patchBothAmsMathEnvironmentsForLineno{gather}%
+	\patchBothAmsMathEnvironmentsForLineno{multline}%
+	}}%
+	{}
+\makeatother
+
+% add your additional packages here
+\usepackage{lipsum}
+
+\begin{document}
+
+%
+% When submitting the review, make sure to include the following line to enable
+% line numbering. When submitting the final report, disable the following line!
+\linenumbers
+
+%
+% configure submission details
+%
+
+% here you can specify the day of submission
+\newcommand{\submissiondate}{\today}
+
+% please specify the type of your submission. E.g. Advanced Seminar or Practical
+% Laboratory
+\newcommand{\submissiontype}{Practical course: Computational Neuro Engineering}
+
+% give information about when your course happened in form of SEMESTER YEAR,
+% e.g. Winter Semester 2016. In addition, specify the "short version", e.g. WS
+% 2016
+\newcommand{\submissionterm}{Winter Semester 2017/2018}
+\newcommand{\submissiontermshort}{WS 2017/2018}
+
+% the full submission title
+\newcommand{\submissiontitle}{Learning to drive based on multiple sensor cues
+in The Open Racing Car Simulator (TORCS)}
+% in case that you have a very long report title, make sure to provide a shorter
+% version that can be used in the \markboth command further below. In case your
+% topic is short, simply comment the next and uncommented the second line
+\newcommand{\submissiontitleshort}{Autonomous driving in TORCS with multiple sensors}
+%\newcommand{\submissiontitleshort}{\submissiontitle}
+
+% author list. Make sure that you include your matriculation number in the
+% section starting with \thanks. In addition, specify your supervisor(s).
+\author{Tim~Bicker and Nimar~Blume%
+	\thanks{\textbf{Authors}:
+		Tim Bicker (12345678, tim.bicker@tum.de)
+		and Nimar Blume (03638934, nimar.blume@tum.de)
+		% the following includes additional information
+		\textbf{Course}: \submissiontype{} \submissionterm{}
+		\textbf{Submitted}: \submissiondate{}
+		\textbf{Supervisor}: Florian Mirus.
+		Neuroscientific System Theory (Prof. Dr. J\"org Conradt), Technische
+		Universit\"at M\"unchen, Arcisstraße 21, 80333 M\"unchen, Germany.
+}}
+
+% both items should look alike and contain a short version of the type of work
+% and semester (e.g. Advanced Seminar WS 2016, Project Laboratory SS 2017) and
+% your report title. If your title is too long, find a shorter one.
+\markboth{\submissiontype{} \submissiontermshort{}: \submissiontitleshort{}}
+{\submissiontype{} \submissiontermshort{}: \submissiontitleshort{}}
+
+% this generates the paper title
+\title{\submissiontitle}
+\maketitle
+
+% write a short abstract to introduce the reader to your work
+\begin{abstract}
+	To implement an autonomous driver in The Open Racing Car Simulator (TORCS)
+	based on a deep neural network (DNN) and spiking neural network (SNN) multiple
+	sensor cues are used. Specifically, the DNN predicts the current car displacement
+	and angle to the road centre from a driver's view image. Based on the two values
+	a SNN generates driving commands for the car. Subsequently, the car is put onto a 
+	new track and the driving performance is evaluated.\
+	The DNN is based on a Convolutional Neural Network and after training the mean 
+	absolute error for the displacement is XXXX and for the angle is XXX on an
+	unseen test track.
+\end{abstract}
+
+\begin{IEEEkeywords}
+	deep learning, TORCS, convolutional neural network, spiking neural network, autonomous driving
+\end{IEEEkeywords}
+
+%
+% Main body follows here. Only capitalize the first word in any title
+%
+\section{Introduction}
+\label{sc:intro}
+
+\IEEEPARstart{A}{utonomous} driving is currently the subject of much controversy, especially
+its feasibility and performance. To explore the details of autonomous driving, an abstract prototype is build focussing on the  implementation of deriving location data from images and using sensor inputs to drive a car.
+In this paper The Open Racing Car Simulator (TORCS) is used
+to simulate a car on a race track and provide relevant sensor data. The goal is to use multiple sensor cues to drive the car safely around the defined test tracks. Through the Robot Operating System (ROS) the following sensors can be read from TORCS: 
+\begin{enumerate}
+	\item range finder
+	\item driver point of view (POV) image
+	\item displacement (distance from road centre to car centre)
+	\item angle (rotation angle between car and road)
+\end{enumerate}
+Then, a deep neural network will be trained on the ground truth data to infer the angle and displacement from the provided POV image. Subsequently, a controller based on spiking neural networks (SNN) is trained to generate driving commands based on range finder, displacement and angle sensor inputs. Finally, the controller and the DNN are connected. So the overall model works only based on the POV image and the range finder data, which are directly taken from TORCS.
+
+As a competing group is working on the same task, a race will be carried out at the end and the winner will be determined. Thus, the goal is to drive the car around the track as quickly as possible while maintaining a safe driving style.
+
+%\section{State of the art}
+%\label{sc:sota}
+%\the\textwidth
+%\the\columnwidth
+
+%\subsection{Using deep neural networks for regression}
+%TODO: EXPLAIN current DNNs made for regression tasks
+
+\section{A deep neural network for regression}
+The implementation of the deep neural network was done in \texttt{python} version 3.6.3. To facilitate development, the library \texttt{keras} \cite{chollet2015keras} was used with the backend \texttt{tensorflow} \cite{tensorflow2015-whitepaper}. To manipulate image data \texttt{openCV3} \cite{opencv_library} was used and finally to load and manipulate data the library \texttt{numpy} \cite{5725236} was utilised. 
+
+\subsection{The testing deep neural network}
+\label{ssc:testing-dnn}
+To be able to chose hyperparametres for the convolutional neural network (CNN) at an early point, a basic CNN network architecture was chose which has been proven before. The criteria for chosing the network architecture was, that it has to provide reasonable performance while being quick to train. The focus was rather on good training performance, as the available resources are limited to us. Thus, after studying the architectures' training performances as seen here \cite{jjohnson-cnn-benchmarks}, AlexNet \cite{alexnet2012imagenet} was chosen.\\
+
+AlexNet is a network designed for image classification tasks, such as the ImageNet challenge. Therefore, the last layer of AlexNet was altered to use it for multidimensional regression problems such as guessing the angle and displacement from an image. To achieve that, the number of output neurons of the last fully connected layer (FCL) was reduced from 1000 to 2, as there are two numbers to guess. Furthermore, the last FCL used a rectified linear unit (ReLU) as activation function. 
+\begin{equation}
+	f(x) = max(x, 0)
+\end{equation}
+To prevent the activation function from cropping the output to values greater than zero, a linear activation function was used: $ f(x) = x $.
+
+%\subsection{Convolutional neural network}
+%TODO: DESCRIBE BASICS OF CNN
+
+\subsection{Data set splitting}
+\label{ssc:data-set-split}
+TORCS provides 19 tracks of which all are relevant. Therefore, the recorded data set is split into three parts: 
+\begin{enumerate}
+	\item Training set
+	\item Validataion set
+	\item Test set
+\end{enumerate}
+First, the two tracks TODO:FIX TEST TRACKS were determined to be used for testing later on. As the goal is to train a general model, a prerequisite is that data recorded on either of the two test tracks is not used during training. In total XXX data points were recorded on the two test tracks. \\
+The remaining tracks were used to train the DNN and determine its hyperparametres. Therefore, the data set was randomly split into \texttt{train} and \texttt{val} (validataion) at a ratio of 90\% to 10\%. The exact validation set data itself was thus not used for traning, but it was taken from tracks which were trained on.
+
+\subsection{Input images}
+The image data is acquired from TORCS \cite{TORCS} using ROS via the TORCS-ROS node \cite{mirus_torcs-ros_2017}. 
+
+\subsubsection{Choosing a camera angle}
+TORCS provides several camera perspectives: 
+\begin{enumerate}
+	\item Driver's view with hood
+	\item Driver's view without hood
+	\item Third person perspective: far
+	\item Third person perspective: close
+	%\item TODO: CHECK ALL TORCS VIEWS
+\end{enumerate}
+All perspectives were evaluated based on the DNN described in \autoref{ssc:testing-dnn} 
+and as final perspective the driver's view without hood was chosen. The basis for that decision can be seen in 
+\autoref{fig:camera-evaluation}, which shows the mean absolute error for each view.
+\begin{figure}[ht]
+	\centering
+	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
+	\caption{Mean absolute error of the same DNN trained with multiple camera angles}
+	\label{fig:camera-evaluation}
+\end{figure}
+
+\subsubsection{Choosing the image size}
+The images are provided by TORCS ROS \cite{mirus_torcs-ros_2017} at a rate of 10 frames per second (fps) at a resoultion of $ \SI{640}{\px} \times \SI{480}{\px} $. Because that image size is too large
+to train a reasonably deep network in a reasonable time, the images are down-scaled prior to training as well as in the final application. To determine the image providing the best result, four different sizes were evaluated with the DNN described in \autoref{ssc:testing-dnn}: 
+\begin{enumerate}
+	\item $ \SI{320}{\px} \times \SI{240}{\px} $
+	\item $ \SI{160}{\px} \times \SI{120}{\px} $
+	\item $ \SI{80}{\px} \times \SI{60}{\px} $
+	%\item $ \SI{40}{\px} \times \SI{30}{\px} $
+\end{enumerate}
+First, the training images were collected from TORCS ROS at a resolution of $ \SI{640}{\px}\times \SI{480}{\px}$. Upong loading the images, \texttt{openCV} based downscaling was applied using the bilinear interpolation algorithm. Second, the testing DNN was trained with the images at the mentioned resolutions and the mean absolute error 
+for the validation set was recorded, which can be seen in \autoref{fig:img-res-evaluation}.
+\begin{figure}[ht]
+	\centering
+	%\input{attachments/alexnet-val_mae-img_size_compare-09042-12547-22111.pgf}
+	\includegraphics[width=\columnwidth]{attachments/alexnet-val_mae-img_size_compare-09042-12547-22111.pdf}
+	\caption{Mean absolute error of the same DNN trained with multiple image resolutions}
+	\label{fig:img-res-evaluation}
+\end{figure}
+
+Therefore, the image size $ \SI{80}{\px}\times\SI{60}{\px} $ is for the DNN as it provides the smallest mean absolute error and additionally reduces the training time due to the small image size.
+
+\subsection{Choosing the optimiser}
+\label{sc:optimiser-choice}
+A plethora of different optimisers are available for use in the backpropagation step when training DNNs. The largest differences are in their abilities to exit large local maxima, training performance and accuracy. As the currently used DNN is managable in size, the training performance is not yet a critical property. Therefore, the optimiser was selected based on its ability to minimse the mean absolute error of the validation set. As illustrated in \autoref{fig:optimiser-evaluation}, the \texttt{sgd} (strochastic gradient descend) optimiser provides the best result and is thus chosen for future application.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=\columnwidth]{attachments/alexnet-val_mae-optimiser_comp-76023-79233-82251.pdf}
+	\caption{Optimiser comparison in the test DNN using with an image size of $ \SI{80}{\px}\times\SI{60}{\px} $}
+	\label{fig:optimiser-evaluation}
+\end{figure}
+
+\subsection{Building a deep neural network with keras}
+\label{ssc:keras}
+Keras is a python library 
+hello keras \cite{Toshev_2014_CVPR}
+
+\section{Controller Architecture}
+\label{sc:controller}
+
+The controller of the car is designed based on Spiking Neural Networks (SNN) which are implemented with nengo \cite{nengo}, a python framework for building large-scale neural systems that is based on the Neural Engineering Framework (NEF) \cite{nef}. \\
+The controller is divided in several modular parts: acceleration, braking, steering, gear changing and clutching. We choose the modular approach, because it allows to test different modules independently from each other and also mix hard coded solutions with learned ones. \\
+
+\subsection{Signals}
+The available input signals are as follows: The already mentioned lateral displacement, rotation angle relative to the street center line and the 19-dimensional range finder signals are used. Furthermore, we calculate the car speed $ v $ as $ v = \sqrt{v_x^2 + v_y^2} $, with $ v_x $ and $ v_y $ as the car speed in the front and side directions relative to the car. \\
+As control signals an acceleration, brake and clutch signal, as well as a steering and a gear signal are given.
+
+\section{Controller Training}
+In this work a supervised learning approach for training the controller is chosen. This leads to several variables, that strongly influence controller performance. Those variables are discussed in the following.
+
+\subsection{Acquiring Data}
+There are three possibilities to acquire data. The first and easiest to use is the default TORCS-ROS driver \cite{mirus_torcs-ros_2017}. The advantage of this driver is that he drives a maximum speed of \SI{149}{\km\per\hour} and drives very carefully. Which means, that he always tries to stick to the middle lane of the road and brakes heavily when he comes close to a turn. We believe that this is an easy to learn and robust driving style. However, this driver is very slow, as can be seen in \autoref{tab:torcs_laptime}. \\
+Then there are several drivers that are implemented in TORCS. Those drivers have no speed limit and their driving style approximates that of a real race. The cars drive very close to the edge of the road and drive very fast through turns. We think that this is a hard to learn and error-prone driving style, because small errors lead to disastrous effects. \\
+Finally there is the option to drive by ourselves. As it turns out this is really difficult with a keyboard. Because fractions of seconds on the left and right arrows lead to very strong steering behavior and almost every time lead to a full turn-around or a far deviation of the track. This leads to a manual driving style that comes close to the default driver: very slow through turns and sticking close to the road center. However, because it is possible to drive as fast as one wants and in general one achieves a smoother driving of the car, we achieve a faster time than the default driver. \\
+\begin{table}[ht]
+	\begin{center}
+		\begin{tabular}{ |c|c|c| } 
+			\hline
+			TORCS-ROS default & 85s \\
+			TORCS  & 43s  \\
+			manual & 69s \\
+			\hline
+		\end{tabular}
+		\caption{\label{tab:torcs_laptime}This table compares the lap times of different driver types.}
+	\end{center}
+\end{table}
+Because of the above mentioned characteristics of the different driver styles, it does make sense to first learn the TORCS-ROS default driver, because he seems to be the most robust one and data generation is the easiest.
+
+
+\subsection{Choosing the learning methods}
+
+Besides the functionality of nengo to directly encode and decode hardcoded functions according to the NEF \cite{nef}, nengo provides two different learning strategies: offline and online learning. With nengo deep learning \cite{nengo_dl} an extension to implement classic deep learning methods exists as well.
+
+\paragraph{offline learning} can be used for the classical supervised learning approach. Feature data and corresponding labels are given and nengo uses a least squares approximation to solve for the neuron weights \cite{nef}.
+
+\paragraph{online learning} iteratively improves the initial neuron configuration in a supervised manner during runtime. However, this requires that for every timestep during runtime a goal value has to be known so nengo can solve for it. In our problem this is not the case. Therefore online learning is not further considered in this work.
+
+\paragraph{nengo deep learning} allows to train classical deep learning methods e.g. feedforward neural networks with backpropagation and then implement the learned nets into nengo. \\
+This work focuses on a mixture between hard coded functionality and offline learning.
+
+\subsection{Evaluate the results}
+As a evaluation metric for the controller performance the following is used: First, it is evaluated if the controller is able to finish one lap in a reasonable amount of time. Second, the time necessary to complete one lap is considered. Both criteria are first evaluated on the trained tracks and in case the first criteria is successful, it is then measured how well the driver generalizes to unseen tracks.
+
+
+\section{Experiments and evaluation}
+\label{sc:evaluation}
+
+\subsection{Performance comparison between guessing angles vs. guessing displacement}
+For the final application, the same model is used to guess the car's displacement and its angle. During training, the loss function (MSE) and the metrics (MAE) are continueally evaluating the consolidated training performance. However, to determine the performance of predicting the individual values, two models were trained on each either predicting the angle or predicting the displacement of the car. In \autoref{fig:mae-distance-vs-angle} the difference between angle and displacement prediction is shown. In training and validation set, the value of the displacement is in the range of -0.9 to 1.1 and the angle is in the range of -0.9 to 1.1. Thus, it can be concluded that the displacement prediction performance especially still needs to be worked on. 
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=\columnwidth]{attachments/alexnet-val_mae-angle_dist_comp-05425-86589.pdf}
+	%\input{attachments/alexnet-val_mae-distance_angle_error-84095-86589-98073_-.pgf}
+	\caption{Mean absolute error of two test networks trained only to predict either the displacement or angle of the car}
+	\label{fig:mae-distance-vs-angle}
+\end{figure}
+
+\subsection{Performance of the controller}
+In a first setup the driver is trained on an easy track. It has only 3 big turns, one is steep. The track length is small compared to the other tracks. With ensemble sizes between 2000 and 5000 neurons, the controller drives the car safely around the first turn, but hits a wall in the second turn. \\
+For increasing the controller performance it is possible to further increase the number of neurons. However, the processor that is used for simulation is already at its peak with the above mentioned neuron sizes. Furthermore, a detailed comparison between the infered and original output signals can be made. 
+
+
+
+\section{Conclusion}
+\label{sc:conclusion}
+
+\subsection{Outlook}
+\label{ssc:outlook}
+%Change training data/camera view/angle etc to improve angle prediction performance. \\
+The network architecture can perhaps still be significantly improved upon, especially with an architecture specifically designed for regression tasks. 
+The controller needs to be improved further and looked at more closely. Finally, the DNN and the controller will be connected in order to work together.
+
+
+% each report should include all references that you cite in the work. Make sure
+% that you include all references!
+\bibliographystyle{ieee}
+\bibliography{bibliography}
+
+\end{document}
