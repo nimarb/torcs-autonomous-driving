@@ -116,9 +116,8 @@ in The Open Racing Car Simulator (TORCS)}
 	To implement an autonomous driver in The Open Racing Car Simulator (TORCS)
 	based on a deep neural network (DNN) and spiking neural network (SNN) multiple
 	sensor cues are used. Specifically, the DNN predicts the current car displacement
-	and angle to the road centre from a driver's view image. Based on the two values
-	a SNN generates driving commands for the car. Subsequently, the car is put onto a 
-	new track and the driving performance is evaluated.\
+	and angle to the road centre from a driver's view image. Based on the two values and an additional range finder sensor a SNN generates driving commands for the car. Subsequently, the car is put onto an unseen
+	track and the driving performance is evaluated.\
 	The DNN is based on a Convolutional Neural Network and after training the mean 
 	absolute error for the displacement is XXXX and for the angle is XXX on an
 	unseen test track.
@@ -134,8 +133,8 @@ in The Open Racing Car Simulator (TORCS)}
 \section{Introduction}
 \label{sc:intro}
 
-\IEEEPARstart{A}{utonomous} driving is currently the subject of much controversy, especially
-its feasibility and performance. To explore the details of autonomous driving, an abstract prototype is build focussing on the  implementation of deriving location data from images and using sensor inputs to drive a car.
+\IEEEPARstart{A}{utonomous} driving is currently a controversial subject, especially
+regarding feasibility and performance. To explore the details of autonomous driving, an abstract prototype is build focussing on the  implementation of deriving location data from images and using sensor inputs to drive a car.
 In this paper The Open Racing Car Simulator (TORCS) is used
 to simulate a car on a race track and provide relevant sensor data. The goal is to use multiple sensor cues to drive the car safely around the defined test tracks. Through the Robot Operating System (ROS) the following sensors can be read from TORCS: 
 \begin{enumerate}
