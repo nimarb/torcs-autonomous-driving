@@ -15,7 +15,7 @@ class TORCSInputNode(nengo.Node):
         name : str
             An arbitrary name for the object
         """
-        neuro_dimensions = 22 # angle, disp, speed, rangefinder[19]
+        neuro_dimensions = 6 # angle, disp, speed, rangefinder[3]
         direct_dimensions = 2 # gear, rpm
         dimensions = neuro_dimensions + direct_dimensions
         self.data = np.zeros((dimensions,))
@@ -31,14 +31,15 @@ class TORCSInputNode(nengo.Node):
     def extract_displacement(self, data):
         self.data[0] = data.angle
         self.data[1] = data.trackPos
-        self.data[22] = data.gear
-        self.data[23] = data.rpm
+        self.data[6] = data.gear
+        self.data[7] = data.rpm
 
     def extract_speed(self, data):
-        self.data[2] = math.sqrt(data.twist.linear.x ** 2 + data.twist.linear.y ** 2)
+        # self.data[2] = math.sqrt(data.twist.linear.x ** 2 + data.twist.linear.y ** 2)
+        self.data[2] = data.twist.linear.x
 
     def extract_laser(self, data):
-        self.data[3:22] = np.array(data.ranges) * 1.0/200
+        self.data[3:6] = np.array(data.ranges[9:12]) * 1.0/200
 
     def extract_ctrl(self, data):
         pass

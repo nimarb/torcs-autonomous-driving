@@ -3,6 +3,7 @@ import rospy
 import pickle
 import argparse
 import numpy as np
+import os.path
 from torcs_msgs.msg import TORCSSensors, TORCSCtrl
 from geometry_msgs.msg import TwistStamped
 from sensor_msgs.msg import LaserScan, Image
@@ -20,10 +21,13 @@ def extract_data(sample):
     import math
     input_data = list()
     output = list()
-    input_data.append(sample['sensor'].angle)
-    input_data.append(sample['sensor'].trackPos)
-    input_data.append(math.sqrt(sample['speed'].twist.linear.x ** 2 + sample['speed'].twist.linear.y ** 2))
-    input_data.extend([s/200. for s in sample['laser'].ranges])
+    input_data.append(sample['sensor'].angle) # 0
+    input_data.append(sample['sensor'].trackPos) # 1
+    # input_data.append(math.sqrt(sample['speed'].twist.linear.x ** 2 + sample['speed'].twist.linear.y ** 2))
+    input_data.append(sample['speed'].twist.linear.x) # 2
+    # input_data.extend([s/200. for s in sample['laser'].ranges])
+    for i in range(9, 12): # 3, 4, 5
+        input_data.append(sample['laser'].ranges[i]/200.)
     output.append(sample['ctrl'].accel)
     output.append(sample['ctrl'].brake)
     output.append(sample['ctrl'].steering)
@@ -34,8 +38,8 @@ def extract_data(sample):
 
 class DataProcessor:
     def __init__(self, map_name):
-        self.path = 'raw_data/'
-        self.obj_path = self.path + map_name
+        self.path_raw_data = os.path.join('raw_data/', map_name)
+        self.path_processed_data = os.path.join('processed_data/', map_name)
         self.data = list()
         self.input_data = None
         self.output_data = None
@@ -43,7 +47,7 @@ class DataProcessor:
     def read_map_data(self):
         import pickle
         objects = []
-        with (open(self.obj_path, "rb")) as openfile:
+        with (open(self.path_raw_data, "rb")) as openfile:
             while True:
                 try:
                     objects.append(pickle.load(openfile))
@@ -72,8 +76,8 @@ class DataProcessor:
         self.output_data = np.vstack(output_data)
 
     def save_data(self):
-        np.save(self.obj_path + '_input', self.input_data)
-        np.save(self.obj_path + '_output', self.output_data)
+        np.save(self.path_processed_data + '_input', self.input_data)
+        np.save(self.path_processed_data + '_output', self.output_data)
 
 
 if __name__ == '__main__':

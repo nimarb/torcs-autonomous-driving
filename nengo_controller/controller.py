@@ -10,20 +10,25 @@ with model:
 
     with nengo.Network():
         input_node = TORCSInputNode('TORCS_input')
-        input_ensemble = nengo.Ensemble(n_neurons=5000, dimensions=22)
-        nengo.Connection(input_node[:22], input_ensemble)
+        # input_ensemble = nengo.Ensemble(n_neurons=5000, dimensions=22)
+        # angle, displ, speed
+        input_steer_ensemble = nengo.Ensemble(n_neurons=2000, dimensions=3)
+        # 3 range
+        input_ab_ensemble = nengo.Ensemble(n_neurons=2000, dimensions=4)
+        nengo.Connection(input_node[:3], input_steer_ensemble)
+        nengo.Connection(input_node[2:6], input_ab_ensemble)
 
     with nengo.Network():
         output_node = TORCSOutputNode('CTRL_signals')
 
     # Steering
-    Steer('steer', input_ensemble, output_node, mode='report')
+    Steer('steer', input_steer_ensemble, output_node, mode='report')
 
     # Accelerating
-    Accelerate('accelerate', input_ensemble, output_node, mode='report')
+    Accelerate('accelerate', input_ab_ensemble, output_node, mode='report')
 
     # Brake
-    Brake('brake', input_ensemble, output_node, mode='report')
+    Brake('brake', input_ab_ensemble, output_node, mode='report')
 
     # Gear
     NonNeuralGear('gear', input_node, output_node)

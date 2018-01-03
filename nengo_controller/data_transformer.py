@@ -34,8 +34,12 @@ def get_label_ind(label):
     return ind
 
 
-def get_inputs():
-    return load_file(PROCESSED_DATA + MAP_NAMES[0] + '_input.npy')
+def get_inputs(dims=None):
+    if dims is None:
+        return load_file(PROCESSED_DATA + MAP_NAMES[0] + '_input.npy')
+    else:
+        data = load_file(PROCESSED_DATA + MAP_NAMES[0] + '_input.npy')
+        return data[:, dims]
 
 
 def get_outputs(label):
