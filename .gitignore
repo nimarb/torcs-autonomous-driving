@@ -16,3 +16,5 @@ src/models/*
 *.fdb_latexmk
 *.fls
 *.synctex.gz
+
+report/final-report-torcs-autonomous-driving.pdf
