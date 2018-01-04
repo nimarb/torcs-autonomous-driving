@@ -5,6 +5,8 @@ from torcs_ros_network import TORCSInputNode, TORCSOutputNode
 
 rospy.init_node('nengo_controller')
 
+n_neurons = 1000
+
 model = nengo.Network()
 with model:
 
@@ -12,9 +14,9 @@ with model:
         input_node = TORCSInputNode('TORCS_input')
         # input_ensemble = nengo.Ensemble(n_neurons=5000, dimensions=22)
         # angle, displ, speed
-        input_steer_ensemble = nengo.Ensemble(n_neurons=2000, dimensions=3)
+        input_steer_ensemble = nengo.Ensemble(n_neurons=n_neurons, dimensions=3)
         # 3 range
-        input_ab_ensemble = nengo.Ensemble(n_neurons=2000, dimensions=4)
+        input_ab_ensemble = nengo.Ensemble(n_neurons=n_neurons, dimensions=4)
         nengo.Connection(input_node[:3], input_steer_ensemble)
         nengo.Connection(input_node[2:6], input_ab_ensemble)
 

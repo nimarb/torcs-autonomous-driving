@@ -2,13 +2,14 @@ import nengo
 import numpy as np
 from data_transformer import get_inputs, get_outputs
 
+n_neurons = 1000
 
 class Steer(nengo.Network):
     def __init__(self, name, input_ensemble, output_node, mode='default'):
         super(Steer, self).__init__(label=name)
 
         with self:
-            steer_ensemble = nengo.Ensemble(n_neurons=3000, dimensions=1)
+            steer_ensemble = nengo.Ensemble(n_neurons=2*n_neurons, dimensions=1)
 
         nengo.Connection(steer_ensemble, output_node[4])
 
@@ -26,7 +27,7 @@ class Accelerate(nengo.Network):
         super(Accelerate, self).__init__(label=name)
 
         with self:
-            accel_ensemble = nengo.Ensemble(n_neurons=1000, dimensions=1)
+            accel_ensemble = nengo.Ensemble(n_neurons=n_neurons, dimensions=1)
 
         nengo.Connection(accel_ensemble, output_node[0])
 
@@ -45,7 +46,7 @@ class Brake(nengo.Network):
         super(Brake, self).__init__(label=name)
 
         with self:
-            brake_ensemble = nengo.Ensemble(n_neurons=1000, dimensions=1)
+            brake_ensemble = nengo.Ensemble(n_neurons=n_neurons, dimensions=1)
 
         nengo.Connection(brake_ensemble, output_node[1])
 

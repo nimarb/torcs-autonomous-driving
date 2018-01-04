@@ -70,6 +70,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     map_name = args.map_name
 
+    print('started.. map name: ' + map_name)
     collector = DataCollector()
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()

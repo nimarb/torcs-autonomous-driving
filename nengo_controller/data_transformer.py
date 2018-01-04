@@ -5,7 +5,7 @@ import argparse
 LEARN_DATA = 'learn_data/'
 PROCESSED_DATA = 'data/processed_data/'
 
-MAP_NAMES = ('cg_speedway_1',)
+MAP_NAMES = ('cg_speedway_1', 'brondelhach', 'alpine_1')
 
 
 def load_file(path):
@@ -35,14 +35,20 @@ def get_label_ind(label):
 
 
 def get_inputs(dims=None):
+    data = []
+    for m in MAP_NAMES:
+        data.append(load_file(PROCESSED_DATA + m + '_input.npy'))
+    data = np.vstack(data)
     if dims is None:
-        return load_file(PROCESSED_DATA + MAP_NAMES[0] + '_input.npy')
+        return data
     else:
-        data = load_file(PROCESSED_DATA + MAP_NAMES[0] + '_input.npy')
         return data[:, dims]
 
 
 def get_outputs(label):
     ind = get_label_ind(label)
-    data = load_file(PROCESSED_DATA + MAP_NAMES[0] + '_output.npy')
+    data = []
+    for m in MAP_NAMES:
+        data.append(load_file(PROCESSED_DATA + m + '_output.npy'))
+    data = np.vstack(data)
     return np.reshape(data[:, ind], (data.shape[0], 1))
