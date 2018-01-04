@@ -137,7 +137,7 @@ in The Open Racing Car Simulator (TORCS)}
 \IEEEPARstart{A}{utonomous} driving is currently a controversial subject, especially 
 regarding feasibility and performance. To explore the details of autonomous driving, an abstract prototype is build focussing on the  implementation of deriving location data from images and using sensor inputs to drive a car.
 In this paper The Open Racing Car Simulator (TORCS) is used
-to simulate a car on a race track and collect relevant sensor data. The goal is to use multiple sensor cues to drive the car safely around the defined test tracks. Through the Robot Operating System (ROS) TODO: ADD CITATION the following sensors can be read from TORCS TODO: ADD ROS_TORCS CITATION: 
+to simulate a car on a race track and collect relevant sensor data. The goal is to use multiple sensor cues to drive the car safely around the defined test tracks. Through the Robot Operating System (ROS) TODO: ADD CITATION the following sensors can be read from TORCS TODO: ADD ROS TORCS CITATION: 
 \begin{enumerate}
 	\item range finder
 	\item driver point of view (POV) image
@@ -243,22 +243,26 @@ A plethora of different optimisers are available for use in the backpropagation 
 Keras is a python library 
 hello keras \cite{Toshev_2014_CVPR}
 
-\section{Controller Architecture}
+\section{Nengo Controller}
 \label{sc:controller}
 
 The controller of the car is designed based on Spiking Neural Networks (SNN) which are implemented with Nengo \cite{nengo}, a python framework for building large-scale neural systems that is based on the Neural Engineering Framework (NEF) \cite{nef}. \\
 The controller is divided in several modular parts: acceleration, braking, steering, gear changing and clutching. We choose the modular approach, because it allows to test different modules independently from each other and also mix hard coded solutions with learned ones. \\
+In order to discuss the architecture of the nengo model, we choose to first explain TODO: the setup?
 
-\subsection{Signals}
+\paragraph{Signals}
 The available input signals are as follows: The already mentioned lateral displacement, rotation angle relative to the street center line and the 19-dimensional range finder signals are used. Furthermore, we calculate the car speed $ v $ as $ v = \sqrt{v_x^2 + v_y^2} $, with $ v_x $ and $ v_y $ as the car speed in the front and side directions relative to the car. \\
 As control signals an acceleration, brake and clutch signal, as well as a steering and a gear signal are given.
 
-\section{Controller Training}
+\subsection{Controller Training}
 In this work a supervised learning approach for training the controller is chosen. This leads to several variables, that strongly influence controller performance. Those variables are discussed in the following.
 
-\subsection{Acquiring Data}
-There are three possibilities to acquire data. The first and easiest to use is the default TORCS-ROS driver \cite{mirus_torcs-ros_2017}. The advantage of this driver is that he drives a maximum speed of \SI{149}{\km\per\hour} and drives very carefully. Which means, that he always tries to stick to the middle lane of the road and brakes heavily when he comes close to a turn. We believe that this is an easy to learn and robust driving style. However, this driver is very slow, as can be seen in \autoref{tab:torcs_laptime}. \\
-Furthermore, there are several drivers that are implemented in TORCS. Those drivers have no speed limit and their driving style approximates that of a real race. The cars drive very close to the edge of the road and drive very fast through turns. We think that this is a hard to learn and error-prone driving style, because small errors lead to disastrous effects. \\
+\subsection{Data Sources}
+\paragraph{TORCS-ROS default driver}
+The first and easiest to acquire is the default TORCS-ROS driver \cite{mirus_torcs-ros_2017}. The advantage of this driver is that he drives a maximum speed of \SI{149}{\km\per\hour} and drives very carefully. Which means, that he always tries to stick to the middle lane of the road and brakes heavily when he comes close to a turn. We believe that this is an easy to learn and robust driving style. However, this driver is very slow, as can be seen in \autoref{tab:torcs_laptime}.
+\paragraph{TORCS drivers}
+Furthermore, there are several drivers that are implemented in TORCS. Those drivers have no speed limit and their driving style approximates that of a real race. The cars drive very close to the edge of the road and drive very fast through turns. We think that this is a hard to learn and error-prone driving style, because small errors lead to disastrous effects.
+\paragraph{driving manually}
 Finally, there is the option to drive manually. As it turns out this is really difficult with a keyboard. Because fractions of seconds on the left and right arrows lead to very strong steering behavior and almost every time lead to a full turn-around or a far deviation of the track. This leads to a manual driving style that comes close to the default driver: very slow through turns and sticking close to the road center. However, because it is possible to drive as fast as one wants and in general one achieves a smoother driving of the car, we achieve a faster time than the default driver. \\
 \begin{table}[ht]
 	\begin{center}
@@ -272,10 +276,10 @@ Finally, there is the option to drive manually. As it turns out this is really d
 		\caption{\label{tab:torcs_laptime}This table compares the lap times of different driver types.}
 	\end{center}
 \end{table}
-Because of the above mentioned characteristics of the different driver styles, it does make sense to first learn the TORCS-ROS default driver, because he seems to be the most robust one and data generation is the easiest.
+Because of the above mentioned characteristics of the different driver styles, it does make sense to first learn the TORCS-ROS default driver, because he seems to be the most robust one and data generation is simple.
 
 
-\subsection{Choosing the learning methods}
+\subsection{learning methods}
 
 Besides the functionality of Nengo to directly encode and decode hardcoded functions according to the NEF \cite{nef}, Nengo provides two different learning strategies: offline and online learning. With Nengo deep learning \cite{nengo_dl}, an extension to implement classic deep learning methods exists as well.
 
@@ -286,8 +290,11 @@ Besides the functionality of Nengo to directly encode and decode hardcoded funct
 \paragraph{Nengo deep learning} allows to train classical deep learning methods e.g. feedforward neural networks with backpropagation and then implement the learned nets into Nengo. \\
 This work focuses on a mixture between hard coded functionality and offline learning.
 
-\subsection{Evaluate the results}
+\subsection{Evaluation metric}
 As a evaluation metric for the controller performance the following is used: First, it is evaluated if the controller is able to finish one lap in a reasonable amount of time. Second, the time necessary to complete one lap is considered. Both criteria are first evaluated on the trained tracks and in case the first criteria is successful, it is then measured how well the driver generalizes to unseen tracks.
+
+\subsection{Nengo design}
+Since we have the possibility to look in the source code of the default driver, we observe that the different modules drive based on different sensor inputs. The steering module is a function based on the car speed $v_x$, the lateral displacement $d_{lat}$ and the rotation angle $/alpha$. Both, acceleration and braking module are based on three range sensor signals $-5$, $0$ and $5$ degrees TODO: insert degrees symbol' as well as $v_x$. We chose to implement the gear changing as a hard coded solution without any learning involved, since it is a simple if else condition. It is further possible to neglect the clutching module, because it did not show to make any difference for driver performance even though it is implemented in the default driver.
 
 
 \section{Experiments and evaluation}
@@ -304,9 +311,15 @@ For the final application, the same model is used to guess the car's displacemen
 	\label{fig:mae-distance-vs-angle}
 \end{figure}
 
-\subsection{Performance of the controller}
-In a first setup the driver is trained on an easy track. It has only 3 big turns, one is steep. The track length is small compared to the other tracks. With ensemble sizes between 2000 and 5000 neurons, the controller drives the car safely around the first turn, but hits a wall in the second turn. \\
-To improve the controller's performance, it is possible to further increase the number of neurons. However, the processor that is used for simulation is already at its peak with the above mentioned neuron sizes. Furthermore, a detailed comparison between the infered and original output signals can be made. 
+\subsection{Controller performance}
+For finetuning the results we have basically three tuning possibilities: the neuron sizes, the amount of data and the composition of tracks the data was collected from. \\
+The neuron size.. \\
+amount of data ... \\
+track composition.. \\
+Final generalisation times.. \\
+
+
+\subsection{Controller and DNN}
 
 
 
