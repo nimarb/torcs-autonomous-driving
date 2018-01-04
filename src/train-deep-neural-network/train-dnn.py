@@ -10,6 +10,7 @@ import time
 from keras.models import Sequential, load_model
 from keras.layers import Flatten, Dense, Activation, Dropout, LeakyReLU, ZeroPadding2D
 from keras.layers.pooling import MaxPooling2D
+from keras.layers.normalization import BatchNormalization
 from keras.layers.convolutional import Conv2D
 from keras.callbacks import EarlyStopping, Callback, CSVLogger, History
 
@@ -37,7 +38,7 @@ else:
 class ImgToSensorCNN:
     """Guess distance, angle of a vehicle using deep learning"""
 
-    def __init__(self, model_name="learndrive-model", w=160, h=120):
+    def __init__(self, model_name="learndrive-model", w=160, h=120, optimiser="adamax", model_architecture="alexnet"):
         self.img_width = w
         self.img_height = h
         self.resize_imgs = True
@@ -55,6 +56,8 @@ class ImgToSensorCNN:
         self.loss_function = "mean_squared_error"
         self.metrics = "mae"
         self.model_name = model_name
+        self.optimiser = optimiser
+        self.model_architecture = model_architecture
 
     def set_val_set_in_percent(self, val_percent):
         """Set the training/validation data size in percent of available img files
@@ -276,6 +279,8 @@ class ImgToSensorCNN:
         metadata["val_mae_hist"] = self.fit_hist.history["val_mean_absolute_error"]
         metadata["test_loss"] = self.score[0]
         metadata["test_mae"] = self.score[1]
+        metadata["optimiser"] = self.optimiser
+        metadata["model_architecture"] = self.model_architecture
         json_str = json.dumps(metadata)
         save_data_dir = os.path.join(
             "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
@@ -312,7 +317,14 @@ class ImgToSensorCNN:
         """Creates a keras ConvNet model"""
         # loss= mean_squared_error, metrics=mean_absolute_error
         self.model = Sequential()
-        self.cnn_alexnet()
+        if "alexnet" == self.model_architecture:
+            self.cnn_alexnet()
+        elif "alexnet_no_dropout" == self.model_architecture:
+            self.cnn_alexnet_no_dropout()
+        elif "tensorkart" == self.model_architecture:
+            self.cnn_tensorkart()
+        elif "simple" == self.model_architecture:
+            self.cnn_simple()
 
         train_data = np.empty(
                 (self.num_train_set, self.img_height, self.img_width, 3),
@@ -347,10 +359,12 @@ class ImgToSensorCNN:
 
         # other good optimiser: adam, rmsprop
         self.model.compile(
-            loss=self.loss_function, optimizer="adam", metrics=[self.metrics])
+            loss=self.loss_function, optimizer=self.optimiser, metrics=[self.metrics])
         self.model.fit(
             x=train_data, y=train_target_vals, batch_size=self.batch_size,
             validation_data=(val_data, val_target_vals),
+            #x=train_data, y=self.train_angle_array, batch_size=self.batch_size,
+            #validation_data=(val_data, self.val_angle_array),
             epochs=self.num_epochs, callbacks=cbs)
 
     def cnn_alexnet(self):
@@ -383,17 +397,92 @@ class ImgToSensorCNN:
         self.model.add(Dense(4096))
         self.model.add(Activation("relu"))
         self.model.add(Dropout(0.5))
+        #self.model.add(Dense(1))
         self.model.add(Dense(2))
+
+    def cnn_alexnet_no_dropout(self):
+        """Uses the AlexNet network topology without dropout layers for the cnn model"""
+        self.model.add(
+            Conv2D(
+                96, kernel_size=(11, 11), strides=(4, 4), padding="same",
+                input_shape=(self.img_height, self.img_width, 3)))
+        self.model.add(Activation("relu"))
+        self.model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
+        self.model.add(ZeroPadding2D(padding=(2, 2)))
+        self.model.add(Conv2D(256, kernel_size=(5, 5), strides=(4, 4)))
+        self.model.add(Activation("relu"))
+        self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        self.model.add(ZeroPadding2D(padding=(1, 1)))
+        self.model.add(Conv2D(384, kernel_size=(3, 3)))
+        self.model.add(Activation("relu"))
+        self.model.add(ZeroPadding2D(padding=(1, 1)))
+        self.model.add(Conv2D(384, kernel_size=(3, 3)))
+        self.model.add(Activation("relu"))
+        self.model.add(ZeroPadding2D(padding=(1, 1)))
+        self.model.add(Conv2D(256, kernel_size=(3, 3)))
+        self.model.add(Activation("relu"))
+        self.model.add(ZeroPadding2D(padding=(1, 1)))
+        self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+        self.model.add(Flatten())
+        self.model.add(Dense(4096))
+        self.model.add(Activation("relu"))
+        self.model.add(Dense(4096))
+        self.model.add(Activation("relu"))
+        #self.model.add(Dense(1))
+        self.model.add(Dense(2))
+
+    def cnn_tensorkart(self):
+        """Uses NeuralKart/TensorKart model architecture"""
+        #self.model.add(BatchNormalization(input_shape=(self.img_height, self.img_width, 3)))
+        self.model.add(Conv2D(24, input_shape=(self.img_height, self.img_width, 3), kernel_size=(5, 5), strides=(2, 2), activation='relu'))
+        self.model.add(BatchNormalization())
+        self.model.add(Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu'))
+        self.model.add(BatchNormalization())
+        self.model.add(Conv2D(48, kernel_size=(5, 5), strides=(2, 2), activation='relu'))
+        self.model.add(BatchNormalization())
+        self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+        self.model.add(BatchNormalization())
+        self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+        self.model.add(Flatten())
+        self.model.add(Dense(1164, activation='relu'))
+        drop_out = 0.4
+        self.model.add(Dropout(drop_out))
+        self.model.add(Dense(100, activation='relu'))
+        self.model.add(Dropout(drop_out))
+        self.model.add(Dense(50, activation='relu'))
+        self.model.add(Dropout(drop_out))
+        self.model.add(Dense(10, activation='relu'))
+        self.model.add(Dropout(drop_out))
+        self.model.add(Dense(2))
+        #self.model.add(Dense(1))
 
     def cnn_simple(self):
         """Uses own simple model as cnn topology"""
-        print("hi")
+        self.model.add(Conv2D(256,
+            input_shape=(self.img_height, self.img_width, 3),
+            kernel_size=(7, 7),
+            padding='same',
+            activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(256, kernel_size=(5, 5), activation='relu', padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Flatten())
+        self.model.add(Dense(2048, activation='relu'))
+        self.model.add(Dense(1024, activation='relu'))
+        self.model.add(Dense(512, activation='relu'))
+        self.model.add(Dense(256, activation='relu'))
+        self.model.add(Dense(128, activation='relu'))
+        self.model.add(Dense(1))
+        #self.model.add(Dense(2))
 
     def test_model(self):
         """Evaluate the loaded / trained model"""
         self.load_test_set()
         self.score = self.model.evaluate(
                                     x=self.test_imgs,
+                                    #y=self.test_vals[:, 0],
                                     y=self.test_vals,
                                     batch_size=self.batch_size)
         print(self.score)
@@ -458,8 +547,12 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         if sys.argv[2]:
             cnn = ImgToSensorCNN(sys.argv[2])
-    else:
+    elif len(sys.argv) == 4:
         cnn = ImgToSensorCNN(w=int(sys.argv[2]), h=int(sys.argv[3]))
+    elif len(sys.argv) == 5:
+        cnn = ImgToSensorCNN(
+            w=int(sys.argv[2]), h=int(sys.argv[3]), model_architecture=sys.argv[4])
+
     cnn.set_val_set_in_percent(10)
     cnn.load_data()
     cnn.shuffle_data_arrays()
