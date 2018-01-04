@@ -37,7 +37,7 @@ else:
 class ImgToSensorCNN:
     """Guess distance, angle of a vehicle using deep learning"""
 
-    def __init__(self, model_name="learndrive-model", w=160, h=120):
+    def __init__(self, model_name="learndrive-model", w=160, h=120, optimiser="adamax"):
         self.img_width = w
         self.img_height = h
         self.resize_imgs = True
@@ -55,6 +55,7 @@ class ImgToSensorCNN:
         self.loss_function = "mean_squared_error"
         self.metrics = "mae"
         self.model_name = model_name
+        self.optimiser = optimiser
 
     def set_val_set_in_percent(self, val_percent):
         """Set the training/validation data size in percent of available img files
@@ -276,6 +277,7 @@ class ImgToSensorCNN:
         metadata["val_mae_hist"] = self.fit_hist.history["val_mean_absolute_error"]
         metadata["test_loss"] = self.score[0]
         metadata["test_mae"] = self.score[1]
+        metadata["optimiser"] = self.optimiser
         json_str = json.dumps(metadata)
         save_data_dir = os.path.join(
             "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
@@ -347,7 +349,7 @@ class ImgToSensorCNN:
 
         # other good optimiser: adam, rmsprop
         self.model.compile(
-            loss=self.loss_function, optimizer="adam", metrics=[self.metrics])
+            loss=self.loss_function, optimizer=self.optimiser, metrics=[self.metrics])
         self.model.fit(
             x=train_data, y=train_target_vals, batch_size=self.batch_size,
             validation_data=(val_data, val_target_vals),
@@ -458,8 +460,12 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         if sys.argv[2]:
             cnn = ImgToSensorCNN(sys.argv[2])
-    else:
+    elif len(sys.argv) == 4:
         cnn = ImgToSensorCNN(w=int(sys.argv[2]), h=int(sys.argv[3]))
+    elif len(sys.argv) == 5:
+        cnn = ImgToSensorCNN(
+            w=int(sys.argv[2]), h=int(sys.argv[3]))
+
     cnn.set_val_set_in_percent(10)
     cnn.load_data()
     cnn.shuffle_data_arrays()
