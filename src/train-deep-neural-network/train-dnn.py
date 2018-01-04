@@ -318,7 +318,7 @@ class ImgToSensorCNN:
         # loss= mean_squared_error, metrics=mean_absolute_error
         self.model = Sequential()
         if "alexnet" == self.model_architecture:
-        self.cnn_alexnet()
+            self.cnn_alexnet()
         elif "alexnet_no_dropout" == self.model_architecture:
             self.cnn_alexnet_no_dropout()
         elif "tensorkart" == self.model_architecture:
@@ -363,6 +363,8 @@ class ImgToSensorCNN:
         self.model.fit(
             x=train_data, y=train_target_vals, batch_size=self.batch_size,
             validation_data=(val_data, val_target_vals),
+            #x=train_data, y=self.train_angle_array, batch_size=self.batch_size,
+            #validation_data=(val_data, self.val_angle_array),
             epochs=self.num_epochs, callbacks=cbs)
 
     def cnn_alexnet(self):
@@ -395,6 +397,7 @@ class ImgToSensorCNN:
         self.model.add(Dense(4096))
         self.model.add(Activation("relu"))
         self.model.add(Dropout(0.5))
+        #self.model.add(Dense(1))
         self.model.add(Dense(2))
 
     def cnn_alexnet_no_dropout(self):
@@ -479,6 +482,7 @@ class ImgToSensorCNN:
         self.load_test_set()
         self.score = self.model.evaluate(
                                     x=self.test_imgs,
+                                    #y=self.test_vals[:, 0],
                                     y=self.test_vals,
                                     batch_size=self.batch_size)
         print(self.score)
