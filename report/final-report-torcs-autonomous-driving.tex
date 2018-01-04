@@ -229,7 +229,7 @@ Therefore, the image size $ \SI{80}{\px}\times\SI{60}{\px} $ is used for the DNN
 
 \subsection{Choosing the optimiser}
 \label{sc:optimiser-choice}
-A plethora of different optimisers are available for use in the backpropagation step when training DNNs. The largest differences are in their abilities to exit large local maxima, training performance and accuracy. As the currently used DNN is managable in size, the training performance is not yet a critical property. Therefore, the optimiser was selected based on its ability to minimse the mean absolute error of the validation set. As illustrated in \autoref{fig:optimiser-evaluation}, the \texttt{sgd} (strochastic gradient descend) optimiser provides the best result and is thus chosen for future application.
+A plethora of different optimisers are available for use in the backpropagation step when training DNNs. The largest differences are in their abilities to exit large local maxima, training performance and accuracy. As the currently used DNN is managable in size, the training performance is not yet a critical property. Therefore, the optimiser was selected based on its ability to minimse the mean absolute error of the validation set. As illustrated in \autoref{fig:optimiser-evaluation}, the \texttt{adamax} optimiser provides the best result and is thus chosen for future application. \texttt{adamax} is similiar to the \texttt{adam} optimiser while being more stable in certain conditions, see \cite{DBLP:journals/corr/KingmaB14}. 
 
 \begin{figure}[ht]
 	\centering
