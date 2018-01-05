@@ -313,10 +313,15 @@ For the final application, the same model is used to guess the car's displacemen
 
 \subsection{Controller performance}
 For finetuning the results we have basically three tuning possibilities: the neuron sizes, the amount of data and the composition of tracks the data was collected from. \\
-The neuron size.. \\
+For choosing the final neuron sizes we looked at the generalization performance and tried to figure out the neuron size composition where the generalization performance peaked. To do this, we created a set of XX samples of three different tracks and evaluated performance on an unseen track. \\
+In order to specify the relative neuron sizes for the different driving modules as well as the signal encoding, we compared driver performance on the test tracks. We treated this relative neuron sizes as a hyper-parameter. \\
+After we found the relative neuron sizes, we chose the base neuron size by testing on the unseen tracks. This is due to the fact, that a too small neuron size will give a large generalization bias whereas a too large neuron size leads to overfitting. \\
+However, besides the neuron sizes the data composition and the amount of data also influence generalization bias and overfitting. The more different types of street courses we have, the smaller the generalization bias. The more data we have, the smaller the likelihood of overfitting and actually learning specific race track criteria. \\
+In order to find the optimum of those three criteria, we changed track composition and data amount for every neuron size we tested. If the performance didn't impo
+The final base neuron size $n_{base}$ is chosen to be XX. The ensambles that encode the nengo signals into a set of leaky XXX neurons are built with neuron size $n_{base}$. The steering module shows best performance with $XX*n_{base}$. Accelerating and braking modules with $XX*n_{base}$ and $XX*n_{base}$ respectively. \\
 amount of data ... \\
 track composition.. \\
-Final generalisation times.. \\
+Final generalization times.. \\
 
 
 \subsection{Controller and DNN}

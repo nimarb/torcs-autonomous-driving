@@ -50,7 +50,7 @@ class TORCSInputNode(nengo.Node):
 
 
 class TORCSOutputNode(nengo.Node):
-    def __init__(self, name, period=30):
+    def __init__(self, name, period=1):
         """
         Parameters
         ----------
@@ -68,7 +68,7 @@ class TORCSOutputNode(nengo.Node):
         self.counter = 0
 
         # TODO: discuss queue_size
-        self.pub = rospy.Publisher("/torcs_ros/ctrl_cmd", TORCSCtrl, queue_size=10)
+        self.pub = rospy.Publisher("/torcs_ros/ctrl_cmd", TORCSCtrl, queue_size=0)
 
         super(TORCSOutputNode, self).__init__(label=name, output=self.tick,
                                               size_in=dimensions, size_out=0)

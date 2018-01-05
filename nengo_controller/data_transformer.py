@@ -5,7 +5,9 @@ import argparse
 LEARN_DATA = 'learn_data/'
 PROCESSED_DATA = 'data/processed_data/'
 
-MAP_NAMES = ('cg_speedway_1', 'brondelhach', 'alpine_1')
+# MAP_NAMES = ('cg_speedway_1', 'brondelhach', 'e_track_3')
+# MAP_NAMES = ('cg_speedway_1', 'e_track_3', 'brondelhach', 'e_track_1')
+MAP_NAMES = ('cg_speedway_1', 'e_track_1', 'alpine_1', 'brondelhach', 'corkscrew')
 
 
 def load_file(path):
