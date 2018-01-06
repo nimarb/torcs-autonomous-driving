@@ -7,7 +7,7 @@ PROCESSED_DATA = 'data/processed_data/'
 
 # MAP_NAMES = ('cg_speedway_1', 'brondelhach', 'e_track_3')
 # MAP_NAMES = ('cg_speedway_1', 'e_track_3', 'brondelhach', 'e_track_1')
-MAP_NAMES = ('cg_speedway_1', 'e_track_1', 'alpine_1', 'brondelhach', 'corkscrew')
+MAP_NAMES = ('cg_speedway_1', 'e_track_1', 'e_track_3', 'e_track_2', 'brondelhach', 'corkscrew')
 
 
 def load_file(path):

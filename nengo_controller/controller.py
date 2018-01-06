@@ -5,7 +5,7 @@ from torcs_ros_network import TORCSInputNode, TORCSOutputNode
 
 rospy.init_node('nengo_controller')
 
-n_neurons = 350
+n_neurons = 500
 
 model = nengo.Network()
 with model:
@@ -41,4 +41,4 @@ with model:
 if __name__ == "__main__":
     print('done')
     sim = nengo.Simulator(model, progress_bar=True)
-    sim.run(120)
+    sim.run(600)
