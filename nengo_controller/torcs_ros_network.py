@@ -5,28 +5,35 @@ from geometry_msgs.msg import TwistStamped
 from sensor_msgs.msg import LaserScan, Image
 import numpy as np
 import rospy
+from DNN import DNN
 
 
 class TORCSInputNode(nengo.Node):
-    def __init__(self, name):
+    def __init__(self, name, dnn=False):
         """
         Parameters
         ----------
         name : str
             An arbitrary name for the object
         """
-        neuro_dimensions = 6 # angle, disp, speed, rangefinder[3]
-        direct_dimensions = 2 # gear, rpm
+        neuro_dimensions = 6  # angle, disp, speed, rangefinder[3]
+        direct_dimensions = 2  # gear, rpm
         dimensions = neuro_dimensions + direct_dimensions
         self.data = np.zeros((dimensions,))
 
         rospy.Subscriber("/torcs_ros/sensors_state", TORCSSensors, self.extract_displacement)
         rospy.Subscriber("/torcs_ros/speed", TwistStamped, self.extract_speed)
         rospy.Subscriber("/torcs_ros/scan_track", LaserScan, self.extract_laser)
-        rospy.Subscriber("/torcs_ros/ctrl_state", TORCSCtrl, self.extract_ctrl)
+        # rospy.Subscriber("/torcs_ros/ctrl_state", TORCSCtrl, self.extract_ctrl)
+        rospy.Subscriber("/torcs_ros/pov_image", Image, self.extract_img)
 
         super(TORCSInputNode, self).__init__(label=name, output=self.tick,
                                              size_in=0, size_out=dimensions)
+        if not dnn:
+            self.DNN = None
+        else:
+            self.DNN = DNN()
+        self.img = None
 
     def extract_displacement(self, data):
         self.data[0] = data.angle
@@ -39,13 +46,17 @@ class TORCSInputNode(nengo.Node):
         self.data[2] = data.twist.linear.x
 
     def extract_laser(self, data):
-        self.data[3:6] = np.array(data.ranges[9:12]) * 1.0/200
+        self.data[3:6] = np.array(data.ranges[9:12]) * 1.0 / 200
 
     def extract_ctrl(self, data):
         pass
 
+    def extract_img(self, data):
+        self.img = data
 
     def tick(self, t):
+        if self.DNN is not None:
+            self.data[0], self.data[1] = self.DNN.propagate(self.img)
         return self.data
 
 
@@ -90,4 +101,3 @@ class TORCSOutputNode(nengo.Node):
         ctrl.focus = 0
         ctrl.meta = 0
         return ctrl
-

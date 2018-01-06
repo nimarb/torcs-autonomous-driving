@@ -11,7 +11,7 @@ model = nengo.Network()
 with model:
 
     with nengo.Network():
-        input_node = TORCSInputNode('TORCS_input')
+        input_node = TORCSInputNode('TORCS_input', dnn=True)
         # input_ensemble = nengo.Ensemble(n_neurons=5000, dimensions=22)
         # angle, displ, speed
         input_steer_ensemble = nengo.Ensemble(n_neurons=4*n_neurons, dimensions=3)
