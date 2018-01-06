@@ -291,10 +291,12 @@ Besides the functionality of Nengo to directly encode and decode hardcoded funct
 This work focuses on a mixture between hard coded functionality and offline learning.
 
 \subsection{Evaluation metric}
-As a evaluation metric for the controller performance the following is used: First, it is evaluated if the controller is able to finish one lap in a reasonable amount of time. Second, the time necessary to complete one lap is considered. Both criteria are first evaluated on the trained tracks and in case the first criteria is successful, it is then measured how well the driver generalizes to unseen tracks.
+To evaluate the controller's performance, we used the following two metrics: Firstly, we investigate if the controller is able to finish one lap in a reasonable time and how fast he is compared to the default driver. Secondly, we judge the overall robustness of the controller. For this we observed the actual controller during driving and evaluated how stable he drives, e.g. how close he actually drives to the edge of the street. 
 
-\subsection{Nengo design}
-Since we have the possibility to look in the source code of the default driver, we observe that the different modules drive based on different sensor inputs. The steering module is a function based on the car speed $v_x$, the lateral displacement $d_{lat}$ and the rotation angle $/alpha$. Both, acceleration and braking module are based on three range sensor signals $-5$, $0$ and $5$ degrees TODO: insert degrees symbol' as well as $v_x$. We chose to implement the gear changing as a hard coded solution without any learning involved, since it is a simple if else condition. It is further possible to neglect the clutching module, because it did not show to make any difference for driver performance even though it is implemented in the default driver.
+\subsection{Nengo controller design}
+In the default driver's source code, the different driving modules are based on different sensory inputs. The steering module is a function based on the car speed $v_x$, the lateral displacement $d_{lat}$ and the rotation angle $/alpha$. Both, the acceleration and the braking module are based on three range sensor signals $-5$, $0$ and $5$ degrees as well as $v_x$. We chose to implement the gear changing as a hard coded solution without any learning involved, since it is a simple if else condition. It is further possible to neglect the clutching module, because it did not show to make any difference for driver performance even though it is implemented in the default driver. \\
+TODO how are ensambles connected? Picture with DNN
+
 
 
 \section{Experiments and evaluation}
@@ -313,15 +315,23 @@ For the final application, the same model is used to guess the car's displacemen
 
 \subsection{Controller performance}
 For finetuning the results we have basically three tuning possibilities: the neuron sizes, the amount of data and the composition of tracks the data was collected from. \\
-For choosing the final neuron sizes we looked at the generalization performance and tried to figure out the neuron size composition where the generalization performance peaked. To do this, we created a set of XX samples of three different tracks and evaluated performance on an unseen track. \\
-In order to specify the relative neuron sizes for the different driving modules as well as the signal encoding, we compared driver performance on the test tracks. We treated this relative neuron sizes as a hyper-parameter. \\
-After we found the relative neuron sizes, we chose the base neuron size by testing on the unseen tracks. This is due to the fact, that a too small neuron size will give a large generalization bias whereas a too large neuron size leads to overfitting. \\
-However, besides the neuron sizes the data composition and the amount of data also influence generalization bias and overfitting. The more different types of street courses we have, the smaller the generalization bias. The more data we have, the smaller the likelihood of overfitting and actually learning specific race track criteria. \\
-In order to find the optimum of those three criteria, we changed track composition and data amount for every neuron size we tested. If the performance didn't impo
-The final base neuron size $n_{base}$ is chosen to be XX. The ensambles that encode the nengo signals into a set of leaky XXX neurons are built with neuron size $n_{base}$. The steering module shows best performance with $XX*n_{base}$. Accelerating and braking modules with $XX*n_{base}$ and $XX*n_{base}$ respectively. \\
-amount of data ... \\
-track composition.. \\
-Final generalization times.. \\
+We increased the neuron sizes and track data until we hardly discovered any improvements on the generalization task. As tracks for the training set we chose tracks with somewhat different shapes and turns in order to cover a vide variety of situations. \\
+Further it played an important role to keep the forward propagation time of the controller relatively low. This is necessary because when the neuron size becomes too large, the controller signals are too far behind of the car and controlling becomes instable. Further we observed that braking needed much more neurons than accelerating and steering to work reliable. We assume the reason for this is that the braking function in the driver is highly non linear and consists also of a ABS implementation. \\
+As the final neuron sizes for the different modules we chose $2,000$ neurons for each input signal. The steering and acceleration module consist of $2,400$ neurons and the braking module consists of $4,800$ neurons. The controller performance based on ground truth data is shown in \autoref{tab:controller_laptime}.
+
+\begin{table}[ht]
+	\begin{center}
+		\begin{tabular}{ |c|c|c| } 
+			\hline
+			track &  default driver & Nengo controller\\
+			\hline
+			cg track 2  & 1:58:15 & 1:59:76  \\
+			wheel 2 & 4:21:45 & 4:26:80 \\
+			\hline
+		\end{tabular}
+		\caption{\label{tab:controller_laptime}This table compares the lap times of controller and default driver on the generalization task.}
+	\end{center}
+\end{table}
 
 
 \subsection{Controller and DNN}
