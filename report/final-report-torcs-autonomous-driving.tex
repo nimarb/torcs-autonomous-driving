@@ -116,12 +116,8 @@ in The Open Racing Car Simulator (TORCS)}
 	To implement an autonomous driver in The Open Racing Car Simulator (TORCS)
 	we use a combination of a deep neural network (DNN) and a spiking neural network (SNN) based on multiple
 	sensor cues. Specifically, the DNN predicts the current car displacement
-	and angle to the road centre from a driver's view image. Based on the two values
-	a SNN generates driving commands for the car. Subsequently, the car is put onto a 
-	new track and the driving performance is evaluated.\
-	The DNN is based on a Convolutional Neural Network and after training the mean 
-	absolute error for the displacement is XXXX and for the angle is XXX on an
-	unseen test track.
+	and angle relative to the road centre from a driver's view image. Based on the two values
+	and an additional multi dimension range finder sensor a SNN generates driving commands for the car. Subsequently, the driving performance is evaluated on unseen tracks.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -135,18 +131,18 @@ in The Open Racing Car Simulator (TORCS)}
 \label{sc:intro}
 
 \IEEEPARstart{A}{utonomous} driving is currently a controversial subject, especially 
-regarding feasibility and performance. To explore the details of autonomous driving, an abstract prototype is build focussing on the  implementation of deriving location data from images and using sensor inputs to drive a car.
-In this paper The Open Racing Car Simulator (TORCS) is used
-to simulate a car on a race track and collect relevant sensor data. The goal is to use multiple sensor cues to drive the car safely around the defined test tracks. Through the Robot Operating System (ROS) TODO: ADD CITATION the following sensors can be read from TORCS TODO: ADD ROS TORCS CITATION: 
+regarding feasibility and performance. To explore the details of autonomous driving, an abstract prototype is built focussing on the implementation of infering location information from images and implementing a neural controller to drive a car. In this work we use The Open Racing Car Simulator (TORCS) to simulate a car on a race track and collect relevant sensor data. The goal is to use multiple sensor cues to drive the car safely around the defined test tracks. Further, we use the Robot Operating System (ROS) TODO: ADD CITATION as an interface between TORCS and the controller TODO: ADD ROS TORCS CITATION. The following signals are used:
 \begin{enumerate}
 	\item range finder
 	\item driver point of view (POV) image
 	\item displacement (distance from road centre to car centre)
 	\item angle (rotation angle between car and road)
 \end{enumerate}
-Then, a deep neural network will be trained on the ground truth data to infer the angle and displacement from the provided POV image. Subsequently, a controller based on spiking neural networks (SNN) is trained to generate driving commands based on range finder, displacement and angle sensor inputs. Finally, the controller and the DNN are connected. So the overall model works only based on the POV image and the range finder data, which are directly taken from TORCS.
+Then, a deep neural network will be trained on the ground truth data to infer the angle and displacement from the provided POV image. Subsequently, a controller based on spiking neural networks (SNN) is trained to generate driving commands based on range finder, displacement and angle sensor inputs. Finally, the controller and the DNN are connected. So the final model works only based on the POV image and the range finder data. An overview of the overall structure can be seen in figure XX.
 
-As a competing group is working on the same task, a race will be carried out at the end and the winner will be determined. Thus, the goal is to drive the car around the track as quickly as possible while maintaining a safe driving style.
+TODO: model structure overview picture as in presentation
+
+% As a competing group is working on the same task, a race will be carried out at the end and the winner will be determined. Thus, the goal is to drive the car around the track as quickly as possible while maintaining a safe driving style.
 
 %\section{State of the art}
 %\label{sc:sota}
@@ -245,17 +241,35 @@ hello keras \cite{Toshev_2014_CVPR}
 
 \section{Nengo Controller}
 \label{sc:controller}
+The controller of the car is designed based on Spiking Neural Networks (SNN) which are implemented in Nengo \cite{nengo}, a python framework for building large-scale neural systems that is based on the Neural Engineering Framework (NEF) \cite{nef}. \\
+The controller is divided in several modular parts: acceleration, braking, steering, gear changing and clutching. We choose the modular approach, because it allows to test different modules independently from each other and also mix hard coded solutions with learned ones.
 
-The controller of the car is designed based on Spiking Neural Networks (SNN) which are implemented with Nengo \cite{nengo}, a python framework for building large-scale neural systems that is based on the Neural Engineering Framework (NEF) \cite{nef}. \\
-The controller is divided in several modular parts: acceleration, braking, steering, gear changing and clutching. We choose the modular approach, because it allows to test different modules independently from each other and also mix hard coded solutions with learned ones. \\
-In order to discuss the architecture of the nengo model, we choose to first explain TODO: the setup?
-
-\paragraph{Signals}
-The available input signals are as follows: The already mentioned lateral displacement, rotation angle relative to the street center line and the 19-dimensional range finder signals are used. Furthermore, we calculate the car speed $ v $ as $ v = \sqrt{v_x^2 + v_y^2} $, with $ v_x $ and $ v_y $ as the car speed in the front and side directions relative to the car. \\
-As control signals an acceleration, brake and clutch signal, as well as a steering and a gear signal are given.
+\subsection{Nengo controller design}
+In the default driver's source code, the driving modules are based on different sensory inputs. The steering module is a function based on the car speed $v_x$, the lateral displacement $d_{lat}$ and the rotation angle $/alpha$. Both, the acceleration and the braking module are based on three range sensor signals $-5$, $0$ and $5$ degrees as well as $v_x$. We chose to implement the gear changing as a hard coded solution without any learning involved, since it is a simple if-else condition. It is further possible to neglect the clutching module, because it did not show to make any difference for driver performance even though it is implemented in the default driver. The final model architecture can be seen in \autoref{fig:nengo_architecture}\\
+TODO: neuron type
+\begin{figure}[ht]
+	\centering
+	%\input{attachments/alexnet-val_mae-img_size_compare-09042-12547-22111.pgf}
+	\includegraphics[width=\columnwidth]{attachments/nengo_architecture.png}
+	\caption{Nengo architecture with different modules. The input network contains an input node that has subscribed to the ROS topics and contains the CNN for inference of rotation angle and lateral displacement. The steer, accelerate and brake module contain one ensemble each. The output network contains an output node that publishes to the ROS topics. The gear module is not shown here.}
+	\label{fig:nengo_architecture}
+\end{figure}
 
 \subsection{Controller Training}
-In this work a supervised learning approach for training the controller is chosen. This leads to several variables, that strongly influence controller performance. Those variables are discussed in the following.
+In this work we chose a supervised learning approach for training the controller. Nengo offers two types of learning strategies: offline and online learning.
+% Besides the functionality of Nengo to directly encode and decode hardcoded functions according to the NEF \cite{nef},
+With Nengo deep learning \cite{nengo_dl}, an extension to implement classic deep learning methods exists as well.
+
+\paragraph{offline learning} can be used for the classical supervised learning approach. Feature data and corresponding labels are given and Nengo uses a least squares approximation to solve for the neuron weights \cite{nef}.
+
+\paragraph{online learning} iteratively improves the initial neuron configuration in a supervised manner during runtime. However, this requires that for every timestep during runtime a goal value has to be known for Nengo to solve for it. In our problem this is not the case. Therefore online learning is not further considered in this work.
+
+\paragraph{Nengo deep learning} allows to train classical deep learning methods e.g. feedforward neural networks with backpropagation and then implement the learned nets into Nengo. \\
+This work focuses on a mixture between hard coded functionality and offline learning.
+TODO: explain how Nengo learns hard coded functions
+
+\subsection{Evaluation metric}
+To evaluate the controller's performance, we used the following two metrics: Firstly, we investigate if the controller is able to finish one lap in a reasonable time and how fast he is compared to the default driver. Secondly, we judge the overall robustness of the controller. For this we observed the actual controller during driving and evaluated how stable he drives, e.g. how close he actually drives to the edge of the street.
 
 \subsection{Data Sources}
 \paragraph{TORCS-ROS default driver}
@@ -278,34 +292,6 @@ Finally, there is the option to drive manually. As it turns out this is really d
 \end{table}
 Because of the above mentioned characteristics of the different driver styles, it does make sense to first learn the TORCS-ROS default driver, because he seems to be the most robust one and data generation is simple.
 
-
-\subsection{learning methods}
-
-Besides the functionality of Nengo to directly encode and decode hardcoded functions according to the NEF \cite{nef}, Nengo provides two different learning strategies: offline and online learning. With Nengo deep learning \cite{nengo_dl}, an extension to implement classic deep learning methods exists as well.
-
-\paragraph{offline learning} can be used for the classical supervised learning approach. Feature data and corresponding labels are given and Nengo uses a least squares approximation to solve for the neuron weights \cite{nef}.
-
-\paragraph{online learning} iteratively improves the initial neuron configuration in a supervised manner during runtime. However, this requires that for every timestep during runtime a goal value has to be known so Nengo can solve for it. In our problem this is not the case. Therefore online learning is not further considered in this work.
-
-\paragraph{Nengo deep learning} allows to train classical deep learning methods e.g. feedforward neural networks with backpropagation and then implement the learned nets into Nengo. \\
-This work focuses on a mixture between hard coded functionality and offline learning.
-
-\subsection{Evaluation metric}
-To evaluate the controller's performance, we used the following two metrics: Firstly, we investigate if the controller is able to finish one lap in a reasonable time and how fast he is compared to the default driver. Secondly, we judge the overall robustness of the controller. For this we observed the actual controller during driving and evaluated how stable he drives, e.g. how close he actually drives to the edge of the street. 
-
-\subsection{Nengo controller design}
-In the default driver's source code, the driving modules are based on different sensory inputs. The steering module is a function based on the car speed $v_x$, the lateral displacement $d_{lat}$ and the rotation angle $/alpha$. Both, the acceleration and the braking module are based on three range sensor signals $-5$, $0$ and $5$ degrees as well as $v_x$. We chose to implement the gear changing as a hard coded solution without any learning involved, since it is a simple if-else condition. It is further possible to neglect the clutching module, because it did not show to make any difference for driver performance even though it is implemented in the default driver. The final model architecture can be seen in \autoref{fig:nengo_architecture}\\
-TODO: neuron type
-\begin{figure}[ht]
-	\centering
-	%\input{attachments/alexnet-val_mae-img_size_compare-09042-12547-22111.pgf}
-	\includegraphics[width=\columnwidth]{attachments/nengo_architecture.png}
-	\caption{Nengo architecture with different modules. The input network contains an input node that has subscribed to the ROS topics and contains the CNN for inference of rotation angle and lateral displacement. The steer, accelerate and brake module contain one ensemble each. The output network contains an output node that publishes to the ROS topics. The gear module is not shown here.}
-	\label{fig:nengo_architecture}
-\end{figure}
-
-
-
 \section{Experiments and evaluation}
 \label{sc:evaluation}
 
@@ -323,8 +309,28 @@ For the final application, the same model is used to guess the car's displacemen
 \subsection{Controller performance}
 For finetuning the results we have basically three tuning possibilities: the neuron sizes, the amount of data and the composition of tracks the data was collected from. \\
 We increased the neuron sizes and track data until we hardly discovered any improvements on the generalization task. As tracks for the training set we chose tracks with somewhat different shapes and turns in order to cover a vide variety of situations. \\
-Further it played an important role to keep the forward propagation time of the controller relatively low. This is necessary because when the neuron size becomes too large, the controller signals are too far behind of the car and controlling becomes instable. Further we observed that braking needed much more neurons than accelerating and steering to work reliable. We assume the reason for this is that the braking function in the driver is highly non linear and consists also of a ABS implementation. \\
+Further it played an important role to keep the forward propagation time of the controller relatively low. This is necessary because when the neuron size becomes too large, the controller signals are too far behind of the car and controlling becomes instable. This is especially important on computer with older hardware. Further we observed that braking needed much more neurons than accelerating and steering to work reliable. We assume the reason for this is that the braking function in the driver is highly non linear and consists also of a ABS implementation. \\
+While testing we observed that even though lower neuron counts perform equally well in lap time, they, however, performe much worse in stability. E.g. a setup with 
 As the final neuron sizes for the different modules we chose $2,000$ neurons for each input signal. The steering and acceleration module consist of $2,400$ neurons and the braking module consists of $4,800$ neurons. The controller performance based on ground truth data is shown in \autoref{tab:controller_laptime}.
+
+50 ms big slalom
+
+1.5 ms between controller call on avg - 2400/3000/3000
+1.6 ms on 2,4 / 3,0 / 4,5
+
+0.8 ms on - 1400/1600/1600
+0.00083
+
+
+
+% 2,400 / 3,000 / 4,500 - 2:02:91 | +
+% 2,400 / 3,000 / 3,000 - 1:59:14
+% 2,000 / 2,400 / 4,800 - 2:01:12 | +
+% 2,000 / 2,400 / 3,600 - 2:00:58 | +
+% 2,000 / 2,400 / 2,400 - 2:04:51 | o
+% 1,400 / 1,600 / 4,800 - xx | -
+% 1,400 / 1,600 / 3,200 - 2:04:99 | o
+% 1,400 / 1,600 / 1,600 - 2:07:45 | -
 
 \begin{table}[ht]
 	\begin{center}
