@@ -5,6 +5,7 @@ import glob
 import json
 import platform
 from random import sample
+import random
 import time
 
 from keras.models import Sequential, load_model
@@ -16,6 +17,13 @@ from keras.callbacks import EarlyStopping, Callback, CSVLogger, History
 
 import numpy as np
 import cv2
+
+import tensorflow as tf
+
+np.random.seed(42)
+os.environ['PYTHONHASHSEED'] = '0'
+random.seed(42)
+tf.set_random_seed(42)
 # import matplotlib.pyplot as plt
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
