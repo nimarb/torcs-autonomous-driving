@@ -159,7 +159,7 @@ The implementation of the deep neural network is done in \texttt{python} version
 \label{ssc:testing-dnn}
 To be able to chose hyperparametres for the convolutional neural network (CNN) at an early point, a basic CNN network architecture was chosen which has been proven before. The criteria for chosing the network architecture was, that it has to provide reasonable performance while being quick to train. The focus was rather on fast training performance, as the available resources are limited to us. Thus, after studying the architectures' training performances as seen here \cite{jjohnson-cnn-benchmarks}, AlexNet \cite{alexnet2012imagenet} was chosen as testing DNN.\\
 
-AlexNet is a network designed for image classification tasks, such as the ImageNet challenge. Therefore, the last layer of AlexNet was altered to use it for multidimensional regression problems such as guessing the angle and displacement from an image. To achieve that, the number of output neurons of the last fully connected layer (FCL) was reduced from 1000 to 2, as there are two numbers to guess. Furthermore, the last FCL used a rectified linear unit (ReLU) as activation function. 
+AlexNet is a network designed for image classification tasks, such as the ImageNet challenge. Therefore, the last layer of AlexNet was altered to use it for multidimensional regression problems such as inferring the angle and displacement from an image. To achieve that, the number of output neurons of the last fully connected layer (FCL) was reduced from 1000 to 2, as there are two numbers to determine. Furthermore, the last FCL used a rectified linear unit (ReLU) as activation function. 
 \begin{equation}
 	f(x) = max(x, 0)
 \end{equation}
@@ -295,8 +295,8 @@ Because of the above mentioned characteristics of the different driver styles, i
 \section{Experiments and evaluation}
 \label{sc:evaluation}
 
-\subsection{Performance comparison between guessing angles vs. guessing displacement}
-For the final application, the same model is used to guess the car's displacement and its angle. During training, the loss function (MSE) and the metrics (MAE) are continueally evaluating the consolidated training performance. However, to determine the performance of predicting the individual values, two models were trained on each either predicting the angle or predicting the displacement of the car. \autoref{fig:mae-distance-vs-angle} shows the difference between angle and displacement prediction is shown. In training and validation set, the value of the displacement is in the range of -0.9 to 1.1 and the angle is in the range of -0.9 to 1.1. Thus, it can be concluded that the displacement prediction performance especially still needs to be worked on. 
+\subsection{Performance comparison between inferring angles vs. inferring displacement}
+For the final application, the same model is used to infer the car's displacement and its angle. During training, the loss function (MSE) and the metrics (MAE) are continueally evaluating the consolidated training performance. However, to determine the performance of predicting the individual values, two models were trained on each either predicting the angle or predicting the displacement of the car. \autoref{fig:mae-distance-vs-angle} shows the difference between angle and displacement prediction is shown. In training and validation set, the value of the displacement is in the range of -0.9 to 1.1 and the angle is in the range of -0.9 to 1.1. Thus, it can be concluded that the displacement prediction performance especially still needs to be worked on. 
 
 \begin{figure}[ht]
 	\centering
