@@ -5,6 +5,7 @@ import glob
 import json
 import platform
 from random import sample
+import random
 import time
 
 from keras.models import Sequential, load_model
@@ -16,6 +17,13 @@ from keras.callbacks import EarlyStopping, Callback, CSVLogger, History
 
 import numpy as np
 import cv2
+
+import tensorflow as tf
+
+np.random.seed(42)
+os.environ['PYTHONHASHSEED'] = '0'
+random.seed(42)
+tf.set_random_seed(42)
 # import matplotlib.pyplot as plt
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -38,7 +46,12 @@ else:
 class ImgToSensorCNN:
     """Guess distance, angle of a vehicle using deep learning"""
 
-    def __init__(self, model_name="learndrive-model", w=160, h=120, optimiser="adamax", model_architecture="alexnet"):
+    def __init__(self,
+                model_name="learndrive-model",
+                w=80,
+                h=60,
+                optimiser="adamax",
+                model_architecture="alexnet"):
         self.img_width = w
         self.img_height = h
         self.resize_imgs = True
@@ -269,7 +282,7 @@ class ImgToSensorCNN:
         metadata["loss_function"] = self.loss_function
         metadata["metrics"] = self.metrics
         metadata["loss_hist"] = self.loss_hist.loss
-        #metadata["metrics_hist"] = self.loss_hist.metric
+        # metadata["metrics_hist"] = self.loss_hist.metric
         metadata["data_name"] = DATA_NAME
         metadata["test_data_name"] = TEST_DATA_NAME
         metadata["time_hist"] = self.time_hist.times
@@ -359,12 +372,14 @@ class ImgToSensorCNN:
 
         # other good optimiser: adam, rmsprop
         self.model.compile(
-            loss=self.loss_function, optimizer=self.optimiser, metrics=[self.metrics])
+            loss=self.loss_function,
+            optimizer=self.optimiser,
+            metrics=[self.metrics])
         self.model.fit(
             x=train_data, y=train_target_vals, batch_size=self.batch_size,
             validation_data=(val_data, val_target_vals),
-            #x=train_data, y=self.train_angle_array, batch_size=self.batch_size,
-            #validation_data=(val_data, self.val_angle_array),
+            # x=train_data, y=self.train_angle_array, batch_size=self.batch_size,
+            # validation_data=(val_data, self.val_angle_array),
             epochs=self.num_epochs, callbacks=cbs)
 
     def cnn_alexnet(self):
@@ -397,7 +412,7 @@ class ImgToSensorCNN:
         self.model.add(Dense(4096))
         self.model.add(Activation("relu"))
         self.model.add(Dropout(0.5))
-        #self.model.add(Dense(1))
+        # self.model.add(Dense(1))
         self.model.add(Dense(2))
 
     def cnn_alexnet_no_dropout(self):
@@ -428,17 +443,28 @@ class ImgToSensorCNN:
         self.model.add(Activation("relu"))
         self.model.add(Dense(4096))
         self.model.add(Activation("relu"))
-        #self.model.add(Dense(1))
+        # self.model.add(Dense(1))
         self.model.add(Dense(2))
 
     def cnn_tensorkart(self):
         """Uses NeuralKart/TensorKart model architecture"""
-        #self.model.add(BatchNormalization(input_shape=(self.img_height, self.img_width, 3)))
-        self.model.add(Conv2D(24, input_shape=(self.img_height, self.img_width, 3), kernel_size=(5, 5), strides=(2, 2), activation='relu'))
+        # self.model.add(BatchNormalization(input_shape=(self.img_height, self.img_width, 3)))
+        self.model.add(Conv2D(24,
+                                input_shape=(
+                                    self.img_height, self.img_width, 3),
+                                kernel_size=(5, 5),
+                                strides=(2, 2),
+                                activation='relu'))
         self.model.add(BatchNormalization())
-        self.model.add(Conv2D(36, kernel_size=(5, 5), strides=(2, 2), activation='relu'))
+        self.model.add(Conv2D(36,
+                                kernel_size=(5, 5),
+                                strides=(2, 2),
+                                activation='relu'))
         self.model.add(BatchNormalization())
-        self.model.add(Conv2D(48, kernel_size=(5, 5), strides=(2, 2), activation='relu'))
+        self.model.add(Conv2D(48,
+                                kernel_size=(5, 5),
+                                strides=(2, 2),
+                                activation='relu'))
         self.model.add(BatchNormalization())
         self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
         self.model.add(BatchNormalization())
@@ -454,7 +480,7 @@ class ImgToSensorCNN:
         self.model.add(Dense(10, activation='relu'))
         self.model.add(Dropout(drop_out))
         self.model.add(Dense(2))
-        #self.model.add(Dense(1))
+        # self.model.add(Dense(1))
 
     def cnn_simple(self):
         """Uses own simple model as cnn topology"""
@@ -464,9 +490,15 @@ class ImgToSensorCNN:
             padding='same',
             activation='relu'))
         self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(256, kernel_size=(5, 5), activation='relu', padding='same'))
+        self.model.add(Conv2D(256,
+                                kernel_size=(5, 5),
+                                activation='relu',
+                                padding='same'))
         self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same'))
+        self.model.add(Conv2D(128,
+                                kernel_size=(3, 3),
+                                activation='relu',
+                                padding='same'))
         self.model.add(MaxPooling2D(pool_size=(2, 2)))
         self.model.add(Flatten())
         self.model.add(Dense(2048, activation='relu'))
@@ -475,14 +507,14 @@ class ImgToSensorCNN:
         self.model.add(Dense(256, activation='relu'))
         self.model.add(Dense(128, activation='relu'))
         self.model.add(Dense(1))
-        #self.model.add(Dense(2))
+        # self.model.add(Dense(2))
 
     def test_model(self):
         """Evaluate the loaded / trained model"""
         self.load_test_set()
         self.score = self.model.evaluate(
                                     x=self.test_imgs,
-                                    #y=self.test_vals[:, 0],
+                                    # y=self.test_vals[:, 0],
                                     y=self.test_vals,
                                     batch_size=self.batch_size)
         print(self.score)
@@ -559,7 +591,7 @@ if __name__ == "__main__":
     if train:
         cnn.cnn_model()
         cnn.test_model()
-        #cnn.preditct_test_pics()
+        # cnn.preditct_test_pics()
         cnn.save()
     else:
         cnn.load_model()
