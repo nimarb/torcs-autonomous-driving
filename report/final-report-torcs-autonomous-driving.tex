@@ -114,8 +114,8 @@ in The Open Racing Car Simulator (TORCS)}
 % write a short abstract to introduce the reader to your work
 \begin{abstract}
 	To implement an autonomous driver in The Open Racing Car Simulator (TORCS)
-	based on a deep neural network (DNN) and spiking neural network (SNN) multiple
-	sensor cues are used. Specifically, the DNN predicts the current car displacement
+	we use a combination of a deep neural network (DNN) and a spiking neural network (SNN) based on multiple
+	sensor cues. Specifically, the DNN predicts the current car displacement
 	and angle to the road centre from a driver's view image. Based on the two values
 	a SNN generates driving commands for the car. Subsequently, the car is put onto a 
 	new track and the driving performance is evaluated.\
@@ -294,8 +294,15 @@ This work focuses on a mixture between hard coded functionality and offline lear
 To evaluate the controller's performance, we used the following two metrics: Firstly, we investigate if the controller is able to finish one lap in a reasonable time and how fast he is compared to the default driver. Secondly, we judge the overall robustness of the controller. For this we observed the actual controller during driving and evaluated how stable he drives, e.g. how close he actually drives to the edge of the street. 
 
 \subsection{Nengo controller design}
-In the default driver's source code, the different driving modules are based on different sensory inputs. The steering module is a function based on the car speed $v_x$, the lateral displacement $d_{lat}$ and the rotation angle $/alpha$. Both, the acceleration and the braking module are based on three range sensor signals $-5$, $0$ and $5$ degrees as well as $v_x$. We chose to implement the gear changing as a hard coded solution without any learning involved, since it is a simple if else condition. It is further possible to neglect the clutching module, because it did not show to make any difference for driver performance even though it is implemented in the default driver. \\
-TODO how are ensambles connected? Picture with DNN
+In the default driver's source code, the driving modules are based on different sensory inputs. The steering module is a function based on the car speed $v_x$, the lateral displacement $d_{lat}$ and the rotation angle $/alpha$. Both, the acceleration and the braking module are based on three range sensor signals $-5$, $0$ and $5$ degrees as well as $v_x$. We chose to implement the gear changing as a hard coded solution without any learning involved, since it is a simple if-else condition. It is further possible to neglect the clutching module, because it did not show to make any difference for driver performance even though it is implemented in the default driver. The final model architecture can be seen in \autoref{fig:nengo_architecture}\\
+TODO: neuron type
+\begin{figure}[ht]
+	\centering
+	%\input{attachments/alexnet-val_mae-img_size_compare-09042-12547-22111.pgf}
+	\includegraphics[width=\columnwidth]{attachments/nengo_architecture.png}
+	\caption{Nengo architecture with different modules. The input network contains an input node that has subscribed to the ROS topics and contains the CNN for inference of rotation angle and lateral displacement. The steer, accelerate and brake module contain one ensemble each. The output network contains an output node that publishes to the ROS topics. The gear module is not shown here.}
+	\label{fig:nengo_architecture}
+\end{figure}
 
 
 
@@ -329,7 +336,7 @@ As the final neuron sizes for the different modules we chose $2,000$ neurons for
 			wheel 2 & 4:21:45 & 4:26:80 \\
 			\hline
 		\end{tabular}
-		\caption{\label{tab:controller_laptime}This table compares the lap times of controller and default driver on the generalization task.}
+		\caption{\label{tab:controller_laptime}This table compares the lap times of the controller and the default driver on the generalization task.}
 	\end{center}
 \end{table}
 
