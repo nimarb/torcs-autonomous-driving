@@ -28,19 +28,64 @@ tf.set_random_seed(42)
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 DATA_NAME = "data-olethros_road_1-2laps-640x480"
-TEST_DATA_NAME = "data-cg_track_3-2laps-640x480"
+TEST_DATA_NAME = "data-cg_track_2-2laps-640x480"
+
+DATA_NAMES = [
+    "data-olethros_road_1-2laps-640x480",
+    "data-aalborg-2laps-640x480",
+    "data-alpine_1-2laps-640x480",
+    "data-alpine_2-2laps-640x480",
+    "data-brondehach-2laps-640x480",
+    "data-cg_speedway_1-2laps-640x480",
+    "data-cg_track_3-2laps-640x480",
+    "data-corkscrew-2laps-640x480",
+    "data-e_road-2laps-640x480",
+    "data-etrack_1-2laps-640x480",
+    "data-etrack_2-2laps-640x480",
+    "data-etrack_3-2laps-640x480",
+    "data-etrack_4-2laps-640x480",
+    "data-etrack_6-2laps-640x480",
+    "data-forza-2laps-640x480",
+    "data-ruudskogen-2laps-640x480",
+    #"data-spring-2laps-640x480",
+    "data-street_1-2laps-640x480",
+    "data-wheel_1-2laps-640x480"]
+TEST_DATA_NAMES = [
+    "data-cg_track_2-2laps-640x480",
+    "data-wheel_2-2laps-640x480"]
 
 if "DigitsBoxBMW2" == platform.node():
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
     DATA_DIR = os.path.join(
         "/", "raid", "student_data", "PP_TORCS_LearnDrive1", DATA_NAME)
     TEST_DATA_DIR = os.path.join(
         "/", "raid", "student_data", "PP_TORCS_LearnDrive1", TEST_DATA_NAME)
-else: 
+    DATA_DIRS = []
+    for track in DATA_NAMES:
+        DATA_DIRS.append(
+            os.path.join(
+                "/", "raid", "student_data", "PP_TORCS_LearnDrive1", track))
+    TEST_DATA_DIRS = []
+    for track in TEST_DATA_NAMES:
+        TEST_DATA_DIRS.append(
+            os.path.join(
+                "/", "raid", "student_data", "PP_TORCS_LearnDrive1", track))
+else:
     DATA_DIR = os.path.join(
         CURRENT_DIR, "..", "collect_img_sensor_data", DATA_NAME)
     TEST_DATA_DIR = os.path.join(
         CURRENT_DIR, "..", "collect_img_sensor_data", TEST_DATA_NAME)
+    DATA_DIRS = []
+    for track in DATA_NAMES:
+        DATA_DIRS.append(
+            os.path.join(
+                CURRENT_DIR, "..", "collect_img_sensor_data", track))
+    TEST_DATA_DIRS = []
+    for track in TEST_DATA_NAMES:
+        TEST_DATA_DIRS.append(
+            os.path.join(
+                CURRENT_DIR, "..", "collect_img_sensor_data", track))
 
 
 class ImgToSensorCNN:
@@ -55,14 +100,18 @@ class ImgToSensorCNN:
         self.img_width = w
         self.img_height = h
         self.resize_imgs = True
-        self.num_train_set = 5400
-        self.num_val_set = 100
-        self.num_test_set = 200
+        self.num_train_set = 1
+        self.num_val_set = 1
+        self.num_test_set = 20
         self.img_data_type = ".jpg"
+        self.distance_array = np.empty(0)
+        self.angle_array = np.empty(0)
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
         self.val_imgs = np.empty(self.num_val_set, dtype=object)
-        self.imgs = np.empty(
-            self.num_train_set + self.num_val_set, dtype=object)
+        #self.imgs = np.empty(
+        #    self.num_train_set + self.num_val_set, dtype=object)
+        self.imgs = np.empty(0, dtype=object)
+        self.img_list = []
         self.model = object
         self.batch_size = 32
         self.num_epochs = 100
@@ -71,34 +120,54 @@ class ImgToSensorCNN:
         self.model_name = model_name
         self.optimiser = optimiser
         self.model_architecture = model_architecture
+        self.img_iter = 0
 
     def set_val_set_in_percent(self, val_percent):
         """Set the training/validation data size in percent of available img files
         
         Arguments
             val_percent: Integer, validation data size in percent of total data"""
-        img_dir = os.path.join(DATA_DIR, "images")
-        num_img = len([f for f in os.listdir(img_dir) if f.endswith(self.img_data_type) and os.path.isfile(os.path.join(img_dir, f))])
+        num_img = 0
+        for track_dir in DATA_DIRS:
+            img_dir = os.path.join(track_dir, "images")
+            num_img += len([f for f in os.listdir(img_dir) if f.endswith(self.img_data_type) and os.path.isfile(os.path.join(img_dir, f))])
+        #img_dir = os.path.join(DATA_DIR, "images")
+        #num_img = len([f for f in os.listdir(img_dir) if f.endswith(self.img_data_type) and os.path.isfile(os.path.join(img_dir, f))])
         self.num_val_set = round(num_img * (val_percent * 0.01))
         self.num_train_set = num_img - self.num_val_set
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
         self.val_imgs = np.empty(self.num_val_set, dtype=object)
-        self.imgs = np.empty(
-            self.num_train_set + self.num_val_set, dtype=object)
+        #self.imgs = np.empty(
+        #    self.num_train_set + self.num_val_set, dtype=object)
 
     def load_data(self):
         """Load img & sensor data and split into train/val/test set"""
-        self.load_imgs(self.imgs, DATA_DIR)
-        self.load_labels()
+        print("Loading " + str(self.num_val_set + self.num_train_set) + " imgs")
+        for track_dir in DATA_DIRS:
+            self.load_imgs(self.img_list, track_dir)
+            self.load_labels(track_dir)
+            print("img_list contains: " + str(len(self.img_list)) + " items")
+            print("labels contain: " + str(self.distance_array.size) + " items")
+        print("All imgs loaded into img_list")
+        #self.imgs = np.asarray(self.img_list, dtype=object)
+        self.imgs = np.empty(len(self.img_list), dtype=object)
+        for i in range(0, len(self.img_list)-1):
+            self.imgs[i] = self.img_list[i]
+        self.img_list = None
+        print("All imgs loaded into np array")
+        print("self.imgs np array contains: " + str(self.imgs.size) + " items")
+        print("Labels contain: " + str(self.distance_array.size) + " items")
+        #self.load_imgs(self.imgs, DATA_DIR)
+        #self.load_labels()
         self.split_into_train_val_set()
 
-    def load_imgs(self, img_array, data_dir):
-        """Load all images into array, sorted by file name (pad with zeros!)
+    def load_imgs(self, img_list, data_dir):
+        """Load all images into list, sorted by file name (pad with zeros!)
         
         Arguments:
-            img_array: 
+            img_list: 
             data_dir: """
-        img_iter = 0
+        #img_iter = 0
         img_name_filter = glob.glob(
                             data_dir + "/images/*" + self.img_data_type)
         for filename in sorted(img_name_filter):
@@ -108,19 +177,20 @@ class ImgToSensorCNN:
                 if h != self.img_height and w != self.img_width:
                     factor = self.img_width / w
                     img = cv2.resize(img, None, fx=factor, fy=factor)
-                    if 0 == img_iter:
-                        print(
-                            "Resizing imgs; src width="
-                            + str(w) + "; dest w=" + str(w*factor))
-                        print("Factor = " + str(factor))
-            if img_iter < img_array.size:
-                img_array[img_iter] = img
-            else:
-                np.append(img_array, img)
-                if img_iter == img_array.size:
-                    print("load_imgs: now appending imgs to array, slow af")
-            img_iter += 1
-        print("All imgs loaded into np array")
+                    #if 0 == self.img_iter:
+                    #    print(
+                    #        "Resizing imgs; src width="
+                    #        + str(w) + "; dest w=" + str(w*factor))
+                    #    print("Factor = " + str(factor))
+            #if self.img_iter < img_list.size:
+            #    img_list[self.img_iter] = img
+            #else:
+            #    np.append(img_list, img)
+            #    if self.img_iter == img_list.size:
+            #        print("load_imgs: now appending imgs to array, slow af")
+            #self.img_iter += 1
+            img_list.append(img)
+        print("All imgs of " + data_dir + " loaded into img_list")
 
     def load_imgs_with_rnd_split(self):
         """Load all imgs into array and randomly split into train/val
@@ -148,18 +218,23 @@ class ImgToSensorCNN:
                 img_iter += 1
         print("All imgs randomly loaded into np array")
 
-    def load_labels(self):
+    def load_labels(self, data_dir):
         """Load recorded sensor data into numpy arrays"""
-        self.distance_array = np.load(DATA_DIR + "/sensor/distance.npy")
-        self.angle_array = np.load(DATA_DIR + "/sensor/angle.npy")
-        print("Loaded label arrays into np array")
+        _distance_array = np.load(data_dir + "/sensor/distance.npy")
+        _angle_array = np.load(data_dir + "/sensor/angle.npy")
+        self.distance_array = np.append(self.distance_array, _distance_array)
+        self.angle_array = np.append(self.angle_array, _angle_array)
+        print("Loaded label arrays of " + data_dir + " into np array")
 
     def load_test_set(self):
         """Load test set from a different track"""
-        _imgs = np.empty(self.num_test_set, dtype=object)
-        self.load_imgs(_imgs, TEST_DATA_DIR)
+        #_imgs = np.empty(self.num_test_set, dtype=object)
+        _imgs_raw = []
+        self.load_imgs(_imgs_raw, TEST_DATA_DIR)
+        print("img_list contains: " + str(len(_imgs_raw)) + " items")
         _distance_array = np.load(TEST_DATA_DIR + "/sensor/distance.npy")
         _angle_array = np.load(TEST_DATA_DIR + "/sensor/angle.npy")
+        _imgs = np.array(_imgs_raw)
         # Test data is from a different track but always a rnd subset
         self.shuffle_three_arrays_in_unison(
             _imgs, _angle_array, _distance_array)
@@ -323,7 +398,7 @@ class ImgToSensorCNN:
             model: keras.model, filename"""
         if name:
             self.model_name = name
-        self.model = load_model(self.model_name + ".hd5")
+        self.model = load_model("../models/" + self.model_name + ".hd5")
         print("Loaded model")
 
     def cnn_model(self):
@@ -506,8 +581,8 @@ class ImgToSensorCNN:
         self.model.add(Dense(512, activation='relu'))
         self.model.add(Dense(256, activation='relu'))
         self.model.add(Dense(128, activation='relu'))
-        self.model.add(Dense(1))
-        # self.model.add(Dense(2))
+        #self.model.add(Dense(1))
+        self.model.add(Dense(2))
 
     def test_model(self):
         """Evaluate the loaded / trained model"""
@@ -522,12 +597,19 @@ class ImgToSensorCNN:
     def preditct_test_pics(self):
         """Use model to predict values for image data from the test set"""
         data = np.empty(
-                (self.num_test_set, self.img_height, self.img_width, 3),
+                (1, self.img_height, self.img_width, 3),
+                #(self.num_test_set, self.img_height, self.img_width, 3),
                 dtype=object)
-        for i in range(self.num_test_set):
+        #for i in range(self.num_test_set):
+        for i in range(1):
             data[i, :, :, :] = self.test_imgs[i]
+        #i = 0
+        #data[i, :, :, :] = self.test_imgs[i]
 
+        t1 = time.time()
         prediction = self.model.predict(x=data)
+        dt = time.time() - t1
+        print ("TIME TO PROP: " + str(dt))
         i = 0
 
         for val in prediction:
@@ -586,14 +668,14 @@ if __name__ == "__main__":
             w=int(sys.argv[2]), h=int(sys.argv[3]), model_architecture=sys.argv[4])
 
     cnn.set_val_set_in_percent(10)
-    cnn.load_data()
-    cnn.shuffle_data_arrays()
     if train:
+        cnn.load_data()
+        cnn.shuffle_data_arrays()
         cnn.cnn_model()
         cnn.test_model()
         # cnn.preditct_test_pics()
         cnn.save()
     else:
-        cnn.load_model()
+        cnn.load_model("learndrive-model-89752")
         cnn.test_model()
         cnn.preditct_test_pics()
