@@ -32,11 +32,14 @@ for track in DATA_NAMES:
         os.path.join(
             CURRENT_DIR, "..", "collect_img_sensor_data", track))
 
+total_num_img = 0
+
 for cur_dir in DATA_DIRS:
     angle = np.load(os.path.join(cur_dir, "sensor", "angle.npy"))
     distance = np.load(os.path.join(cur_dir, "sensor", "distance.npy"))
     img_dir = os.path.join(cur_dir, "images")
     num_img = len([f for f in os.listdir(img_dir) if f.endswith(".jpg") and os.path.isfile(os.path.join(img_dir, f))])
+    total_num_img += num_img
 
     print("Track: " + cur_dir)
     print("Angle size: " + str(angle.size))
@@ -45,3 +48,5 @@ for cur_dir in DATA_DIRS:
 
     if angle.size != num_img:
         print("ERROR CHECK PLEASE")
+
+print("Total img count: " + str(total_num_img))
