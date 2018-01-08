@@ -63,12 +63,12 @@ class TORCSInputNode(nengo.Node):
         self.img = data
 
     def tick(self, t):
-        self.time_delay()
-        # self.calc_avg_execution_time()
-
         _data = list(self.data)
+        # self.time_delay(0.009)
+        # self.calc_avg_execution_time()
         if self.DNN is not None:
             _data[0], _data[1] = self.DNN.propagate(self.img)
+        _data[2:] = self.data[2:]
         return _data
 
     def time_delay(self, delay_s=0):
@@ -77,8 +77,10 @@ class TORCSInputNode(nengo.Node):
         else:
             time.sleep(delay_s)
 
-    def calc_avg_execution_time(self, num_avg=5000):
-        if self.counter > 100 and self.counter < num_avg:
+    def calc_avg_execution_time(self, num_avg=10000):
+        if self.counter == 5000:
+            print('start counting execution time')
+        if self.counter > 5000 and self.counter < num_avg:
             t = time.time()
             self.time_list.append(t - self.time)
             self.time = t
