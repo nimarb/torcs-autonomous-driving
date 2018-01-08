@@ -5,13 +5,13 @@ from torcs_ros_network import TORCSInputNode, TORCSOutputNode
 
 rospy.init_node('nengo_controller')
 
-n_neurons = 500
+n_neurons = 600
 
 model = nengo.Network()
 with model:
 
     with nengo.Network():
-        input_node = TORCSInputNode('TORCS_input', dnn=True)
+        input_node = TORCSInputNode('TORCS_input', dnn=False)
         # input_ensemble = nengo.Ensemble(n_neurons=5000, dimensions=22)
         # angle, displ, speed
         input_steer_ensemble = nengo.Ensemble(n_neurons=4*n_neurons, dimensions=3)
@@ -40,5 +40,5 @@ with model:
 
 if __name__ == "__main__":
     print('done')
-    sim = nengo.Simulator(model, progress_bar=True)
+    sim = nengo.Simulator(model, progress_bar=False)
     sim.run(600)

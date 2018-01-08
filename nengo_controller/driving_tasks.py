@@ -2,7 +2,7 @@ import nengo
 import numpy as np
 from data_transformer import get_inputs, get_outputs
 
-n_neurons = 600
+n_neurons = 750
 
 class Steer(nengo.Network):
     def __init__(self, name, input_ensemble, output_node, mode='default'):
@@ -46,7 +46,7 @@ class Brake(nengo.Network):
         super(Brake, self).__init__(label=name)
 
         with self:
-            brake_ensemble = nengo.Ensemble(n_neurons=8*n_neurons, dimensions=1)
+            brake_ensemble = nengo.Ensemble(n_neurons=6*n_neurons, dimensions=1)
 
         nengo.Connection(brake_ensemble, output_node[1])
 

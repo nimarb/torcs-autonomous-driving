@@ -1,5 +1,6 @@
 import nengo
 import math
+import time
 from torcs_msgs.msg import TORCSSensors, TORCSCtrl
 from geometry_msgs.msg import TwistStamped
 from sensor_msgs.msg import LaserScan, Image
@@ -29,6 +30,13 @@ class TORCSInputNode(nengo.Node):
 
         super(TORCSInputNode, self).__init__(label=name, output=self.tick,
                                              size_in=0, size_out=dimensions)
+
+        # variables for execution time calculation
+        self.time = time.time()
+        self.time_list = []
+        self.counter = 0
+        self._print = True
+
         if not dnn:
             self.DNN = None
         else:
@@ -55,9 +63,32 @@ class TORCSInputNode(nengo.Node):
         self.img = data
 
     def tick(self, t):
+        self.time_delay()
+        # self.calc_avg_execution_time()
+
+        _data = list(self.data)
         if self.DNN is not None:
-            self.data[0], self.data[1] = self.DNN.propagate(self.img)
-        return self.data
+            _data[0], _data[1] = self.DNN.propagate(self.img)
+        return _data
+
+    def time_delay(self, delay_s=0):
+        if delay_s == 0:
+            return
+        else:
+            time.sleep(delay_s)
+
+    def calc_avg_execution_time(self, num_avg=5000):
+        if self.counter > 100 and self.counter < num_avg:
+            t = time.time()
+            self.time_list.append(t - self.time)
+            self.time = t
+        elif self.counter > num_avg:
+            if self._print:
+                self.avg = sum(self.time_list) / float(len(self.time_list))
+                print(self.avg)
+                self._print = False
+        self.counter += 1
+        self.time = time.time()
 
 
 class TORCSOutputNode(nengo.Node):
