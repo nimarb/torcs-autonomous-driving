@@ -56,7 +56,7 @@ class training_data_collector(object):
         """Initialise all ROS related variables and get the parametres"""
         self._data_collection_size_param = "~num_data_to_collect"
         self.data_collection_size = rospy.get_param(
-                                    self._data_collection_size_param, 2800)
+                                    self._data_collection_size_param, 1000)
         rospy.init_node("TrainingDataCollector", anonymous=True)
         rospy.on_shutdown(self.shutdown)
         self.bridge = CvBridge()
