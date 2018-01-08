@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 from keras.models import load_model
 from cv_bridge import CvBridge
+import time
 #from sensor_msgs.msg import Image
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -39,7 +40,10 @@ class DNN:
                 dtype=object)
         data[0, :, :, :] = cvimg
 
+        t1 = time.time()
         prediction = self._model.predict(x=data, batch_size=1)
+        dt = time.time() - t1
+        print("TIME TO PROP: " + str(dt))
 
         angle = prediction[0]
         displacement = prediction[1]
