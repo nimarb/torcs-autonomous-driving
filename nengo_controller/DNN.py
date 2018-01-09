@@ -12,7 +12,7 @@ MODEL_DIR = os.path.join("..", "src", "models")
 
 
 class DNN:
-    def __init__(self, img_w=80, img_h=60, model_name="learndrive-model-89752"):
+    def __init__(self, img_w=80, img_h=60, model_name="learndrive-model-89752.hd5"):
         """
 
         """
