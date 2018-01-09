@@ -276,8 +276,9 @@ The first and easiest to acquire is the default TORCS-ROS driver \cite{mirus_tor
 Furthermore, there are several drivers that are implemented in TORCS. Those drivers have no speed limit and their driving style approximates that of a real race. The cars drive very close to the edge of the road and drive very fast through turns. We think that this is a hard to learn and error-prone driving style, because small errors lead to disastrous effects.
 \paragraph{driving manually}
 Finally, there is the option to drive manually. As it turns out this is really difficult with a keyboard. Because fractions of seconds on the left and right arrows lead to very strong steering behavior and almost every time lead to a full turn-around or a far deviation of the track. This leads to a manual driving style that comes close to the default driver: very slow through turns and sticking close to the road center. However, because it is possible to drive as fast as one wants and in general one achieves a smoother driving of the car, we achieve a faster time than the default driver. \\
+
 \begin{table}[ht]
-	\begin{center}
+	\centering
 		\begin{tabular}{ |c|c|c| } 
 			\hline
 			TORCS-ROS default & 85s \\
@@ -286,9 +287,8 @@ Finally, there is the option to drive manually. As it turns out this is really d
 			\hline
 		\end{tabular}
 		\caption{\label{tab:torcs_laptime}This table compares the lap times of different driver types.}
-	\end{center}
 \end{table}
-Because of the above mentioned characteristics of the different driver styles, it does make sense to first learn the TORCS-ROS default driver, because he seems to be the most robust one and data generation is simple.
+Because of the above mentioned characteristics of the different driver styles, it we decided to first learn the TORCS-ROS default driver, because it seems to be the most robust one and data generation is simple.
 
 \section{Experiments and evaluation}
 \label{sc:evaluation}
@@ -331,21 +331,21 @@ During the testphase we observed a large variance in the data. Even when we ran 
 % 1,400 / 1,600 / 1,600 - 2:07:45 | 0.8 ms - bad performance
 As already mentioned it is important to keep the control frequency high. This is necessary because with increasing model capacity, the calculation time of the controller becomes too large which lead to an instable controller. Low frequencies lead to the controller signals being already outdatet when they arrive at the car and therefore controlling becomes instable. This is especially important on computers with older hardware, which, even with native operating systems, have problems to simulate TORCS, ROS and Nengo at the same time. We observed that for average controller iteration times larger than 12 ms the controller already becomes instable. One forward propagation of the Nengo controller without a DNN takes approximately between 1.5 and 3 ms. This requires the DNN to have a maximum forward propagation of 9 ms. \\
 Another influence on controller perfomance is the way we acquire the signal. The forward propagation of the DNN in the input node (see \autoref{fig:nengo_architecture}) leads to a delay until the calculated signal enters the SNN. As stated above, only the steering module is based on the DNN signals. In order to gain the best controller performance, we updated the range finder signals and the speed signals asynchronously. So even when the DNN was calculating the angle and displacement values, the Nengo input node still recieved updates from the ROS topics. Then, after the DNN had calculated the signals, we fed the now outdated angle and displacement values together with the most recent speed and range finder signals into the SNN. \\
-As the final neuron sizes for the different modules we chose $2,000$ neurons encoding each input signal. The driving modules consist of $2,400$ neurons each. With smaller model capacities we obtained a less stable driver, while a larger model capacity did not show any improvements. \autoref{tab:controller_laptime} shows the results of the controller without the DNN, with and without 9 ms artificial interruption with asynchronous signal updates based on ground truth data input signals.
+As the final neuron sizes for the different modules we chose $2,000$ neurons encoding each input signal. The driving modules consist of $2,400$ neurons each. With smaller model capacities we obtained a less stable driver, while a larger model capacity did not show any improvements. \autoref{tab:controller_laptime} shows the results of the controller without the DNN, with and without 9 ms artificial interruption with asynchronous signal updates based on ground truth data input signals. \\
 \begin{table}[ht]
 	\begin{center}
 		\begin{tabular}{ |c|c|c|c| } 
 			\hline
 			track &  default driver & no interruption & interruption \\
 			\hline
-			cg track 2  & 1:58:15 & 1:59:76 & 2:03:84  \\
+			cg track 2  & 1:58:15 & 2:00:76 & 2:03:84  \\
 			wheel 2 & 4:21:45 & 4:26:80 & 4:46:51 \\
 			\hline
 		\end{tabular}
 		\caption{\label{tab:controller_laptime}This table compares the lap times of the controller with and without 9 ms artificial interruption against the default driver on the generalization task with ground truth data as input signals.}
 	\end{center}
 \end{table}
-To elaborate the effects of noisy data input, we modified the input data with an additional gaussian noise with mean 0 and a standard deviation of 30\% of the signal value. We tested the model without an artificial interrupt and achieved a lap time of 2:04:14,
+To elaborate the effects of noisy data input, we modified the input data with an additional gaussian noise with mean 0 and a standard deviation of 30\% of the signal value. We tested the model without an artificial interrupt and achieved a lap time of 2:04:14. With an artificial interrup of 9 ms we achieved a laptime of 2:30:31. Further we observed that due to the noisy data and the artificial delay the car drives in slaloms over the whole track. On the one hand this leads to a lower overall speed and therefore a lower lap time, but on the other hand does the lower speed help the car to drive stable through critical turns without crossing the edge of the street.
 %noisy data:
 % std deviation 0.3 -> 2:04:14
 % std deviation 0.3 & 9ms interrupt -> 2:30:31 -> big slalom makes driver more stable in critical turns because of lower overall velocity
@@ -356,12 +356,13 @@ To elaborate the effects of noisy data input, we modified the input data with an
 
 \section{Conclusion}
 \label{sc:conclusion}
-big factors for controller perfomance: ..
+We identified critical factors for the controller performance and could also provide quantitative guidelines for controller stablity. A very important factor is the propagation time. A overall propagation time of less than 12ms is desirable and puts an upper limit of approximately 9ms on the capacity of the DNN. We further discovered that it is possible to drive the car stable, but slow, with a 9ms propagation delay and 30\% standard deviation around the signal value. This points out a clear focus for the design of the DNN: it is more desirable to have a fast and less accurate DNN than a slow and accurate one. \\
 
 \subsection{Outlook}
 \label{ssc:outlook}
 %Change training data/camera view/angle etc to improve angle prediction performance. \\
-In order to increase the controller performance it is possible to merge the accelerating and braking module into one module, so the controller can either accelerate or brake. Nengo Deep Learning is an interesting approach to see if controller performance could be improved. Further, a quantitative measurement of controller stability could help in finding the optimal controller capacity. The training data can be changed so that the driver is based on more range finder signals in order to steer earlier when approaching a turn. Additionally a lower speed limit seems promising.
+It is possible to further enhance controller performance. The biggest room for improvement is a different default driver. A slow overall speed helps immensiley to drive the car stable through the track. Further, steering, accelerating and breaking also proivde room for improvement. E.g. the driver could use more angles of the range finder sensor to be able to drive faster through turns. Another improvement possibility is to merge the accelerating and braking module into one module, so the controller can only either accelerate or brake. Nengo Deep Learning is an interesting approach to see if controller performance could be improved further. Also a quantitative measurement of controller stability could help in finding the optimal controller capacity. \\
+It further needs to be investigated if it is possible to train a DNN that fulfills the newly found out requirements.
 
 % each report should include all references that you cite in the work. Make sure
 % that you include all references!
