@@ -245,8 +245,7 @@ The controller of the car is designed based on Spiking Neural Networks (SNN) whi
 The controller is divided in several modular parts: acceleration, braking, steering, gear changing and clutching. We choose the modular approach, because it allows to test different modules independently from each other and also mix hard coded solutions with learned ones.
 
 \subsection{Nengo controller design}
-In the default driver's source code, the driving modules are based on different sensory inputs. The steering module is a function based on the car speed $v_x$, the lateral displacement $d_{lat}$ and the rotation angle $/alpha$. Both, the acceleration and the braking module are based on three range sensor signals $-5$, $0$ and $5$ degrees as well as $v_x$. We chose to implement the gear changing as a hard coded solution without any learning involved, since it is a simple if-else condition. It is further possible to neglect the clutching module, because it did not show to make any difference for driver performance even though it is implemented in the default driver. The final model architecture can be seen in \autoref{fig:nengo_architecture}\\
-TODO: neuron type
+In the default driver's source code, the driving modules are based on different sensor inputs. The steering module is a function based on the car speed $v_x$, the lateral displacement $d_{lat}$ and the rotation angle $\alpha$. Both, the acceleration and the braking module are based on three range sensor signals $-5$, $0$ and $5$ degrees as well as $v_x$. We chose to implement the gear changing as a hard coded solution without any learning involved, since it is a simple if-else condition. It is further possible to neglect the clutching module, because it did not show to make any difference for driver performance even though it is implemented in the default driver. The final model architecture can be seen in \autoref{fig:nengo_architecture}.\\
 \begin{figure}[ht]
 	\centering
 	%\input{attachments/alexnet-val_mae-img_size_compare-09042-12547-22111.pgf}
@@ -265,11 +264,10 @@ With Nengo deep learning \cite{nengo_dl}, an extension to implement classic deep
 \paragraph{online learning} iteratively improves the initial neuron configuration in a supervised manner during runtime. However, this requires that for every timestep during runtime a goal value has to be known for Nengo to solve for it. In our problem this is not the case. Therefore online learning is not further considered in this work.
 
 \paragraph{Nengo deep learning} allows to train classical deep learning methods e.g. feedforward neural networks with backpropagation and then implement the learned nets into Nengo. \\
-This work focuses on a mixture between hard coded functionality and offline learning.
-TODO: explain how Nengo learns hard coded functions
+This work focuses on a mixture of hard coded functionality and offline learning.
 
 \subsection{Evaluation metric}
-To evaluate the controller's performance, we used the following two metrics: Firstly, we investigate if the controller is able to finish one lap in a reasonable time and how fast he is compared to the default driver. Secondly, we judge the overall robustness of the controller. For this we observed the actual controller during driving and evaluated how stable he drives, e.g. how close he actually drives to the edge of the street.
+To evaluate the controller's performance, we used the following two metrics: Firstly, we investigate if the controller is able to finish one lap in a reasonable time and how fast he is compared to the default driver. Secondly, we judge the overall robustness of the controller. For this we observe the actual controller during driving and evaluated how stable he drives, e.g. how close he actually drives to the edge of the street.
 
 \subsection{Data Sources}
 \paragraph{TORCS-ROS default driver}
@@ -307,45 +305,47 @@ For the final application, the same model is used to infer the car's displacemen
 \end{figure}
 
 \subsection{Controller performance}
-For finetuning the results we have basically three tuning possibilities: the neuron sizes, the amount of data and the composition of tracks the data was collected from. \\
-We increased the neuron sizes and track data until we hardly discovered any improvements on the generalization task. As tracks for the training set we chose tracks with somewhat different shapes and turns in order to cover a vide variety of situations. \\
-Further it played an important role to keep the forward propagation time of the controller relatively low. This is necessary because when the neuron size becomes too large, the controller signals are too far behind of the car and controlling becomes instable. This is especially important on computer with older hardware. Further we observed that braking needed much more neurons than accelerating and steering to work reliable. We assume the reason for this is that the braking function in the driver is highly non linear and consists also of a ABS implementation. \\
-While testing we observed that even though lower neuron counts perform equally well in lap time, they, however, performe much worse in stability. E.g. a setup with 
-As the final neuron sizes for the different modules we chose $2,000$ neurons for each input signal. The steering and acceleration module consist of $2,400$ neurons and the braking module consists of $4,800$ neurons. The controller performance based on ground truth data is shown in \autoref{tab:controller_laptime}.
-
-50 ms big slalom
-
-1.5 ms between controller call on avg - 2400/3000/3000
-1.6 ms on 2,4 / 3,0 / 4,5
-
-0.8 ms on - 1400/1600/1600
-0.00083
-
-
-
-% 2,400 / 3,000 / 4,500 - 2:02:91 | +
-% 2,400 / 3,000 / 3,000 - 1:59:14
-% 2,000 / 2,400 / 4,800 - 2:01:12 | +
-% 2,000 / 2,400 / 3,600 - 2:00:58 | +
-% 2,000 / 2,400 / 2,400 - 2:04:51 | o
-% 1,400 / 1,600 / 4,800 - xx | -
-% 1,400 / 1,600 / 3,200 - 2:04:99 | o
-% 1,400 / 1,600 / 1,600 - 2:07:45 | -
+Controller performance is influenced by different factors. Data composition, model capacity and forward propagation time are discussed in the following. \\
+%For finetuning the results we have basically three tuning possibilities: the neuron sizes, the amount of data and the composition of tracks the data was collected from. \
+In order to define the best model capacity, it is important to generalize well. The final model should not overfit and neither underfit. Besides the neuron sizes for the different modules and signal encodings, also neuron composition is of interested. It is possible that one module has a much more complex function and therefore needs a higher capacity to learn it's corresponding function. During testing, however, we didn't see different module capacities to have a strong influence on the model. We increased the neuron sizes from a bad performing configuration until we hardly discovered any improvements on the generalization task. We could not reach overfitting with the dataset we used, because our hardware would eventually run out of physical memory.\\
+When we collected track data for training the controller, we chose tracks with somewhat different shapes and turns in order to cover a vide variety of situations. We observed that small training sets would lead to overfitting of the model and for small model capacities to instable performance. Once we had enough data, the track composition did not seem to influence controller performance. \\
+% Further we observed that braking needed much more neurons than accelerating and steering to work reliable. We assume the reason for this is that the braking function in the driver is highly non linear and consists also of a ABS implementation. \\
+% While testing we observed that even though lower neuron counts perform equally well in lap time, they, however, performe much worse in stability. E.g. a setup with  \\
+% The controller performance based on ground truth data is shown in \autoref{tab:controller_laptime}.  \\
+During the testphase we observed a large variance in the data. Even when we ran tracks twice with the same configurations we obtained different track times with up to 2s difference. Further the same models showed different behaviour in critical turns. We have not yet found out the reason for this, but we suppose it has something to do with the controller frequency, which is influenced by the kernel management and other processes running on the system. Because our setup was Ubuntu 16.04 on a virtual machine, it could be possible that a native host and therefore a more powerful system would show less variance. \\
+% We could not test larger models, because our system ran out of physical memory in the building process (7,2 GB RAM).
+% 2,800 / 3,400 - XX - xx ms -> instable, bigger laptime -> overfitting! However our model ran out of physical memory by increasing the data
+% 2,400 / 3,000 / 4,500 - 2:02:91 - 1.6 ms
+% 2,400 / 3,000 / 3,000 - 1:59:14 - 1.5 ms
+% 2,400 / 3,000 / 3,000 - 1:59:90 - 2.6ms -> rausgehauen bei kurve
+% 2:00:67 - 1.67 ms -> nicht rausgehauen
+% 2:03:41 - 1.9ms
+% mit 10ms signal delay 2:16:x-> 4ms prop time
+% mit 10ms interrupt 2:01:59 -> 3,6 ms prop time
+% mit 10ms lenkung interrupt 2:06:04 -> 3,6 ms prop time
+%
+% 2,000 / 2,400 / 2,400 - 2:00:41 | 0 - 1.5ms
+% 2,000 / 2,400 / 2,400 - 2:01:59 | 0 - 1.47 ms
+% mit 10 ms lenkung intterupt 2:04:33 -> 2,6 ms prop time
+%
+% 1,400 / 1,600 / 1,600 - 2:07:45 | 0.8 ms - bad performance
+As already mentioned it is important to keep the control frequency high. This is necessary because with increasing model capacity, the calculation time of the controller becomes too large which lead to an instable controller. Low frequencies lead to the controller signals being already outdatet when they arrive at the car and therefore controlling becomes instable. This is especially important on computers with older hardware, which, even with native operating systems, have problems to simulate TORCS, ROS and Nengo at the same time. We observed that for average controller iteration times larger than 12 ms the controller already becomes instable. One forward propagation of the Nengo controller without a DNN takes approximately between 1.5 and 3 ms. This requires the DNN to have a maximum forward propagation of 9 ms. \\
+Another influence on controller perfomance is the way we acquire the signal. The forward propagation of the DNN in the input node (see \autoref{fig:nengo_architecture}) leads to a delay until the calculated signal enters the SNN. As stated above, only the steering module is based on the DNN signals. In order to gain the best controller performance, we updated the range finder signals and the speed signals asynchronously. So even when the DNN was calculating the angle and displacement values, the Nengo input node still recieved updates from the ROS topics. Then, after the DNN had calculated the signals, we fed the now outdated angle and displacement values together with the most recent speed and range finder signals into the SNN. \\
+As the final neuron sizes for the different modules we chose $2,000$ neurons encoding each input signal. The driving modules consist of $2,400$ neurons each. With smaller model capacities we obtained a less stable driver, while a larger model capacity did not show any improvements. \autoref{tab:controller_laptime} shows the results of the controller without the DNN, with and without 9 ms artificial interruption with asynchronous signal updates based on ground truth data input signals.
 
 \begin{table}[ht]
 	\begin{center}
-		\begin{tabular}{ |c|c|c| } 
+		\begin{tabular}{ |c|c|c|c| } 
 			\hline
-			track &  default driver & Nengo controller\\
+			track &  default driver & no interruption & interruption \\
 			\hline
-			cg track 2  & 1:58:15 & 1:59:76  \\
-			wheel 2 & 4:21:45 & 4:26:80 \\
+			cg track 2  & 1:58:15 & 1:59:76 & 2:05:84  \\
+			wheel 2 & 4:21:45 & 4:26:80 & 4:46:51 \\
 			\hline
 		\end{tabular}
-		\caption{\label{tab:controller_laptime}This table compares the lap times of the controller and the default driver on the generalization task.}
+		\caption{\label{tab:controller_laptime}This table compares the lap times of the controller with and without 9 ms artificial interruption against the default driver on the generalization task with ground truth data as input signals.}
 	\end{center}
 \end{table}
-
 
 \subsection{Controller and DNN}
 
@@ -357,9 +357,7 @@ As the final neuron sizes for the different modules we chose $2,000$ neurons for
 \subsection{Outlook}
 \label{ssc:outlook}
 %Change training data/camera view/angle etc to improve angle prediction performance. \\
-The network architecture can perhaps still be significantly improved upon, especially with an architecture specifically designed for regression tasks. 
-The controller needs to be improved further and looked at more closely. Finally, the DNN and the controller will be connected in order to work together.
-
+In order to increase the controller performance it is possible to merge the accelerating and braking module into one module, so the controller can either accelerate or brake. Nengo Deep Learning is an interesting approach to see if controller performance could be improved. Further, a quantitative measurement of controller stability could help in finding the optimal controller capacity. The training data can be changed so that the driver is based on more range finder signals in order to steer earlier when approaching a turn. Additionally a lower speed limit seems promising.
 
 % each report should include all references that you cite in the work. Make sure
 % that you include all references!
