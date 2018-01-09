@@ -21,7 +21,7 @@ class DNN:
         self._model = load_model(os.path.join(MODEL_DIR, self._model_name))
         self._img_width = img_w
         self._img_height = img_h
-        self._img_resize_factor = self._img_width / 640
+        self._img_resize_factor = self._img_width / 640.
 
     def propagate(self, img):
         """
