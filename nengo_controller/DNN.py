@@ -12,13 +12,14 @@ MODEL_DIR = os.path.join("..", "src", "models")
 
 
 class DNN:
-    def __init__(self, img_w=80, img_h=60, model_name="learndrive-model-89752"):
+    def __init__(self, img_w=80, img_h=60, model_name="simple-both-vals/modelslearndrive-model-09880.hd5"):
         """
 
         """
         self._bridge = CvBridge()
         self._model_name = model_name
-        self._model = load_model(os.path.join(MODEL_DIR, self._model_name))
+        #self._model = load_model(os.path.join(MODEL_DIR, self._model_name))
+        self._model = load_model("/home/nb/progs/torcs-autonomous-driving/src/models/simple-both-vals/modelslearndrive-model-09880.hd5")
         self._img_width = img_w
         self._img_height = img_h
         self._img_resize_factor = self._img_width / 640
