@@ -61,12 +61,13 @@ class TORCSInputNode(nengo.Node):
 
     def extract_img(self, data):
         self.img = data
+        #print("Type of self.img is: " + str(type(self.img)))
 
     def tick(self, t):
         _data = list(self.data)
         # self.time_delay(0.009)
         # self.calc_avg_execution_time()
-        if self.DNN is not None:
+        if self.DNN is not None and self.img is not None:
             _data[0], _data[1] = self.DNN.propagate(self.img)
         _data[2:] = self.data[2:]
         return _data
