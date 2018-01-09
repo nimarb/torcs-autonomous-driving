@@ -332,7 +332,6 @@ During the testphase we observed a large variance in the data. Even when we ran 
 As already mentioned it is important to keep the control frequency high. This is necessary because with increasing model capacity, the calculation time of the controller becomes too large which lead to an instable controller. Low frequencies lead to the controller signals being already outdatet when they arrive at the car and therefore controlling becomes instable. This is especially important on computers with older hardware, which, even with native operating systems, have problems to simulate TORCS, ROS and Nengo at the same time. We observed that for average controller iteration times larger than 12 ms the controller already becomes instable. One forward propagation of the Nengo controller without a DNN takes approximately between 1.5 and 3 ms. This requires the DNN to have a maximum forward propagation of 9 ms. \\
 Another influence on controller perfomance is the way we acquire the signal. The forward propagation of the DNN in the input node (see \autoref{fig:nengo_architecture}) leads to a delay until the calculated signal enters the SNN. As stated above, only the steering module is based on the DNN signals. In order to gain the best controller performance, we updated the range finder signals and the speed signals asynchronously. So even when the DNN was calculating the angle and displacement values, the Nengo input node still recieved updates from the ROS topics. Then, after the DNN had calculated the signals, we fed the now outdated angle and displacement values together with the most recent speed and range finder signals into the SNN. \\
 As the final neuron sizes for the different modules we chose $2,000$ neurons encoding each input signal. The driving modules consist of $2,400$ neurons each. With smaller model capacities we obtained a less stable driver, while a larger model capacity did not show any improvements. \autoref{tab:controller_laptime} shows the results of the controller without the DNN, with and without 9 ms artificial interruption with asynchronous signal updates based on ground truth data input signals.
-
 \begin{table}[ht]
 	\begin{center}
 		\begin{tabular}{ |c|c|c|c| } 
@@ -346,7 +345,7 @@ As the final neuron sizes for the different modules we chose $2,000$ neurons enc
 		\caption{\label{tab:controller_laptime}This table compares the lap times of the controller with and without 9 ms artificial interruption against the default driver on the generalization task with ground truth data as input signals.}
 	\end{center}
 \end{table}
-
+To elaborate the effects of noisy data input, we modified the input data with an additional gaussian noise with mean 0 and a standard deviation of 30\% of the signal value. We tested the model without an artificial interrupt and achieved a lap time of 2:04:14,
 %noisy data:
 % std deviation 0.3 -> 2:04:14
 % std deviation 0.3 & 9ms interrupt -> 2:30:31 -> big slalom makes driver more stable in critical turns because of lower overall velocity
