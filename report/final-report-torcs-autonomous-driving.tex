@@ -131,7 +131,7 @@ in The Open Racing Car Simulator (TORCS)}
 \label{sc:intro}
 
 \IEEEPARstart{A}{utonomous} driving is currently a controversial subject, especially 
-regarding feasibility and performance. To explore the details of autonomous driving, an abstract prototype is built focussing on the implementation of infering location information from images and implementing a neural controller to drive a car. In this work we use The Open Racing Car Simulator (TORCS) to simulate a car on a race track and collect relevant sensor data. The goal is to use multiple sensor cues to drive the car safely around the defined test tracks. Further, we use the Robot Operating System (ROS) TODO: ADD CITATION as an interface between TORCS and the controller TODO: ADD ROS TORCS CITATION. The following signals are used:
+regarding feasibility and performance. To explore the details of autonomous driving, an abstract prototype is built focussing on the implementation of infering location information from images and implementing a neural controller to drive a car. In this work we use The Open Racing Car Simulator (TORCS) to simulate a car on a race track and collect relevant sensor data. The goal is to use multiple sensor cues to drive the car safely around the defined test tracks. Further, we use the Robot Operating System (ROS) TODO: ADD CITATION as an interface between TORCS and the controller \cite{mirus_torcs-ros_2017}. The following signals are used:
 \begin{enumerate}
 	\item range finder
 	\item driver point of view (POV) image
@@ -176,8 +176,8 @@ TORCS provides 19 tracks of which all are relevant. Therefore, the recorded data
 	\item Validataion set
 	\item Test set
 \end{enumerate}
-First, the two tracks TODO:FIX TEST TRACKS were determined to be used for testing later on. As the goal is to train a general model, a prerequisite is that data recorded on either of the two test tracks is not used during training. In total XXX data points were recorded on the two test tracks. \\
-The remaining tracks are used to train the DNN and to determine its hyperparametres. Therefore, the data set is randomly split into \texttt{train} and \texttt{val} (validataion) at a ratio of 90\% to 10\%. The validation set data itself was thus not used for traning, but it is recorded on tracks which are included in the training tracks.
+First, the two tracks \texttt{Wheel 2} and \texttt{CG Track 2} were determined to be used for testing later on. As the goal is to train a general model, a prerequisite is that data recorded on either of the two test tracks is not used during training. In total 6761 data points were recorded on the two test tracks. \\
+The remaining tracks are used to train the DNN and to determine its hyperparametres. Therefore, the data set is randomly split into \texttt{train} and \texttt{val} (validataion) at a ratio of 90\% to 10\%. The validation set data itself was thus not used for traning, but it is recorded on tracks which are included in the training tracks. The test data set contains a total of 57180 entries while the validation set contains 6342 data points.
 
 \subsection{Input images}
 The image data is acquired from TORCS \cite{TORCS} using ROS via the TORCS-ROS node \cite{mirus_torcs-ros_2017}. 
@@ -303,6 +303,9 @@ For the final application, the same model is used to infer the car's displacemen
 	\caption{Mean absolute error of two test networks trained only to predict either the displacement or angle of the car}
 	\label{fig:mae-distance-vs-angle}
 \end{figure}
+
+\subsection{Prediction performance of the DNN}
+The DNN TODO
 
 \subsection{Controller performance}
 Controller performance is influenced by different factors. Data composition, model capacity and forward propagation time are discussed in the following. \\
