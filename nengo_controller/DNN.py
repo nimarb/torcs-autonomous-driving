@@ -22,7 +22,7 @@ class DNN:
         self._model = load_model("/home/nb/progs/torcs-autonomous-driving/src/models/simple-both-vals/modelslearndrive-model-09880.hd5")
         self._img_width = img_w
         self._img_height = img_h
-        self._img_resize_factor = self._img_width / 640
+        self._img_resize_factor = float(self._img_width) / float(640)
 
     def propagate(self, img):
         """
@@ -46,8 +46,13 @@ class DNN:
         dt = time.time() - t1
         print("TIME TO PROP: " + str(dt))
 
-        angle = prediction[0]
-        displacement = prediction[1]
+        for val in prediction:
+            angle = val[0]
+            displacement = val[1]
+
+        print("Prediction type: ")
+        print(type(prediction))
+        print("Prediction shape: " + str(prediction.shape))
         print("Pred ang: " + str(angle) + "; dis: " + str(displacement))
 
         return angle, displacement
