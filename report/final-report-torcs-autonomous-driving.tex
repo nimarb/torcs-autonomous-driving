@@ -339,7 +339,7 @@ As the final neuron sizes for the different modules we chose $2,000$ neurons enc
 			\hline
 			track &  default driver & no interruption & interruption \\
 			\hline
-			cg track 2  & 1:58:15 & 1:59:76 & 2:05:84  \\
+			cg track 2  & 1:58:15 & 1:59:76 & 2:03:84  \\
 			wheel 2 & 4:21:45 & 4:26:80 & 4:46:51 \\
 			\hline
 		\end{tabular}
@@ -347,12 +347,17 @@ As the final neuron sizes for the different modules we chose $2,000$ neurons enc
 	\end{center}
 \end{table}
 
+%noisy data:
+% std deviation 0.3 -> 2:04:14
+% std deviation 0.3 & 9ms interrupt -> 2:30:31 -> big slalom makes driver more stable in critical turns because of lower overall velocity
+
 \subsection{Controller and DNN}
 
 
 
 \section{Conclusion}
 \label{sc:conclusion}
+big factors for controller perfomance: ..
 
 \subsection{Outlook}
 \label{ssc:outlook}
