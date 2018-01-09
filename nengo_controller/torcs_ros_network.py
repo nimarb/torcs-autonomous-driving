@@ -61,7 +61,8 @@ class TORCSInputNode(nengo.Node):
 
     def extract_img(self, data):
         self.img = data
-        print("Type of self.img is: " + type(self.img))
+        #print("Type of self.img is: ")
+        #print(type(self.img))
 
     def tick(self, t):
         _data = list(self.data)
