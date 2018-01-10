@@ -131,14 +131,10 @@ class ImgToSensorCNN:
         for track_dir in DATA_DIRS:
             img_dir = os.path.join(track_dir, "images")
             num_img += len([f for f in os.listdir(img_dir) if f.endswith(self.img_data_type) and os.path.isfile(os.path.join(img_dir, f))])
-        #img_dir = os.path.join(DATA_DIR, "images")
-        #num_img = len([f for f in os.listdir(img_dir) if f.endswith(self.img_data_type) and os.path.isfile(os.path.join(img_dir, f))])
         self.num_val_set = round(num_img * (val_percent * 0.01))
         self.num_train_set = num_img - self.num_val_set
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
         self.val_imgs = np.empty(self.num_val_set, dtype=object)
-        #self.imgs = np.empty(
-        #    self.num_train_set + self.num_val_set, dtype=object)
 
     def load_data(self):
         """Load img & sensor data and split into train/val/test set"""
@@ -149,7 +145,6 @@ class ImgToSensorCNN:
             print("img_list contains: " + str(len(self.img_list)) + " items")
             print("labels contain: " + str(self.distance_array.size) + " items")
         print("All imgs loaded into img_list")
-        #self.imgs = np.asarray(self.img_list, dtype=object)
         self.imgs = np.empty(len(self.img_list), dtype=object)
         for i in range(0, len(self.img_list)-1):
             self.imgs[i] = self.img_list[i]
@@ -157,8 +152,6 @@ class ImgToSensorCNN:
         print("All imgs loaded into np array")
         print("self.imgs np array contains: " + str(self.imgs.size) + " items")
         print("Labels contain: " + str(self.distance_array.size) + " items")
-        #self.load_imgs(self.imgs, DATA_DIR)
-        #self.load_labels()
         self.split_into_train_val_set()
 
     def load_imgs(self, img_list, data_dir):
@@ -167,7 +160,6 @@ class ImgToSensorCNN:
         Arguments:
             img_list: 
             data_dir: """
-        #img_iter = 0
         img_name_filter = glob.glob(
                             data_dir + "/images/*" + self.img_data_type)
         for filename in sorted(img_name_filter):
@@ -177,18 +169,6 @@ class ImgToSensorCNN:
                 if h != self.img_height and w != self.img_width:
                     factor = self.img_width / w
                     img = cv2.resize(img, None, fx=factor, fy=factor)
-                    #if 0 == self.img_iter:
-                    #    print(
-                    #        "Resizing imgs; src width="
-                    #        + str(w) + "; dest w=" + str(w*factor))
-                    #    print("Factor = " + str(factor))
-            #if self.img_iter < img_list.size:
-            #    img_list[self.img_iter] = img
-            #else:
-            #    np.append(img_list, img)
-            #    if self.img_iter == img_list.size:
-            #        print("load_imgs: now appending imgs to array, slow af")
-            #self.img_iter += 1
             img_list.append(img)
         print("All imgs of " + data_dir + " loaded into img_list")
 
@@ -357,7 +337,6 @@ class ImgToSensorCNN:
         metadata["loss_function"] = self.loss_function
         metadata["metrics"] = self.metrics
         metadata["loss_hist"] = self.loss_hist.loss
-        # metadata["metrics_hist"] = self.loss_hist.metric
         metadata["data_name"] = DATA_NAME
         metadata["test_data_name"] = TEST_DATA_NAME
         metadata["time_hist"] = self.time_hist.times
