@@ -153,13 +153,13 @@ TODO: model structure overview picture as in presentation
 %TODO: EXPLAIN current DNNs made for regression tasks
 
 \section{A deep neural network for regression}
-The implementation of the deep neural network is done in \texttt{python} version 3.6.3. To facilitate development, the library \texttt{keras} \cite{chollet2015keras} is used with the backend \texttt{tensorflow} \cite{tensorflow2015-whitepaper}. To manipulate image data \texttt{openCV3} \cite{opencv_library} is used and finally to load and manipulate data the library \texttt{numpy} \cite{5725236} is utilised. 
+The implementation of the deep neural network is done in \texttt{python} version 3.6.3. To facilitate development, the library \texttt{keras} \cite{chollet2015keras} is used with the backend \texttt{tensorflow} \cite{tensorflow2015-whitepaper}. To manipulate and preprocess image data we use \texttt{openCV3} \cite{opencv_library} and finally to load and manipulate data the library \texttt{numpy} \cite{5725236} is utilised. 
 
 \subsection{The testing deep neural network}
 \label{ssc:testing-dnn}
-To be able to chose hyperparametres for the convolutional neural network (CNN) at an early point, a basic CNN network architecture was chosen which has been proven before. The criteria for chosing the network architecture was, that it has to provide reasonable performance while being quick to train. The focus was rather on fast training performance, as the available resources are limited to us. Thus, after studying the architectures' training performances as seen here \cite{jjohnson-cnn-benchmarks}, AlexNet \cite{alexnet2012imagenet} was chosen as testing DNN.\\
+To be able to chose hyperparametres for the convolutional neural network (CNN) at an early point, we chose a basic CNN network architecture which has been proven before. The criteria for choosing the network architecture was, that it has to provide reasonable prediction performance while being also being quick to train. The focus was rather on fast training performance, as the available resources are limited to us. Thus, after studying many architectures' training performances as seen here \cite{jjohnson-cnn-benchmarks}, the AlexNet \cite{alexnet2012imagenet} architecture was chosen as testing DNN, provinding good training performance with proven good prediction performance. \\
 
-AlexNet is a network designed for image classification tasks, such as the ImageNet challenge. Therefore, the last layer of AlexNet was altered to use it for multidimensional regression problems such as inferring the angle and displacement from an image. To achieve that, the number of output neurons of the last fully connected layer (FCL) was reduced from 1000 to 2, as there are two numbers to determine. Furthermore, the last FCL used a rectified linear unit (ReLU) as activation function. 
+AlexNet is a network designed for image classification tasks, such as the ImageNet challenge. Therefore, we altered the last layer of AlexNet to use it for multidimensional regression problems such as inferring the angle and displacement from an input image. To achieve that, the number of output neurons of the last fully connected layer (FCL) was reduced from 1000 to 2, as there are two numbers to determine. Furthermore, the last FCL used a rectified linear unit (ReLU) as activation function. 
 \begin{equation}
 	f(x) = max(x, 0)
 \end{equation}
@@ -170,19 +170,21 @@ To prevent the activation function from cropping the output to values greater th
 
 \subsection{Data set splitting}
 \label{ssc:data-set-split}
-TORCS provides 19 tracks of which all are relevant. Therefore, the recorded data set is split into three parts: 
+TORCS provides 19 road tracks of which all are relevant. Therefore, data was recorded for all tracks. The recorded data set is split into three parts: 
 \begin{enumerate}
 	\item Training set
 	\item Validataion set
 	\item Test set
 \end{enumerate}
-First, the two tracks \texttt{Wheel 2} and \texttt{CG Track 2} were determined to be used for testing later on. As the goal is to train a general model, a prerequisite is that data recorded on either of the two test tracks is not used during training. In total 6761 data points were recorded on the two test tracks. \\
-The remaining tracks are used to train the DNN and to determine its hyperparametres. Therefore, the data set is randomly split into \texttt{train} and \texttt{val} (validataion) at a ratio of 90\% to 10\%. The validation set data itself was thus not used for traning, but it is recorded on tracks which are included in the training tracks. The test data set contains a total of 57180 entries while the validation set contains 6342 data points.
+First, the two tracks \texttt{Wheel 2} and \texttt{CG Track 2} were chosen to be used for testing. As the goal is to train a general model, a prerequisite is that data recorded on either of the two test tracks is not used during training. In total 6761 data points were recorded on the two test tracks. \\
+The remaining tracks are used to train the DNN and to determine its hyperparametres. Therefore, the data set is randomly split into \texttt{train} and \texttt{val} (validataion) at a ratio of 90\% to 10\%. The validation set data itself was thus not used for traning, but it is recorded on tracks which are included in the training tracks. The test data set contains a total of 57180 entries while the validation set contains 6342 data points. \\
+A data point consists of an input image (see \autoref{ssc:input-images}) with a corresponding distance and angle value, recorded at the same point in time.
 
 \subsection{Input images}
+\label{ssc:input-images}
 The image data is acquired from TORCS \cite{TORCS} using ROS via the TORCS-ROS node \cite{mirus_torcs-ros_2017}. 
 
-\subsubsection{Choosing a camera angle}
+\subsubsection{Choosing a camera perspective}
 TORCS provides four main car camera perspectives: 
 \begin{enumerate}
 	\item Driver's view with hood
@@ -190,7 +192,7 @@ TORCS provides four main car camera perspectives:
 	\item Third person perspective: far
 	\item Third person perspective: close
 \end{enumerate}
-All perspectives are evaluated based on the DNN described in \autoref{ssc:testing-dnn} 
+All perspectives are evaluated based on the test DNN described in \autoref{ssc:testing-dnn} 
 and as final perspective the driver's view without hood is chosen. The basis for that decision can be seen in 
 \autoref{fig:camera-evaluation}, which shows the mean absolute error for each view, with the driver's view without hood being the lowest.\\ 
 The different perspectives are shown in \autoref{fig:car_views}.
@@ -209,7 +211,7 @@ The different perspectives are shown in \autoref{fig:car_views}.
 \end{figure}
 
 \subsubsection{Choosing the image size}
-The images are provided by TORCS ROS \cite{mirus_torcs-ros_2017} at a rate of 10 frames per second (fps) at a resoultion of $ \SI{640}{\px} \times \SI{480}{\px} $. Because that image size is too large
+The images are provided by TORCS-ROS \cite{mirus_torcs-ros_2017} at a rate of 10 frames per second (fps) at a resoultion of $ \SI{640}{\px} \times \SI{480}{\px} $. Because that image size is too large
 to train a reasonably deep network in a reasonable time, the images are down-scaled prior to training as well as in the final application. To determine the image providing the best result, four different sizes were evaluated with the DNN described in \autoref{ssc:testing-dnn}: 
 \begin{enumerate}
 	\item $ \SI{320}{\px} \times \SI{240}{\px} $
@@ -217,7 +219,7 @@ to train a reasonably deep network in a reasonable time, the images are down-sca
 	\item $ \SI{80}{\px} \times \SI{60}{\px} $
 	%\item $ \SI{40}{\px} \times \SI{30}{\px} $
 \end{enumerate}
-First, the training images were collected from TORCS ROS at a resolution of $ \SI{640}{\px}\times \SI{480}{\px}$. Upon loading the images, \texttt{openCV} based downscaling was applied using the bilinear interpolation algorithm. Second, the testing DNN was trained with the images at the mentioned resolutions and the mean absolute error 
+First, the training images were collected from TORCS-ROS at a resolution of $ \SI{640}{\px}\times \SI{480}{\px}$. Upon loading the images, \texttt{openCV} based downscaling was applied using the bilinear interpolation algorithm. Second, the testing DNN was trained with the images at the mentioned resolutions and the mean absolute error 
 for the validation set was recorded, which is visualised in \autoref{fig:img-res-evaluation}.
 \begin{figure}[ht]
 	\centering
@@ -227,10 +229,12 @@ for the validation set was recorded, which is visualised in \autoref{fig:img-res
 	\label{fig:img-res-evaluation}
 \end{figure}
 
-Therefore, the image size $ \SI{80}{\px}\times\SI{60}{\px} $ is used for the DNN as it provides the smallest mean absolute error and additionally reduces the training time due to the small image size.
+Therefore, the image size $ \SI{80}{\px}\times\SI{60}{\px} $ is used for the DNN as it provides the smallest mean absolute error and additionally reduces the training time due to the small image size. \\
+
+Furthermore, we later discovered that the time the DNN needs to output the angle and distance prediction from an input image is also important to the controller. Therefore, a smaller image size is desired to reduce the prediction time. We did however not consider this in the initial design decisions. 
 
 \subsection{Choosing the optimiser}
-\label{sc:optimiser-choice}
+\label{ssc:optimiser-choice}
 A plethora of different optimisers are available for use in the backpropagation step when training DNNs. The largest differences are in their abilities to exit large local maxima, training performance and accuracy. As the currently used DNN is managable in size, the training performance is not yet a critical property. Therefore, the optimiser was selected based on its ability to minimse the mean absolute error of the validation set. As illustrated in \autoref{fig:optimiser-evaluation}, the \texttt{adamax} optimiser provides the best result and is thus chosen for future application. \texttt{adamax} is similiar to the \texttt{adam} optimiser while being more stable in certain conditions, see \cite{DBLP:journals/corr/KingmaB14} for more details. 
 
 \begin{figure}[ht]
@@ -240,10 +244,28 @@ A plethora of different optimisers are available for use in the backpropagation 
 	\label{fig:optimiser-evaluation}
 \end{figure}
 
+\subsection{Choosing a DNN architecture}
+\label{ssc:architecture-choice}
+As a wide variety of DNN architectures are possible it was out of the scope of this course to develop and test a completely new architecture from scratch. Thus, we studied existing architectures and introduced modifications to mold the model towards regression tasks. \\
+The network input is an image for which a Convolutional Neural Network (CNN) is well suited. As the CNN also functions as a feature extractor, manual feature extraction is not necessary. Multiple CNN layers are then followed by Fully Connected Layers (FCL), which are individual neurons each connected to one another. Finally, the last FCL has only two outputs which represent the two numbers to be inferred: displacement and angle. We tested various model architectures against each other and played around with adding more/less Convolutional or Fully Connected Layers. In the end, we achieved the best result with a model shown in \autoref{fig:model-architecture}. The conclusion was reached due to the performance in predicting the correct values from the input images, so the architecture with the lowest mean average error as seen in \autoref{fig:model-architecture-comparison}.
+
+\begin{figure}[ht]
+	\centering
+	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
+	\caption{Structure of the final model architecture used in the DNN for predicting displacement and angle of the car}
+	\label{fig:model-architecture}
+\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
+	\caption{Comparison of the mean average error of different model architectures}
+	\label{fig:model-architecture-comparison}
+\end{figure}
+
 \subsection{Building a deep neural network with keras}
 \label{ssc:keras}
-Keras is a python library 
-hello keras \cite{Toshev_2014_CVPR}
+Keras \cite{Toshev_2014_CVPR} is a python library to simplify building Deep Neural Networks. It can use various backends to do the actual processing, of which we chose \texttt{tensorflow} \cite{tensorflow2015-whitepaper}. The process of building a DNN can be divided into six parts: overall process design, acquiring training/testing data, preprocessing training/testing data, building a DNN model architecture, training a DNN model and finally testing the model.
 
 \section{Nengo Controller}
 \label{sc:controller}
