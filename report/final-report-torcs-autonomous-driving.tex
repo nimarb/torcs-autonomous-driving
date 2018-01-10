@@ -59,7 +59,7 @@
 %
 % When submitting the review, make sure to include the following line to enable
 % line numbering. When submitting the final report, disable the following line!
-\linenumbers
+%\linenumbers
 
 %
 % configure submission details
@@ -183,18 +183,24 @@ The remaining tracks are used to train the DNN and to determine its hyperparamet
 The image data is acquired from TORCS \cite{TORCS} using ROS via the TORCS-ROS node \cite{mirus_torcs-ros_2017}. 
 
 \subsubsection{Choosing a camera angle}
-TORCS provides several camera perspectives: 
+TORCS provides four main car camera perspectives: 
 \begin{enumerate}
 	\item Driver's view with hood
 	\item Driver's view without hood
 	\item Third person perspective: far
 	\item Third person perspective: close
-	%\item TODO: CHECK ALL TORCS VIEWS
 \end{enumerate}
 All perspectives are evaluated based on the DNN described in \autoref{ssc:testing-dnn} 
 and as final perspective the driver's view without hood is chosen. The basis for that decision can be seen in 
-\autoref{fig:camera-evaluation}, which shows the mean absolute error for each view, with the driver's view without hood being the lowest.\\
-TODO: INCLUDE EXAMPLE IMAGES
+\autoref{fig:camera-evaluation}, which shows the mean absolute error for each view, with the driver's view without hood being the lowest.\\ 
+The different perspectives are shown in \autoref{fig:car_views}.
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=\columnwidth]{attachments/car_view_compilation.png}
+	\caption{Different camera perspectives provided by TORCS}
+	\label{fig:car_views}
+\end{figure}
+
 \begin{figure}[ht]
 	\centering
 	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
