@@ -96,6 +96,7 @@ class ImgToSensorCNN:
                 w=80,
                 h=60,
                 optimiser="adamax",
+                model_architecture="simple",
                 dim_choice=1,
                 camera_perspective="1st_no_hood",
         self.img_width = w
@@ -402,6 +403,22 @@ class ImgToSensorCNN:
             self.cnn_tensorkart()
         elif "simple" == self.model_architecture:
             self.cnn_simple()
+        elif "simple_invcnv" == self.model_architecture:
+            self.cnn_simple_invcnv()
+        elif "simple_min1d" == self.model_architecture:
+            self.cnn_simple_min1d()
+        elif "simple_min2d" == self.model_architecture:
+            self.cnn_simple_min2d()
+        elif "simple_plu1d" == self.model_architecture:
+            self.cnn_simple_plu1d()
+        elif "simple_plu2d" == self.model_architecture:
+            self.cnn_simple_plu2d()
+        elif "simple_invcnv_adv" == self.model_architecture:
+            self.cnn_simple_invcnv_adv()
+        elif "simple_small" == self.model_architecture:
+            self.cnn_simple_small()
+        elif "simple_very_small" == self.model_architecture:
+            self.cnn_simple_very_small()
 
         train_data = np.empty(
                 (self.num_train_set, self.img_height, self.img_width, 3),
@@ -522,19 +539,24 @@ class ImgToSensorCNN:
     def cnn_tensorkart(self):
         """Uses NeuralKart/TensorKart model architecture"""
         # self.model.add(BatchNormalization(input_shape=(self.img_height, self.img_width, 3)))
-        self.model.add(Conv2D(24,
-                                input_shape=(
-                                    self.img_height, self.img_width, 3),
+        self.model.add(
+            Conv2D(
+                24,
+                input_shape=(self.img_height, self.img_width, 3),
                                 kernel_size=(5, 5),
                                 strides=(2, 2),
                                 activation='relu'))
         self.model.add(BatchNormalization())
-        self.model.add(Conv2D(36,
+        self.model.add(
+            Conv2D(
+                36,
                                 kernel_size=(5, 5),
                                 strides=(2, 2),
                                 activation='relu'))
         self.model.add(BatchNormalization())
-        self.model.add(Conv2D(48,
+        self.model.add(
+            Conv2D(
+                48,
                                 kernel_size=(5, 5),
                                 strides=(2, 2),
                                 activation='relu'))
@@ -557,11 +579,89 @@ class ImgToSensorCNN:
         else:
             self.model.add(Dense(1, activation='linear'))
 
+    def cnn_simple_min1d(self):
+        """Uses own simple model as cnn topology"""
+        self.model.add(
+            Conv2D(
+                256,
+            input_shape=(self.img_height, self.img_width, 3),
+            kernel_size=(7, 7),
+            padding='same',
+            activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(
+            Conv2D(
+                256,
+                                kernel_size=(5, 5),
+                                activation='relu',
+                                padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.mode.add(
+            Conv2D(
+                128,
+                                kernel_size=(3, 3),
+                                activation='relu',
+                                padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Flatten())
+        self.model.add(Dense(2048, activation='relu'))
+        self.model.add(Dense(1024, activation='relu'))
+        self.model.add(Dense(512, activation='relu'))
+        self.model.add(Dense(256, activation='relu'))
         if 2 == self.dim_choice:
             self.model.add(Dense(2, activation='linear'))
         else:
             self.model.add(Dense(1, activation='linear'))
 
+    def cnn_simple_min2d(self):
+        """Uses own simple model as cnn topology"""
+        self.model.add(Conv2D(256,
+            input_shape=(self.img_height, self.img_width, 3),
+            kernel_size=(7, 7),
+            padding='same',
+            activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(256,
+                                kernel_size=(5, 5),
+                                activation='relu',
+                                padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(128,
+                                kernel_size=(3, 3),
+                                activation='relu',
+                                padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Flatten())
+        self.model.add(Dense(2048, activation='relu'))
+        self.model.add(Dense(1024, activation='relu'))
+        self.model.add(Dense(512, activation='relu'))
+        if 2 == self.dim_choice:
+            self.model.add(Dense(2, activation='linear'))
+        else:
+            self.model.add(Dense(1, activation='linear'))
+
+    def cnn_simple_plu1d(self):
+        """Uses own simple model as cnn topology"""
+        self.model.add(Conv2D(256,
+            input_shape=(self.img_height, self.img_width, 3),
+            kernel_size=(7, 7),
+            padding='same',
+            activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(256,
+                                kernel_size=(5, 5),
+                                activation='relu',
+                                padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(128,
+                                kernel_size=(3, 3),
+                                activation='relu',
+                                padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Flatten())
+        self.model.add(Dense(2048, activation='relu'))
+        self.model.add(Dense(1024, activation='relu'))
+        self.model.add(Dense(512, activation='relu'))
         self.model.add(Dense(256, activation='relu'))
         self.model.add(Dense(128, activation='relu'))
         self.model.add(Dense(64, activation='relu'))
@@ -569,6 +669,33 @@ class ImgToSensorCNN:
             self.model.add(Dense(2, activation='linear'))
         else:
             self.model.add(Dense(1, activation='linear'))
+
+    def cnn_simple_plu2d(self):
+        """Uses own simple model as cnn topology"""
+        self.model.add(Conv2D(256,
+            input_shape=(self.img_height, self.img_width, 3),
+            kernel_size=(7, 7),
+            padding='same',
+            activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(256,
+                                kernel_size=(5, 5),
+                                activation='relu',
+                                padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(128,
+                                kernel_size=(3, 3),
+                                activation='relu',
+                                padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Flatten())
+        self.model.add(Dense(2048, activation='relu'))
+        self.model.add(Dense(1024, activation='relu'))
+        self.model.add(Dense(512, activation='relu'))
+        self.model.add(Dense(256, activation='relu'))
+        self.model.add(Dense(128, activation='relu'))
+        self.model.add(Dense(64, activation='relu'))
+        self.model.add(Dense(32, activation='relu'))
         if 2 == self.dim_choice:
             self.model.add(Dense(2, activation='linear'))
         else:
@@ -603,6 +730,110 @@ class ImgToSensorCNN:
         else:
             self.model.add(Dense(1, activation='linear'))
 
+    def cnn_simple_invcnv(self):
+        """Uses own simple model as cnn topology"""
+        self.model.add(Conv2D(128,
+            input_shape=(self.img_height, self.img_width, 3),
+            kernel_size=(7, 7),
+            padding='same',
+            activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(256,
+                                kernel_size=(5, 5),
+                                activation='relu',
+                                padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(384,
+                                kernel_size=(3, 3),
+                                activation='relu',
+                                padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Flatten())
+        self.model.add(Dense(2048, activation='relu'))
+        self.model.add(Dense(1024, activation='relu'))
+        self.model.add(Dense(512, activation='relu'))
+        self.model.add(Dense(256, activation='relu'))
+        self.model.add(Dense(128, activation='relu'))
+        if 2 == self.dim_choice:
+            self.model.add(Dense(2, activation='linear'))
+        else:
+            self.model.add(Dense(1, activation='linear'))
+
+    def cnn_simple_invcnv_adv(self):
+        """Uses own simple model as cnn topology"""
+        self.model.add(Conv2D(128,
+            input_shape=(self.img_height, self.img_width, 3),
+            kernel_size=(7, 7),
+            padding='same',
+            activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(256,
+                                kernel_size=(5, 5),
+                                activation='relu',
+                                padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(384,
+                                kernel_size=(3, 3),
+                                activation='relu',
+                                padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(256,
+                                kernel_size=(3, 3),
+                                activation='relu',
+                                padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Flatten())
+        self.model.add(Dense(2048, activation='relu'))
+        self.model.add(Dense(1024, activation='relu'))
+        self.model.add(Dense(512, activation='relu'))
+        self.model.add(Dense(256, activation='relu'))
+        self.model.add(Dense(128, activation='relu'))
+        if 2 == self.dim_choice:
+            self.model.add(Dense(2, activation='linear'))
+        else:
+            self.model.add(Dense(1, activation='linear'))
+
+    def cnn_simple_small(self):
+        self.model = Sequential()
+        self.model.add(
+            Conv2D(
+                96,
+                input_shape=(self.img_height, self.img_width, 3),
+                kernel_size=(7, 7),
+                padding='same',
+                activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(128, kernel_size=(7, 7), activation='relu', padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(64, kernel_size=(5, 5), activation='relu', padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Flatten())
+        self.model.add(Dense(256, activation='relu'))
+        self.model.add(Dense(128, activation='relu'))
+        self.model.add(Dense(64, activation='relu'))
+        self.model.add(Dense(32, activation='relu'))
+        if 2 == self.dim_choice:
+            self.model.add(Dense(2, activation='linear'))
+        else:
+            self.model.add(Dense(1, activation='linear'))
+
+    def cnn_simple_very_small(self):
+        self.model = Sequential()
+        self.model.add(
+            Conv2D(
+                96,
+                input_shape=(self.img_height, self.img_width, 3),
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(128, kernel_size=(7, 7), activation='relu', padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Conv2D(64, kernel_size=(5, 5), activation='relu', padding='same'))
+        self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Flatten())
+        self.model.add(Dense(128, activation='relu'))
+        self.model.add(Dense(64, activation='relu'))
         self.model.add(Dense(32, activation='relu'))
         if 2 == self.dim_choice:
             self.model.add(Dense(2, activation='linear'))
