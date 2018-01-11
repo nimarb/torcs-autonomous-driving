@@ -337,8 +337,7 @@ The prediction performance indicates the time in ms which the DNN needs for one 
 
 \subsection{Generalisation performance of the DNN}
 \label{ssc:generalisation}
-The generalisation evaluates the prediction performance of the DNN on the test set, so on previously unseen tracks. When trained on the whole training set as outlined in \autoref{ssc:data-set-split} prediction of the displacement from images on the test track result in a mean absolute error of 0.08. While that value is not good, because it reflects 
-
+The generalisation evaluates the prediction performance of the DNN on the test set, so on previously unseen tracks. When trained on the whole training set as outlined in \autoref{ssc:data-set-split} prediction of the displacement from images on the test track result in a mean absolute error (MAE) of 0.2. While that value is not good, because it reflects a too drastic deviation from the real car position, the real problem in our case is the angle. Predicting the angle will result in an identical output value irrespective of the input image feeded into the DNN. We did try to lower the learning rate, increase or decrease the DNN depth, add regularisation and dropout layers but the angle did stay constant, which means that the DNN considers the most exact value to learn the average. This might be caused by the training data, in which a large amount of images correspond to only very small angle variations. However, even training with a smaller subset of the training set with percieved more angle variation did not result in an improvement. 
 
 \subsection{Controller performance}
 Controller performance is influenced by different factors. Data composition, model capacity and forward propagation time are discussed in the following. \\
