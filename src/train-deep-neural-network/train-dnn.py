@@ -14,6 +14,7 @@ from keras.layers.pooling import MaxPooling2D
 from keras.layers.normalization import BatchNormalization
 from keras.layers.convolutional import Conv2D
 from keras.callbacks import EarlyStopping, Callback, CSVLogger, History
+from keras.optimizers import Adam, Adamax
 
 import numpy as np
 import cv2
@@ -91,12 +92,14 @@ else:
 class ImgToSensorCNN:
     """Guess distance, angle of a vehicle using deep learning"""
 
-    def __init__(self,
+    def __init__(
+                self,
                 model_name="learndrive-model",
                 w=80,
                 h=60,
                 optimiser="adamax",
                 model_architecture="simple",
+                learning_rate=0.00001,
                 dim_choice=1,
                 camera_perspective="1st_no_hood",
         self.img_width = w
@@ -106,6 +109,7 @@ class ImgToSensorCNN:
         self.num_val_set = 1
         self.num_test_set = 20
         self.img_data_type = ".jpg"
+        self.learning_rate = learning_rate
         self.distance_array = np.empty(0)
         self.angle_array = np.empty(0)
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
@@ -353,6 +357,7 @@ class ImgToSensorCNN:
         metadata["test_mae"] = self.score[1]
         metadata["optimiser"] = self.optimiser
         metadata["model_architecture"] = self.model_architecture
+        metadata["learning_rate"] = self.learning_rate
         if self.dim_choice == 2:
             metadata["dim_choice"] = "distance and angle"
         elif self.dim_choice == 1:
@@ -452,9 +457,11 @@ class ImgToSensorCNN:
         # cbs.append(es)
 
         # other good optimiser: adam, rmsprop
+        opti = Adamax(lr=self.learning_rate)
         self.model.compile(
             loss=self.loss_function,
-            optimizer=self.optimiser,
+            #optimizer=self.optimiser,
+            optimizer=opti,
             metrics=[self.metrics])
         
         if self.dim_choice == 2:
