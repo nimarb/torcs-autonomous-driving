@@ -138,9 +138,7 @@ regarding feasibility and performance. To explore the details of autonomous driv
 	\item displacement (distance from road centre to car centre)
 	\item angle (rotation angle between car and road)
 \end{enumerate}
-Then, a deep neural network will be trained on the ground truth data to infer the angle and displacement from the provided POV image. Subsequently, a controller based on spiking neural networks (SNN) is trained to generate driving commands based on range finder, displacement and angle sensor inputs. Finally, the controller and the DNN are connected. So the final model works only based on the POV image and the range finder data. An overview of the overall structure can be seen in figure XX.
-
-TODO: model structure overview picture as in presentation
+Then, a deep neural network will be trained on the ground truth data to infer the angle and displacement from the provided POV image. Subsequently, a controller based on spiking neural networks (SNN) is trained to generate driving commands based on range finder, displacement and angle sensor inputs. Finally, the controller and the DNN are connected. So the final model works only based on the POV image and the range finder data.
 
 % As a competing group is working on the same task, a race will be carried out at the end and the winner will be determined. Thus, the goal is to drive the car around the track as quickly as possible while maintaining a safe driving style.
 
@@ -337,6 +335,11 @@ For the final application, the same model is used to infer the car's displacemen
 \subsection{Prediction performance of the DNN}
 The prediction performance indicates the time in ms which the DNN needs for one prediction given a single input image. Tested on an Intel Core i7-2650M the time fluctuates but stays within \SI{50}{\milli\second} and \SI{200}{\milli\second}. While that time is insufficient for the controller, the prediction can be carried out on a CUDA GPU which should result in a significant speed-up of the operation.
 
+\subsection{Generalisation performance of the DNN}
+\label{ssc:generalisation}
+The generalisation evaluates the prediction performance of the DNN on the test set, so on previously unseen tracks. When trained on the whole training set as outlined in \autoref{ssc:data-set-split} prediction of the displacement from images on the test track result in a mean absolute error of 0.08. While that value is not good, because it reflects 
+
+
 \subsection{Controller performance}
 Controller performance is influenced by different factors. Data composition, model capacity and forward propagation time are discussed in the following. \\
 %For finetuning the results we have basically three tuning possibilities: the neuron sizes, the amount of data and the composition of tracks the data was collected from. \
@@ -395,7 +398,7 @@ We identified critical factors for the controller performance and could also pro
 \label{ssc:outlook}
 %Change training data/camera view/angle etc to improve angle prediction performance. \\
 It is possible to further enhance controller performance. The biggest room for improvement is a different default driver. A slow overall speed helps immensiley to drive the car in a stable manner through the track. Furthermore, steering, accelerating and breaking also proivde room for improvement. For example the driver could use more angles of the range finder sensor to be able to drive faster through turns. Another improvement possibility is to merge the accelerating and braking module into one module, so the controller can only either accelerate or brake. Nengo Deep Learning is an interesting approach to see if controller performance could be improved further. Also a quantitative measurement of controller stability could help in finding the optimal controller capacity. \\
-It further needs to be investigated if it is possible to train a DNN that fulfills the recently discovered requirements. \\
+We further need to investigate if it is possible to train a DNN that fulfills the recently discovered requirements. \\
 To improve the performance of the DNN in inferring the displacement and angle of the car, slight manual feature extraction could be performed on the images. For example, the sky does not seem to provide any substantial information from which the displacement nor angle can be predicted and thus removing the top third of the image could improve the speed and accuracy during prediction and training. Furthremore, during the preprocessing it could make sense to perform mean image substraction on each image so that the image's values are centred around 0. 
 
 % each report should include all references that you cite in the work. Make sure
