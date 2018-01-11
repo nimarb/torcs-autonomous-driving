@@ -273,7 +273,7 @@ The controller of the car is designed based on Spiking Neural Networks (SNN) whi
 The controller is divided in several modular parts: acceleration, braking, steering, gear changing and clutching. We choose the modular approach, because it allows to test different modules independently from each other and also mix hard coded solutions with learned ones.
 
 \subsection{Nengo controller design}
-In the default driver's source code, the driving modules are based on different sensor inputs. The steering module is a function based on the car speed $v_x$, the lateral displacement $d_{lat}$ and the rotation angle $\alpha$. Both, the acceleration and the braking module are based on three range sensor signals $-5$, $0$ and $5$ degrees as well as $v_x$. We chose to implement the gear changing as a hard coded solution without any learning involved, since it is a simple if-else condition. It is further possible to neglect the clutching module, because it did not show to make any difference for driver performance even though it is implemented in the default driver. The final model architecture can be seen in \autoref{fig:nengo_architecture}.\\
+In the default driver's source code, the driving modules are based on different sensor inputs. The steering module is a function based on the car speed $v_x$, the lateral displacement $d_{lat}$ and the rotation angle $\alpha$. Both, the acceleration and the braking module are based on three range sensor signals with an angle of $-5$, $0$ and $5$ degree as well as $v_x$. We chose to implement the gear changing as a hard coded solution without any learning involved, since it is a simple if-else condition. It is further possible to neglect the clutching module, because it did not show to make any difference for driver performance even though it is implemented in the default driver. The final model architecture, including the DNN, can be seen in \autoref{fig:nengo_architecture}.\\
 \begin{figure}[ht]
 	\centering
 	%\input{attachments/alexnet-val_mae-img_size_compare-09042-12547-22111.pgf}
@@ -295,15 +295,15 @@ With Nengo deep learning \cite{nengo_dl}, an extension to implement classic deep
 This work focuses on a mixture of hard coded functionality and offline learning.
 
 \subsection{Evaluation metric}
-To evaluate the controller's performance, we used the following two metrics: Firstly, we investigate if the controller is able to finish one lap in a reasonable time and how fast he is compared to the default driver. Secondly, we judge the overall robustness of the controller. For this we observe the actual controller during driving and evaluated how stable he drives, e.g. how close he actually drives to the edge of the street.
+To evaluate the controller's performance, we used the following two metrics: Firstly, we investigate if the controller is able to finish one lap in a reasonable time and how fast he is compared to the default driver. Secondly, we judge the overall robustness of the controller. For this we observed the controller during driving and evaluated how stable it drives the car, e.g. how close it drives to the edge of the street.
 
 \subsection{Data Sources}
-\paragraph{TORCS-ROS default driver}
-The first and easiest to acquire is the default TORCS-ROS driver \cite{mirus_torcs-ros_2017}. The advantage of this driver is that he drives a maximum speed of \SI{149}{\km\per\hour} and drives very carefully. Which means, that he always tries to stick to the middle lane of the road and brakes heavily when he comes close to a turn. We believe that this is an easy to learn and robust driving style. However, this driver is very slow, as can be seen in \autoref{tab:torcs_laptime}.
+\paragraph{default TORCS-ROS driver}
+The default TORCS-ROS driver \cite{mirus_torcs-ros_2017}. The advantage of this driver is that it drives a maximum speed of \SI{149}{\km\per\hour} and drives very carefully. Which means, that it always tries to stick to the middle lane of the road and brakes heavily when it comes close to a turn. We believe that this is an easy to learn and robust driving style. However, this driver is very slow compared to the other drivers (\autoref{tab:torcs_laptime}).
 \paragraph{TORCS drivers}
 Furthermore, there are several drivers that are implemented in TORCS. Those drivers have no speed limit and their driving style approximates that of a real race. The cars drive very close to the edge of the road and drive very fast through turns. We think that this is a hard to learn and error-prone driving style, because small errors lead to disastrous effects.
 \paragraph{driving manually}
-Finally, there is the option to drive manually. As it turns out this is really difficult with a keyboard. Because fractions of seconds on the left and right arrows lead to very strong steering behavior and almost every time lead to a full turn-around or a far deviation of the track. This leads to a manual driving style that comes close to the default driver: very slow through turns and sticking close to the road center. However, because it is possible to drive as fast as one wants and in general one achieves a smoother driving of the car, we achieve a faster time than the default driver. \\
+Finally, there is the option to drive manually. As it turns out, this is really difficult with a keyboard. Because fractions of seconds on the left and right arrows lead to very strong steering behavior and almost every time lead to a full turn-around or a far deviation of the track. This leads to a manual driving style that comes close to the default driver: very slow through turns and sticking close to the road center. However, because it is possible to drive as fast as one wants and in general one achieves a smoother driving of the car, we achieve a faster time than the default driver. \\
 
 \begin{table}[ht]
 	\centering
@@ -322,7 +322,7 @@ Because of the above mentioned characteristics of the different driver styles, i
 \label{sc:evaluation}
 
 \subsection{Performance comparison between inferring angles vs. inferring displacement}
-For the final application, the same model is used to infer the car's displacement and its angle. During training, the loss function (MSE) and the metrics (MAE) are continueally evaluating the consolidated training performance. However, to determine the performance of predicting the individual values, two models were trained on each either predicting the angle or predicting the displacement of the car. \autoref{fig:mae-distance-vs-angle} shows the difference between angle and displacement prediction is shown. In training and validation set, the value of the displacement is in the range of -0.9 to 1.1 and the angle is in the range of -0.9 to 1.1. Thus, it may seem like the displacement value is more volatile, but the problem here is different. The value for the angle stays constant no matter the input image and thus is unreliable. 
+For the final application, the same model is used to infer the car's displacement and its angle. During training, the loss function (MSE) and the metrics (MAE) are continually evaluating the consolidated training performance. However, to determine the performance of predicting the individual values, two models were trained on each either predicting the angle or predicting the displacement of the car. \autoref{fig:mae-distance-vs-angle} shows the difference between angle and displacement prediction is shown. In training and validation set, the value of the displacement is in the range of -0.9 to 1.1 and the angle is in the range of -0.9 to 1.1. Thus, it may seem like the displacement value is more volatile, but the problem here is different. The value for the angle stays constant no matter the input image and thus is unreliable. 
 
 \begin{figure}[ht]
 	\centering
@@ -388,6 +388,7 @@ To elaborate the effects of noisy data input, we modified the input data with an
 
 \subsection{Controller and DNN}
 
+When we tested the controller and the DNN they failed to work together. The controller drove the car directly against the wall. One main problem is the too large propagation time, which makes the controller instable. Another problem lies in the unreliable inference values of the DNN.
 
 
 \section{Conclusion}
