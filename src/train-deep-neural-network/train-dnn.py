@@ -96,7 +96,8 @@ class ImgToSensorCNN:
                 w=80,
                 h=60,
                 optimiser="adamax",
-                model_architecture="alexnet"):
+                dim_choice=1,
+                camera_perspective="1st_no_hood",
         self.img_width = w
         self.img_height = h
         self.resize_imgs = True
@@ -121,6 +122,9 @@ class ImgToSensorCNN:
         self.optimiser = optimiser
         self.model_architecture = model_architecture
         self.img_iter = 0
+        # 0: only angle, 1: only distance, 2: angle&distance
+        self.dim_choice = dim_choice
+        self.camera_perspective = camera_perspective
 
     def set_val_set_in_percent(self, val_percent):
         """Set the training/validation data size in percent of available img files
@@ -348,6 +352,12 @@ class ImgToSensorCNN:
         metadata["test_mae"] = self.score[1]
         metadata["optimiser"] = self.optimiser
         metadata["model_architecture"] = self.model_architecture
+        if self.dim_choice == 2:
+            metadata["dim_choice"] = "distance and angle"
+        elif self.dim_choice == 1:
+            metadata["dim_choice"] = "distance"
+        elif self.dim_choice == 0:
+            metadata["dim_choice"] = "angle"
         json_str = json.dumps(metadata)
         save_data_dir = os.path.join(
             "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
@@ -429,11 +439,16 @@ class ImgToSensorCNN:
             loss=self.loss_function,
             optimizer=self.optimiser,
             metrics=[self.metrics])
+        
+        if self.dim_choice == 2:
         self.model.fit(
             x=train_data, y=train_target_vals, batch_size=self.batch_size,
             validation_data=(val_data, val_target_vals),
-            # x=train_data, y=self.train_angle_array, batch_size=self.batch_size,
-            # validation_data=(val_data, self.val_angle_array),
+                epochs=self.num_epochs, callbacks=cbs)
+        else:
+            self.model.fit(
+                x=train_data, y=train_target_vals[:, self.dim_choice], batch_size=self.batch_size,
+                validation_data=(val_data, val_target_vals[:, self.dim_choice]),
             epochs=self.num_epochs, callbacks=cbs)
 
     def cnn_alexnet(self):
@@ -466,8 +481,10 @@ class ImgToSensorCNN:
         self.model.add(Dense(4096))
         self.model.add(Activation("relu"))
         self.model.add(Dropout(0.5))
-        # self.model.add(Dense(1))
-        self.model.add(Dense(2))
+        if 2 == self.dim_choice:
+            self.model.add(Dense(2, activation='linear'))
+        else:
+            self.model.add(Dense(1, activation='linear'))
 
     def cnn_alexnet_no_dropout(self):
         """Uses the AlexNet network topology without dropout layers for the cnn model"""
@@ -497,8 +514,10 @@ class ImgToSensorCNN:
         self.model.add(Activation("relu"))
         self.model.add(Dense(4096))
         self.model.add(Activation("relu"))
-        # self.model.add(Dense(1))
-        self.model.add(Dense(2))
+        if 2 == self.dim_choice:
+            self.model.add(Dense(2, activation='linear'))
+        else:
+            self.model.add(Dense(1, activation='linear'))
 
     def cnn_tensorkart(self):
         """Uses NeuralKart/TensorKart model architecture"""
@@ -533,8 +552,27 @@ class ImgToSensorCNN:
         self.model.add(Dropout(drop_out))
         self.model.add(Dense(10, activation='relu'))
         self.model.add(Dropout(drop_out))
-        self.model.add(Dense(2))
-        # self.model.add(Dense(1))
+        if 2 == self.dim_choice:
+            self.model.add(Dense(2, activation='linear'))
+        else:
+            self.model.add(Dense(1, activation='linear'))
+
+        if 2 == self.dim_choice:
+            self.model.add(Dense(2, activation='linear'))
+        else:
+            self.model.add(Dense(1, activation='linear'))
+
+        self.model.add(Dense(256, activation='relu'))
+        self.model.add(Dense(128, activation='relu'))
+        self.model.add(Dense(64, activation='relu'))
+        if 2 == self.dim_choice:
+            self.model.add(Dense(2, activation='linear'))
+        else:
+            self.model.add(Dense(1, activation='linear'))
+        if 2 == self.dim_choice:
+            self.model.add(Dense(2, activation='linear'))
+        else:
+            self.model.add(Dense(1, activation='linear'))
 
     def cnn_simple(self):
         """Uses own simple model as cnn topology"""
@@ -560,17 +598,33 @@ class ImgToSensorCNN:
         self.model.add(Dense(512, activation='relu'))
         self.model.add(Dense(256, activation='relu'))
         self.model.add(Dense(128, activation='relu'))
-        #self.model.add(Dense(1))
-        self.model.add(Dense(2))
+        if 2 == self.dim_choice:
+            self.model.add(Dense(2, activation='linear'))
+        else:
+            self.model.add(Dense(1, activation='linear'))
+
+        self.model.add(Dense(32, activation='relu'))
+        if 2 == self.dim_choice:
+            self.model.add(Dense(2, activation='linear'))
+        else:
+            self.model.add(Dense(1, activation='linear'))
 
     def test_model(self):
         """Evaluate the loaded / trained model"""
-        self.load_test_set()
+        print("Evaluating model...")
+        if self.dim_choice == 2:
         self.score = self.model.evaluate(
                                     x=self.test_imgs,
                                     # y=self.test_vals[:, 0],
                                     y=self.test_vals,
                                     batch_size=self.batch_size)
+        else:
+            self.score = self.model.evaluate(
+                                        x=self.test_imgs,
+                                        y=self.test_vals[:, self.dim_choice],
+                                        batch_size=self.batch_size)
+
+        print("Model evaluated, score is:")
         print(self.score)
 
     def preditct_test_pics(self):
@@ -588,12 +642,13 @@ class ImgToSensorCNN:
         t1 = time.time()
         prediction = self.model.predict(x=data)
         dt = time.time() - t1
-        print ("TIME TO PROP: " + str(dt))
-        i = 0
 
+        pred_descr = ["angl", "dist"]
+        i = 0
         for val in prediction:
+            if self.dim_choice == 2:
             print(
-                "angle val: "
+                    "angl val: "
                 + str(self.test_vals[i, 0])
                 + "; pred: "
                 + str(val[0]))
@@ -602,6 +657,13 @@ class ImgToSensorCNN:
                 + str(self.test_vals[i, 1])
                 + "; pred: "
                 + str(val[1]))
+            else:
+                print(
+                    pred_descr[self.dim_choice]
+                    + " val: "
+                    + str(self.test_vals[i, self.dim_choice])
+                    + "; pred: "
+                    + str(val[0]))
             i += 1
 
 
