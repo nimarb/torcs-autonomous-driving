@@ -12,12 +12,12 @@ from textwrap import wrap
 
 """from: http://bkanuka.com/articles/native-latex-plots/"""
 def figsize(scale):
-    fig_width_pt = 516                          # Get this from LaTeX using \the\textwidth
+    fig_width_pt = 512                          # Get this from LaTeX using \the\textwidth or rather \the\columnwidth for IEEE docs
     inches_per_pt = 1.0/72.27                       # Convert pt to inch
     golden_mean = (np.sqrt(5.0)-1.0)/2.0            # Aesthetic ratio (you could change this)
     fig_width = fig_width_pt*inches_per_pt*scale    # width in inches
     fig_height = fig_width*golden_mean              # height in inches
-    fig_size = [fig_width,fig_height]
+    fig_size = [fig_width, fig_height]
     return fig_size
 
 
@@ -61,14 +61,15 @@ def plots_train_model_json(filenames, labels, yaxis_to_plot):
         plt.plot(
             np.arange(
                 item["num_epochs"]), item[yaxis_to_plot[1]], label=labels[i])
+                #65), item[yaxis_to_plot[1]][:65], label=labels[i])
         i += 1
 
-    plt.legend(loc='upper center', shadow=False, fontsize='large')
+    plt.legend(loc='upper center', shadow=False, fontsize='large', ncol=2)
     plt.yscale('log')
     plt.title("\n".join(wrap(
         json_strs[0][yaxis_to_plot[0]]
         + " of DNN on map: "
-        + json_strs[0]["data_name"].replace("_", " ")
+        + json_strs[0]["data_names"][0].replace("_", " ")
         + ".")))
     plt.ylabel(json_strs[0][yaxis_to_plot[0]])
     plt.xlabel("num_epochs".replace("_", " "))
@@ -88,13 +89,21 @@ def get_img_size_labels(file_names):
     for filename in file_names:
         json_str = json.load(open(filename))
         json_strs.append(json_str)
-    
+
+    i = 0
+    labs = ["angle", "distance"]
     for item in json_strs:
+        #labels.append(
+        #    labs[i])
+        #i += 1
         labels.append(
-            str(item["img_width"])
-            + "x"
-            + str(item["img_height"])
-            + "px")
+            "architecture: "
+        #    str(item["img_width"])
+        #    + "x"
+        #    + str(item["img_height"])
+        #    + "px; opt:"
+        #    + "px")
+            + item["camera_perspective"].replace("_", " "))
 
     return labels
 
@@ -119,14 +128,17 @@ def save_plots(file_names):
 
 
 if __name__ == "__main__":
-    yaxis_to_plot = ["loss_function", "loss_hist"]
+    yaxis_to_plot = ["metrics", "val_mae_hist"]
     if len(sys.argv) == 1:
         labels = []
-        versions = ["48493", "52163", "61302"]
+        versions = ["30567", "31159", "31785", "32414"]
         file_names = []
         for ver in versions:
             file_names.append(
-                "../models/learndrive-model-" + ver + "-metadata.json")
+                "../models/simple-distance-perspective_comp/"
+                + "modelslearndrive-model-"
+                + ver
+                + "-metadata.json")
 
     if len(sys.argv) >= 2:
         file_names = sys.argv[1:]
