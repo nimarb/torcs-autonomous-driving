@@ -52,8 +52,14 @@ DATA_NAMES = [
     "data-street_1-2laps-640x480",
     "data-wheel_1-2laps-640x480"]
 TEST_DATA_NAMES = [
+    #"data-cg_track_3-2laps-640x480"]
     "data-cg_track_2-2laps-640x480",
     "data-wheel_2-2laps-640x480"]
+
+if "data" in sys.argv[6]:
+    print("A single track to train was given, it is: " + sys.argv[6])
+    DATA_NAMES.clear()
+    DATA_NAMES.append(sys.argv[6])
 
 if "DigitsBoxBMW2" == platform.node():
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
@@ -102,6 +108,7 @@ class ImgToSensorCNN:
                 learning_rate=0.00001,
                 dim_choice=1,
                 camera_perspective="1st_no_hood",
+                data_n=None):
         self.img_width = w
         self.img_height = h
         self.resize_imgs = True
@@ -130,6 +137,10 @@ class ImgToSensorCNN:
         # 0: only angle, 1: only distance, 2: angle&distance
         self.dim_choice = dim_choice
         self.camera_perspective = camera_perspective
+        print("Data_n is: " + data_n)
+        if data_n is not None:
+            DATA_NAMES.clear()
+            DATA_NAMES.append(data_n)
 
     def set_val_set_in_percent(self, val_percent):
         """Set the training/validation data size in percent of available img files
@@ -348,6 +359,8 @@ class ImgToSensorCNN:
         metadata["loss_hist"] = self.loss_hist.loss
         metadata["data_name"] = DATA_NAME
         metadata["test_data_name"] = TEST_DATA_NAME
+        metadata["data_names"] = DATA_NAMES
+        metadata["test_data_names"] = TEST_DATA_NAMES
         metadata["time_hist"] = self.time_hist.times
         metadata["train_loss_hist"] = self.fit_hist.history["loss"]
         metadata["train_mae_hist"] = self.fit_hist.history["mean_absolute_error"]
@@ -356,6 +369,7 @@ class ImgToSensorCNN:
         metadata["test_loss"] = self.score[0]
         metadata["test_mae"] = self.score[1]
         metadata["optimiser"] = self.optimiser
+        metadata["camera_perspective"] = self.camera_perspective
         metadata["model_architecture"] = self.model_architecture
         metadata["learning_rate"] = self.learning_rate
         if self.dim_choice == 2:
@@ -945,9 +959,14 @@ if __name__ == "__main__":
     elif len(sys.argv) == 5:
         cnn = ImgToSensorCNN(
             w=int(sys.argv[2]), h=int(sys.argv[3]), model_architecture=sys.argv[4])
+    elif len(sys.argv) == 7:
+        cnn = ImgToSensorCNN(
+            w=int(sys.argv[2]), h=int(sys.argv[3]), model_architecture=sys.argv[4], camera_perspective=sys.argv[5], data_n=sys.argv[6])
 
     cnn.set_val_set_in_percent(10)
     if train:
+        DATA_NAMES.clear()
+        DATA_NAMES.append(sys.argv[6])
         cnn.load_data()
         cnn.shuffle_data_arrays()
         cnn.cnn_model()
