@@ -386,20 +386,19 @@ To elaborate the effects of noisy data input, we modified the input data with an
 % std deviation 0.3 & 9ms interrupt -> 2:30:31 -> big slalom makes driver more stable in critical turns because of lower overall velocity
 
 \subsection{Controller and DNN}
-
-When we tested the controller and the DNN they failed to work together. The controller drove the car directly against the wall. One main problem is the too large propagation time, which makes the controller instable. Another problem lies in the unreliable inference values of the DNN.
-
+When we tested the controller and the DNN they failed to work together. The controller drove the car directly against the wall. One main problem is the too long propagation time from image to displacement and angle values, which makes the controller instable. Another problem lies in the unreliable inference values of the DNN, particularily the constant angle output as described in \autoref{ssc:generalisation}.
 
 \section{Conclusion}
 \label{sc:conclusion}
 We identified critical factors for the controller performance and could also provide quantitative guidelines for controller stablity. A very important factor is the propagation time. A overall propagation time of less than \SI{12}{\milli\second} is desirable and puts an upper limit of approximately \SI{9}{\milli\second} on the capacity of the DNN. We further discovered that it is possible to drive the car stable, but slow, with a \SI{9}{\milli\second} propagation delay and 30\% standard deviation around the signal value. This points out a clear focus for the design of the DNN: it is more desirable to have a fast and less accurate DNN than a slow and accurate one. \\
+As we realised the propagation time limit late during our research, we did not manage to successfully mitigagte the issue and speed up the propagation time. We were able to infer the car displacement from an input image with a mean absolute error of 0.2 but unable to reliably infer the angle of the car, which resulted in a constant output of the average angle. To mitigate this problem, we tried various methods as outlined in \autoref{ssc:generalisation} and further methods as discussed in \autoref{ssc:outlook} could be tried.
 
 \subsection{Outlook}
 \label{ssc:outlook}
 %Change training data/camera view/angle etc to improve angle prediction performance. \\
 It is possible to further enhance controller performance. The biggest room for improvement is a different default driver. A slow overall speed helps immensiley to drive the car in a stable manner through the track. Furthermore, steering, accelerating and breaking also proivde room for improvement. For example the driver could use more angles of the range finder sensor to be able to drive faster through turns. Another improvement possibility is to merge the accelerating and braking module into one module, so the controller can only either accelerate or brake. Nengo Deep Learning is an interesting approach to see if controller performance could be improved further. Also a quantitative measurement of controller stability could help in finding the optimal controller capacity. \\
 We further need to investigate if it is possible to train a DNN that fulfills the recently discovered requirements. \\
-To improve the performance of the DNN in inferring the displacement and angle of the car, slight manual feature extraction could be performed on the images. For example, the sky does not seem to provide any substantial information from which the displacement nor angle can be predicted and thus removing the top third of the image could improve the speed and accuracy during prediction and training. Furthremore, during the preprocessing it could make sense to perform mean image substraction on each image so that the image's values are centred around 0. 
+To improve the performance of the DNN in inferring the displacement and angle of the car, slight manual feature extraction could be performed on the images. For example, the sky does not seem to provide any substantial information from which the displacement nor angle can be predicted and thus removing the top third of the image could improve the speed and accuracy during prediction and training. Furthermore, during the preprocessing it could make sense to perform mean image substraction on each image so that the image's values are centred around 0. Last, more diverse training data with large value deviations from driving at the centre of the road might improve angle and displacement prediction accuracy and could allow the car to also recover from driving faults, as the displacement of the car could be inferred even off track. 
 
 % each report should include all references that you cite in the work. Make sure
 % that you include all references!
