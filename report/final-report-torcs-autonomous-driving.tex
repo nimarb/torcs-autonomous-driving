@@ -163,7 +163,8 @@ AlexNet is a network designed for image classification tasks, such as the ImageN
 \begin{equation}
 	f(x) = max(x, 0)
 \end{equation}
-To prevent the activation function from cropping the output to values greater than zero, a linear activation function is used instead: $ f(x) = x $.
+To prevent the activation function from cropping the output to values greater than zero, a linear activation function is used instead: $ f(x) = x $. \\
+Unless noted otherwise, we used the map \texttt{Olethros Road 1} with the testing network as training data. 
 
 %\subsection{Convolutional neural network}
 %TODO: DESCRIBE BASICS OF CNN
@@ -182,7 +183,7 @@ A data point consists of an input image (see \autoref{ssc:input-images}) with a 
 
 \subsection{Input images}
 \label{ssc:input-images}
-The image data is acquired from TORCS \cite{TORCS} using ROS via the TORCS-ROS node \cite{mirus_torcs-ros_2017}. 
+The image data is acquired from TORCS \cite{TORCS} using ROS via the TORCS-ROS node \cite{mirus_torcs-ros_2017}. The image values are not normalised because all images have the same scale to begin with (0-255). The images are processed in the RGB colour space as this removes one more processing step. Furthermore, should a different colour space be better suited, for example HSV, then the DNN will learn the transformation itself as a colour space transformation is a simple linear transformation operation only. 
 
 \subsubsection{Choosing a camera perspective}
 TORCS provides four main car camera perspectives: 
@@ -205,8 +206,8 @@ The different perspectives are shown in \autoref{fig:car_views}.
 
 \begin{figure}[ht]
 	\centering
-	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
-	\caption{Mean absolute error of the same DNN trained with multiple camera angles}
+	\includegraphics[width=\columnwidth]{attachments/simple-val_mae-perspective_comp-30567-31159-31785-32414.pdf}
+	\caption{Mean absolute error of the simple DNN trained with images from the camera perspectives shown in \autoref{fig:car_views}. 1st means first person while 3rd describes a 3rd person perspective.}
 	\label{fig:camera-evaluation}
 \end{figure}
 
@@ -247,19 +248,20 @@ A plethora of different optimisers are available for use in the backpropagation 
 \subsection{Choosing a DNN architecture}
 \label{ssc:architecture-choice}
 As a wide variety of DNN architectures are possible it was out of the scope of this course to develop and test a completely new architecture from scratch. Thus, we studied existing architectures and introduced modifications to mold the model towards regression tasks. \\
-The network input is an image for which a Convolutional Neural Network (CNN) is well suited. As the CNN also functions as a feature extractor, manual feature extraction is not necessary. Multiple CNN layers are then followed by Fully Connected Layers (FCL), which are individual neurons each connected to one another. Finally, the last FCL has only two outputs which represent the two numbers to be inferred: displacement and angle. We tested various model architectures against each other and played around with adding more/less Convolutional or Fully Connected Layers. In the end, we achieved the best result with a model shown in \autoref{fig:model-architecture}. The conclusion was reached due to the performance in predicting the correct values from the input images, so the architecture with the lowest mean average error as seen in \autoref{fig:model-architecture-comparison}.
+The network input is an image for which a Convolutional Neural Network (CNN) is well suited. As the CNN also functions as a feature extractor, manual feature extraction is not necessary. Multiple CNN layers are then followed by Fully Connected Layers (FCL), which are individual neurons each connected to one another. Finally, the last FCL has only two outputs which represent the two numbers to be inferred: displacement and angle. We tested various model architectures against each other and played around with adding more/less Convolutional or Fully Connected Layers. In the end, as shown in \autoref{fig:model-architecture-comparison} the error stayed more or less constant, irrespective of adding or removing layers. \\
+The architecture of the simple model is shown in \autoref{fig:model-architecture}. \texttt{plu2d} referrs to two FCL being added to the model, while \texttt{min2d} indicates two FCL being removed. \texttt{invcnv} describes that the CNN layers were inverted, meaning that the first CNN layer has a small filter size (128) while the last one is larger (384). The adv model is different in that we added one more CNN layer with filter size 256.
 
 \begin{figure}[ht]
 	\centering
-	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
-	\caption{Structure of the final model architecture used in the DNN for predicting displacement and angle of the car}
+	\includegraphics[width=\columnwidth]{attachments/model-52797-rot.png}
+	\caption{Structure of the simple DNN model}
 	\label{fig:model-architecture}
 \end{figure}
 
 \begin{figure}[ht]
 	\centering
-	\fbox{\rule{0pt}{2cm} \rule{1.0\linewidth}{0pt}}
-	\caption{Comparison of the mean average error of different model architectures}
+	\includegraphics[width=\columnwidth]{attachments/simple-val_mae-architecture_comp-02697-52797-65029-75770-89095.pdf}
+	\caption{Comparison of the mean absolute error of different model architectures. Even though significant changes were introduced, the error did stay relatively constant.}
 	\label{fig:model-architecture-comparison}
 \end{figure}
 
@@ -322,17 +324,18 @@ Because of the above mentioned characteristics of the different driver styles, i
 \label{sc:evaluation}
 
 \subsection{Performance comparison between inferring angles vs. inferring displacement}
-For the final application, the same model is used to infer the car's displacement and its angle. During training, the loss function (MSE) and the metrics (MAE) are continueally evaluating the consolidated training performance. However, to determine the performance of predicting the individual values, two models were trained on each either predicting the angle or predicting the displacement of the car. \autoref{fig:mae-distance-vs-angle} shows the difference between angle and displacement prediction is shown. In training and validation set, the value of the displacement is in the range of -0.9 to 1.1 and the angle is in the range of -0.9 to 1.1. Thus, it can be concluded that the displacement prediction performance especially still needs to be worked on. 
+For the final application, the same model is used to infer the car's displacement and its angle. During training, the loss function (MSE) and the metrics (MAE) are continueally evaluating the consolidated training performance. However, to determine the performance of predicting the individual values, two models were trained on each either predicting the angle or predicting the displacement of the car. \autoref{fig:mae-distance-vs-angle} shows the difference between angle and displacement prediction is shown. In training and validation set, the value of the displacement is in the range of -0.9 to 1.1 and the angle is in the range of -0.9 to 1.1. Thus, it may seem like the displacement value is more volatile, but the problem here is different. The value for the angle stays constant no matter the input image and thus is unreliable. 
 
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=\columnwidth]{attachments/alexnet-val_mae-angle_dist_comp-05425-86589.pdf}
 	%\input{attachments/alexnet-val_mae-distance_angle_error-84095-86589-98073_-.pgf}
-	\caption{Mean absolute error of two test networks trained only to predict either the displacement or angle of the car}
+	\caption{Mean absolute error of two test networks trained only to predict either the displacement or angle of the car. The DNN learned the average angle over all data points and thus outputs a constant value for it.}
 	\label{fig:mae-distance-vs-angle}
 \end{figure}
 
 \subsection{Prediction performance of the DNN}
+The prediction performance indicates the time in ms which the DNN needs for one prediction given a single input image. Tested on an Intel Core i7-2650M the time fluctuates but stays within \SI{50}{\milli\second} and \SI{200}{\milli\second}. While that time is insufficient for the controller, the prediction can be carried out on a CUDA GPU which should result in a significant speed-up of the operation.
 
 \subsection{Controller performance}
 Controller performance is influenced by different factors. Data composition, model capacity and forward propagation time are discussed in the following. \\
@@ -392,7 +395,8 @@ We identified critical factors for the controller performance and could also pro
 \label{ssc:outlook}
 %Change training data/camera view/angle etc to improve angle prediction performance. \\
 It is possible to further enhance controller performance. The biggest room for improvement is a different default driver. A slow overall speed helps immensiley to drive the car in a stable manner through the track. Furthermore, steering, accelerating and breaking also proivde room for improvement. For example the driver could use more angles of the range finder sensor to be able to drive faster through turns. Another improvement possibility is to merge the accelerating and braking module into one module, so the controller can only either accelerate or brake. Nengo Deep Learning is an interesting approach to see if controller performance could be improved further. Also a quantitative measurement of controller stability could help in finding the optimal controller capacity. \\
-It further needs to be investigated if it is possible to train a DNN that fulfills the recently discovered requirements.
+It further needs to be investigated if it is possible to train a DNN that fulfills the recently discovered requirements. \\
+To improve the performance of the DNN in inferring the displacement and angle of the car, slight manual feature extraction could be performed on the images. For example, the sky does not seem to provide any substantial information from which the displacement nor angle can be predicted and thus removing the top third of the image could improve the speed and accuracy during prediction and training. Furthremore, during the preprocessing it could make sense to perform mean image substraction on each image so that the image's values are centred around 0. 
 
 % each report should include all references that you cite in the work. Make sure
 % that you include all references!
