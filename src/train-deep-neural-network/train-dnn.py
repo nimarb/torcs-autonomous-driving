@@ -56,10 +56,11 @@ TEST_DATA_NAMES = [
     "data-cg_track_2-2laps-640x480",
     "data-wheel_2-2laps-640x480"]
 
-if "data" in sys.argv[6]:
-    print("A single track to train was given, it is: " + sys.argv[6])
-    DATA_NAMES.clear()
-    DATA_NAMES.append(sys.argv[6])
+if len(sys.argv) > 6:
+    if "data" in sys.argv[6]:
+        print("A single track to train was given, it is: " + sys.argv[6])
+        DATA_NAMES.clear()
+        DATA_NAMES.append(sys.argv[6])
 
 if "DigitsBoxBMW2" == platform.node():
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
@@ -127,7 +128,7 @@ class ImgToSensorCNN:
         self.img_list = []
         self.model = object
         self.batch_size = 32
-        self.num_epochs = 100
+        self.num_epochs = 50
         self.loss_function = "mean_squared_error"
         self.metrics = "mae"
         self.model_name = model_name
@@ -137,8 +138,8 @@ class ImgToSensorCNN:
         # 0: only angle, 1: only distance, 2: angle&distance
         self.dim_choice = dim_choice
         self.camera_perspective = camera_perspective
-        print("Data_n is: " + data_n)
         if data_n is not None:
+            print("Data_n is: " + data_n)
             DATA_NAMES.clear()
             DATA_NAMES.append(data_n)
 
@@ -178,7 +179,7 @@ class ImgToSensorCNN:
         """Load all images into list, sorted by file name (pad with zeros!)
         
         Arguments:
-            img_list: 
+            img_list:
             data_dir: """
         img_name_filter = glob.glob(
                             data_dir + "/images/*" + self.img_data_type)
@@ -228,22 +229,41 @@ class ImgToSensorCNN:
 
     def load_test_set(self):
         """Load test set from a different track"""
-        #_imgs = np.empty(self.num_test_set, dtype=object)
         _imgs_raw = []
-        self.load_imgs(_imgs_raw, TEST_DATA_DIR)
+        _distance_array = np.empty(0)
+        _angle_array = np.empty(0)
+        for track in TEST_DATA_DIRS:
+            self.load_imgs(_imgs_raw, track)
+            _distance_array = np.append(
+                _distance_array, np.load(track + "/sensor/distance.npy"))
+            _angle_array = np.append(
+                _angle_array, np.load(track + "/sensor/angle.npy"))
+
         print("img_list contains: " + str(len(_imgs_raw)) + " items")
-        _distance_array = np.load(TEST_DATA_DIR + "/sensor/distance.npy")
-        _angle_array = np.load(TEST_DATA_DIR + "/sensor/angle.npy")
-        _imgs = np.array(_imgs_raw)
-        # Test data is from a different track but always a rnd subset
-        self.shuffle_three_arrays_in_unison(
-            _imgs, _angle_array, _distance_array)
-        _imgs = _imgs[:self.num_test_set]
+        print("test labels contain: " + str(_distance_array.size) + " items")
+        if len(_imgs_raw) == _distance_array.size:
+            self.num_test_set = len(_imgs_raw)
+        else:
+            print("ERROR: npy array size and num_test_imgs doesnt match")
+
         self.test_imgs = np.empty(
             (self.num_test_set, self.img_height, self.img_width, 3),
             dtype=object)
-        for i in range(self.num_test_set):
-            self.test_imgs[i, :, :, :] = _imgs[i]
+
+        for i in range(0, self.num_test_set):
+            self.test_imgs[i, :, :, :] = _imgs_raw[i]
+
+        _imgs_raw = None
+        #_imgs = np.empty(self.num_test_set, dtype=object)
+        #_imgs = np.array(_imgs_raw)
+        #print("_imgs array contains: " + str(_imgs.size) + " items")
+        #_imgs = _imgs[:self.num_test_set]
+        #for i in range(self.num_test_set):
+        #    self.test_imgs[i, :, :, :] = _imgs[i]
+            
+        # Test data is from a different track but always a rnd subset
+        self.shuffle_three_arrays_in_unison(
+            self.test_imgs, _angle_array, _distance_array)
 
         self.test_vals = np.empty((self.num_test_set, 2))
         self.test_vals[:, 0] = _angle_array[:self.num_test_set]
@@ -289,7 +309,12 @@ class ImgToSensorCNN:
         print(arr2)
 
     def shuffle_three_arrays_in_unison(self, a, b, c):
-        """Shuffles three given arrays in unison with each other"""
+        """Shuffles three given arrays in unison with each other
+        
+        Arguments:
+            a: numpy array
+            b: numpy array
+            c: numpy array"""
         rng_s = np.random.get_state()
         np.random.shuffle(a)
         np.random.set_state(rng_s)
@@ -407,7 +432,11 @@ class ImgToSensorCNN:
             model: keras.model, filename"""
         if name:
             self.model_name = name
-        self.model = load_model("../models/" + self.model_name + ".hd5")
+        
+        _model_path = os.path.join(
+            "/home/nb/progs/torcs-autonomous-driving/src/models",
+            self.model_name + ".hd5")
+        self.model = load_model(_model_path)
         print("Loaded model")
 
     def cnn_model(self):
@@ -479,15 +508,15 @@ class ImgToSensorCNN:
             metrics=[self.metrics])
         
         if self.dim_choice == 2:
-        self.model.fit(
-            x=train_data, y=train_target_vals, batch_size=self.batch_size,
-            validation_data=(val_data, val_target_vals),
+            self.model.fit(
+                x=train_data, y=train_target_vals, batch_size=self.batch_size,
+                validation_data=(val_data, val_target_vals),
                 epochs=self.num_epochs, callbacks=cbs)
         else:
             self.model.fit(
                 x=train_data, y=train_target_vals[:, self.dim_choice], batch_size=self.batch_size,
                 validation_data=(val_data, val_target_vals[:, self.dim_choice]),
-            epochs=self.num_epochs, callbacks=cbs)
+                epochs=self.num_epochs, callbacks=cbs)
 
     def cnn_alexnet(self):
         """Uses the AlexNet network topology for the cnn model"""
@@ -559,32 +588,33 @@ class ImgToSensorCNN:
 
     def cnn_tensorkart(self):
         """Uses NeuralKart/TensorKart model architecture"""
-        # self.model.add(BatchNormalization(input_shape=(self.img_height, self.img_width, 3)))
+        self.model.add(BatchNormalization(
+            input_shape=(self.img_height, self.img_width, 3)))
         self.model.add(
             Conv2D(
                 24,
-                input_shape=(self.img_height, self.img_width, 3),
-                                kernel_size=(5, 5),
-                                strides=(2, 2),
-                                activation='relu'))
+                kernel_size=(5, 5),
+                strides=(2, 2),
+                activation='relu'))
         self.model.add(BatchNormalization())
         self.model.add(
             Conv2D(
                 36,
-                                kernel_size=(5, 5),
-                                strides=(2, 2),
-                                activation='relu'))
+                kernel_size=(5, 5),
+                strides=(2, 2),
+                activation='relu'))
         self.model.add(BatchNormalization())
         self.model.add(
             Conv2D(
                 48,
-                                kernel_size=(5, 5),
-                                strides=(2, 2),
-                                activation='relu'))
+                kernel_size=(5, 5),
+                strides=(2, 2),
+                activation='relu'))
         self.model.add(BatchNormalization())
         self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
         self.model.add(BatchNormalization())
-        self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+        #self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+        #self.model.add(MaxPooling2D(pool_size=(2, 2)))
         self.model.add(Flatten())
         self.model.add(Dense(1164, activation='relu'))
         drop_out = 0.4
@@ -605,24 +635,24 @@ class ImgToSensorCNN:
         self.model.add(
             Conv2D(
                 256,
-            input_shape=(self.img_height, self.img_width, 3),
-            kernel_size=(7, 7),
-            padding='same',
-            activation='relu'))
+                input_shape=(self.img_height, self.img_width, 3),
+                kernel_size=(7, 7),
+                padding='same',
+                activation='relu'))
         self.model.add(MaxPooling2D(pool_size=(2, 2)))
         self.model.add(
             Conv2D(
                 256,
-                                kernel_size=(5, 5),
-                                activation='relu',
-                                padding='same'))
+                kernel_size=(5, 5),
+                activation='relu',
+                padding='same'))
         self.model.add(MaxPooling2D(pool_size=(2, 2)))
         self.mode.add(
             Conv2D(
                 128,
-                                kernel_size=(3, 3),
-                                activation='relu',
-                                padding='same'))
+                kernel_size=(3, 3),
+                activation='relu',
+                padding='same'))
         self.model.add(MaxPooling2D(pool_size=(2, 2)))
         self.model.add(Flatten())
         self.model.add(Dense(2048, activation='relu'))
@@ -865,11 +895,11 @@ class ImgToSensorCNN:
         """Evaluate the loaded / trained model"""
         print("Evaluating model...")
         if self.dim_choice == 2:
-        self.score = self.model.evaluate(
-                                    x=self.test_imgs,
-                                    # y=self.test_vals[:, 0],
-                                    y=self.test_vals,
-                                    batch_size=self.batch_size)
+            self.score = self.model.evaluate(
+                                        x=self.test_imgs,
+                                        # y=self.test_vals[:, 0],
+                                        y=self.test_vals,
+                                        batch_size=self.batch_size)
         else:
             self.score = self.model.evaluate(
                                         x=self.test_imgs,
@@ -881,34 +911,37 @@ class ImgToSensorCNN:
 
     def preditct_test_pics(self):
         """Use model to predict values for image data from the test set"""
+        i = 10
         data = np.empty(
-                (1, self.img_height, self.img_width, 3),
-                #(self.num_test_set, self.img_height, self.img_width, 3),
+                (i, self.img_height, self.img_width, 3),
                 dtype=object)
-        #for i in range(self.num_test_set):
-        for i in range(1):
-            data[i, :, :, :] = self.test_imgs[i]
-        #i = 0
-        #data[i, :, :, :] = self.test_imgs[i]
 
+        #for i in range(self.num_test_set):
+        for j in range(i):
+            data[j, :, :, :] = self.test_imgs[j, :, :, :]
+
+        print("Predicting test pictures, " + str(self.num_test_set) + " pics to predict...")
+        print("shape: " + str(data.shape))
         t1 = time.time()
-        prediction = self.model.predict(x=data)
+        prediction = self.model.predict(x=data, verbose=1)
+        #prediction = self.model.predict(x=self.test_imgs)
         dt = time.time() - t1
+        print("TIME TO PROP: " + str(dt))
 
         pred_descr = ["angl", "dist"]
         i = 0
         for val in prediction:
             if self.dim_choice == 2:
-            print(
+                print(
                     "angl val: "
-                + str(self.test_vals[i, 0])
-                + "; pred: "
-                + str(val[0]))
-            print(
-                "dist val: "
-                + str(self.test_vals[i, 1])
-                + "; pred: "
-                + str(val[1]))
+                    + str(self.test_vals[i, 0])
+                    + "; pred: "
+                    + str(val[0]))
+                print(
+                    "dist val: "
+                    + str(self.test_vals[i, 1])
+                    + "; pred: "
+                    + str(val[1]))
             else:
                 print(
                     pred_descr[self.dim_choice]
@@ -965,15 +998,15 @@ if __name__ == "__main__":
 
     cnn.set_val_set_in_percent(10)
     if train:
-        DATA_NAMES.clear()
-        DATA_NAMES.append(sys.argv[6])
         cnn.load_data()
         cnn.shuffle_data_arrays()
         cnn.cnn_model()
+        cnn.load_test_set()
         cnn.test_model()
-        # cnn.preditct_test_pics()
+        cnn.preditct_test_pics()
         cnn.save()
     else:
-        cnn.load_model("learndrive-model-89752")
+        cnn.load_model("model_arch-val_mae-comp-large/modelslearndrive-model-21063")
+        cnn.load_test_set()
         cnn.test_model()
         cnn.preditct_test_pics()
