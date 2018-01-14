@@ -361,19 +361,26 @@ class ImgToSensorCNN:
         #    binwidth),
         #    linewidth=0.5)
         # plt.show()
-
-    def visualise_training_data(self):
-        print("Showing train_imgs with assigned values...")
+    
+    def print_train_arr_stats(self):
         print(
             "Distance array: max="
             + str(max(self.train_distance_array))
             + "; min="
-            + str(min(self.train_distance_array)))
+            + str(min(self.train_distance_array))
+            + "; avg: "
+            + str(np.mean(self.train_distance_array)))
         print(
             "Angle array: max="
             + str(max(self.train_angle_array))
             + "; min="
-            + str(min(self.train_angle_array)))
+            + str(min(self.train_angle_array))
+            + "; avg: "
+            + str(np.mean(self.train_angle_array)))
+
+    def visualise_training_data(self):
+        print("Showing train_imgs with assigned values...")
+        self.print_train_arr_stats()
 
         i = 0
         for arr_img in self.train_imgs:
@@ -1078,7 +1085,8 @@ if __name__ == "__main__":
         cnn.load_data()
         cnn.split_into_train_val_set()
         cnn.shuffle_data_arrays()
-        cnn.visualise_training_data()
+        cnn.print_train_arr_stats()
+        #cnn.visualise_training_data()
         cnn.cnn_model()
         cnn.load_test_set()
         cnn.test_model()
