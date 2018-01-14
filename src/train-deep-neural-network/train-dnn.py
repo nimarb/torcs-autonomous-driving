@@ -110,7 +110,9 @@ class ImgToSensorCNN:
                 learning_rate=0.00001,
                 dim_choice=1,
                 camera_perspective="1st_no_hood",
-                data_n=None):
+                data_n=None,
+                normalise_imgs=False,
+                normalise_arrays=False):
         self.img_width = w
         self.img_height = h
         self.resize_imgs = True
@@ -139,6 +141,8 @@ class ImgToSensorCNN:
         # 0: only angle, 1: only distance, 2: angle&distance
         self.dim_choice = dim_choice
         self.camera_perspective = camera_perspective
+        self.normalise_imgs = normalise_imgs
+        self.normalise_arrays = normalise_arrays
         if data_n is not None:
             print("Data_n is: " + data_n)
             DATA_NAMES.clear()
@@ -175,16 +179,28 @@ class ImgToSensorCNN:
         print("self.imgs np array contains: " + str(self.imgs.size) + " items")
         print("Labels contain: " + str(self.distance_array.size) + " items")
 
-    def load_imgs(self, img_list, data_dir):
+    def load_imgs(self, img_list, data_dir, a=0, b=1):
         """Load all images into list, sorted by file name (pad with zeros!)
         
         Arguments:
             img_list:
-            data_dir: """
+            data_dir:
+            a: int, min value of img to normalise to
+            b: int, max value of img to normalise to"""
         img_name_filter = glob.glob(
                             data_dir + "/images/*" + self.img_data_type)
         for filename in sorted(img_name_filter):
             img = cv2.imread(filename)
+            if self.normalise_imgs:
+                norm_img = np.zeros(img.shape)
+                norm_img = cv2.normalize(
+                    img,
+                    norm_img,
+                    alpha=a,
+                    beta=b,
+                    norm_type=cv2.NORM_MINMAX,
+                    dtype=cv2.CV_32F)
+                img = norm_img
             if self.resize_imgs:
                 (h, w, _) = img.shape
                 if h != self.img_height and w != self.img_width:
@@ -219,8 +235,13 @@ class ImgToSensorCNN:
                 img_iter += 1
         print("All imgs randomly loaded into np array")
 
-    def load_labels(self, data_dir):
-        """Load recorded sensor data into numpy arrays"""
+    def load_labels(self, data_dir, a=-1, b=1):
+        """Load recorded sensor data into numpy arrays
+        
+        Arguments:
+            data_dir: 
+            a: 
+            b: """
         _distance_array = np.load(data_dir + "/sensor/distance.npy")
         _angle_array = np.load(data_dir + "/sensor/angle.npy")
         self.distance_array = np.append(self.distance_array, _distance_array)
