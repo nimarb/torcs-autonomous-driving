@@ -8,6 +8,7 @@ from random import sample
 import random
 import time
 
+from PIL import Image
 from keras.models import Sequential, load_model
 from keras.layers import Flatten, Dense, Activation, Dropout, LeakyReLU, ZeroPadding2D
 from keras.layers.pooling import MaxPooling2D
@@ -33,23 +34,23 @@ TEST_DATA_NAME = "data-cg_track_2-2laps-640x480"
 
 DATA_NAMES = [
     "data-olethros_road_1-2laps-640x480",
-    "data-aalborg-2laps-640x480",
-    "data-alpine_1-2laps-640x480",
-    "data-alpine_2-2laps-640x480",
-    "data-brondehach-2laps-640x480",
-    "data-cg_speedway_1-2laps-640x480",
-    "data-cg_track_3-2laps-640x480",
-    "data-corkscrew-2laps-640x480",
-    "data-e_road-2laps-640x480",
-    "data-etrack_1-2laps-640x480",
-    "data-etrack_2-2laps-640x480",
-    "data-etrack_3-2laps-640x480",
-    "data-etrack_4-2laps-640x480",
-    "data-etrack_6-2laps-640x480",
-    "data-forza-2laps-640x480",
-    "data-ruudskogen-2laps-640x480",
-    #"data-spring-2laps-640x480",
-    "data-street_1-2laps-640x480",
+    #"data-aalborg-2laps-640x480",
+    #"data-alpine_1-2laps-640x480",
+    #"data-alpine_2-2laps-640x480",
+    #"data-brondehach-2laps-640x480",
+    #"data-cg_speedway_1-2laps-640x480",
+    #"data-cg_track_3-2laps-640x480",
+    #"data-corkscrew-2laps-640x480",
+    #"data-e_road-2laps-640x480",
+    #"data-etrack_1-2laps-640x480",
+    #"data-etrack_2-2laps-640x480",
+    #"data-etrack_3-2laps-640x480",
+    #"data-etrack_4-2laps-640x480",
+    #"data-etrack_6-2laps-640x480",
+    #"data-forza-2laps-640x480",
+    #"data-ruudskogen-2laps-640x480",
+    ####"data-spring-2laps-640x480",
+    #"data-street_1-2laps-640x480",
     "data-wheel_1-2laps-640x480"]
 TEST_DATA_NAMES = [
     #"data-cg_track_3-2laps-640x480"]
@@ -173,7 +174,6 @@ class ImgToSensorCNN:
         print("All imgs loaded into np array")
         print("self.imgs np array contains: " + str(self.imgs.size) + " items")
         print("Labels contain: " + str(self.distance_array.size) + " items")
-        self.split_into_train_val_set()
 
     def load_imgs(self, img_list, data_dir):
         """Load all images into list, sorted by file name (pad with zeros!)
@@ -361,6 +361,32 @@ class ImgToSensorCNN:
         #    binwidth),
         #    linewidth=0.5)
         # plt.show()
+
+    def visualise_training_data(self):
+        print("Showing train_imgs with assigned values...")
+        print(
+            "Distance array: max="
+            + str(max(self.train_distance_array))
+            + "; min="
+            + str(min(self.train_distance_array)))
+        print(
+            "Angle array: max="
+            + str(max(self.train_angle_array))
+            + "; min="
+            + str(min(self.train_angle_array)))
+
+        i = 0
+        for arr_img in self.train_imgs:
+            print(
+                "Dist: "
+                + str(self.train_distance_array[i])
+                + "; angl: "
+                + str(self.train_angle_array[i]))
+            print("arr_img shape: " + str(arr_img.shape))
+            cv2.imshow("Img" + str(i), self.train_imgs[i])
+            cv2.waitKey()
+            cv2.destroyWindow("Img" + str(i))
+            i += 1
 
     def save(self):
         """Saves all data"""
@@ -1031,7 +1057,9 @@ if __name__ == "__main__":
     cnn.set_val_set_in_percent(10)
     if train:
         cnn.load_data()
+        cnn.split_into_train_val_set()
         cnn.shuffle_data_arrays()
+        cnn.visualise_training_data()
         cnn.cnn_model()
         cnn.load_test_set()
         cnn.test_model()
