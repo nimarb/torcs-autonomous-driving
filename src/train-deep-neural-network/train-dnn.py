@@ -495,6 +495,8 @@ class ImgToSensorCNN:
             self.cnn_simple_very_small()
         elif "simple_small_leaky_relu" == self.model_architecture:
             self.cnn_simple_small_leaky_relu()
+        elif "simple_very_small_3l" == self.model_architecture:
+            self.cnn_simple_very_small_3l()
 
         train_data = np.empty(
                 (self.num_train_set, self.img_height, self.img_width, 3),
@@ -944,6 +946,23 @@ class ImgToSensorCNN:
         self.model.add(Dense(128, activation='relu'))
         self.model.add(Dense(64, activation='relu'))
         self.model.add(Dense(32, activation='relu'))
+        if 2 == self.dim_choice:
+            self.model.add(Dense(2, activation='linear'))
+        else:
+            self.model.add(Dense(1, activation='linear'))
+
+    def cnn_simple_very_small_3l(self):
+        self.model = Sequential()
+        self.model.add(
+            Conv2D(
+                96,
+                input_shape=(self.img_height, self.img_width, 3),
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Flatten())
+        self.model.add(Dense(64, activation='relu'))
         if 2 == self.dim_choice:
             self.model.add(Dense(2, activation='linear'))
         else:
