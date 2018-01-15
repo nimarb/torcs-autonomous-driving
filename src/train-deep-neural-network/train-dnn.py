@@ -55,7 +55,7 @@ DATA_NAMES = [
     "data-wheel_1-2laps-640x480"]
 TEST_DATA_NAMES = [
     #"data-cg_track_3-2laps-640x480"]
-    "data-cg_track_2-2laps-640x480",
+    #"data-cg_track_2-2laps-640x480",
     "data-wheel_2-2laps-640x480"]
 
 if len(sys.argv) > 6:
@@ -377,35 +377,45 @@ class ImgToSensorCNN:
         #    linewidth=0.5)
         # plt.show()
     
-    def print_train_arr_stats(self):
+    def print_array_stats(self, distance_array, angle_array):
+        """Print stats of input distance and angle arrays
+
+        Arguments:
+            distance_array: numpy array
+            angle_array: numpy array"""
         print(
             "Distance array: max="
-            + str(max(self.train_distance_array))
+            + str(max(distance_array))
             + "; min="
-            + str(min(self.train_distance_array))
+            + str(min(distance_array))
             + "; avg: "
-            + str(np.mean(self.train_distance_array)))
+            + str(np.mean(distance_array)))
         print(
             "Angle array: max="
-            + str(max(self.train_angle_array))
+            + str(max(angle_array))
             + "; min="
-            + str(min(self.train_angle_array))
+            + str(min(angle_array))
             + "; avg: "
-            + str(np.mean(self.train_angle_array)))
+            + str(np.mean(angle_array)))
 
-    def visualise_training_data(self):
-        print("Showing train_imgs with assigned values...")
-        self.print_train_arr_stats()
+    def visualise_data_connection(self, img_array, distance_array, angle_array):
+        """Shows images and corresponding distance and angle values
+
+        Arguments:
+            distance_array: numpy array
+            angle_array: numpy array"""
+        print("Showing images with assigned values side by side...")
+        self.print_array_stats(distance_array, angle_array)
 
         i = 0
-        for arr_img in self.train_imgs:
+        for img in img_array:
             print(
                 "Dist: "
-                + str(self.train_distance_array[i])
+                + str(distance_array[i])
                 + "; angl: "
-                + str(self.train_angle_array[i]))
-            print("arr_img shape: " + str(arr_img.shape))
-            cv2.imshow("Img" + str(i), self.train_imgs[i])
+                + str(angle_array[i]))
+            print("img shape: " + str(img.shape))
+            cv2.imshow("Img" + str(i), img_array[i])
             cv2.waitKey()
             cv2.destroyWindow("Img" + str(i))
             i += 1
@@ -491,6 +501,12 @@ class ImgToSensorCNN:
             "/home/nb/progs/torcs-autonomous-driving/src/models",
             self.model_name + ".hd5")
         self.model = load_model(_model_path)
+
+        _model_metadata_path = os.path.join(
+            "/home/nb/progs/torcs-autonomous-driving/src/models",
+            self.model_name + "-metadata.json")
+        json_metadata = json.load(open(_model_metadata_path))
+        self.dim_choice = json_metadata["dim_choice"]
         print("Loaded model")
 
     def cnn_model(self):
@@ -756,7 +772,10 @@ if __name__ == "__main__":
         cnn.split_into_train_val_set()
         cnn.shuffle_data_arrays()
         cnn.print_train_arr_stats()
-        #cnn.visualise_training_data()
+        #cnn.visualise_data_connection(
+        #    cnn.train_imgs,
+        #    cnn.distance_array,
+        #    cnn.angle_array)
         cnn.cnn_model()
         cnn.load_test_set()
         cnn.test_model()
@@ -766,5 +785,14 @@ if __name__ == "__main__":
         MODEL_DIR = "model_arch-val_mae-comp-large/"
         cnn.load_model(MODEL_DIR + "modelslearndrive-model-21063")
         cnn.load_test_set()
+        if cnn.dim_choice == 2:
+            cnn.visualise_data_connection(
+                cnn.test_imgs,
+                cnn.test_vals[:, 0],
+                cnn.test_vals[:, 1])
+        else:
+            cnn.visualise_data_connection(
+                cnn.test_imgs,
+                cnn.test_vals[:, cnn.dim_choice])
         cnn.test_model()
         cnn.preditct_test_pics()
