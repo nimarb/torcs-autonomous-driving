@@ -8,7 +8,6 @@ from random import sample
 import random
 import time
 
-from PIL import Image
 from keras.models import Sequential, load_model
 from keras.layers import Flatten, Dense, Activation, Dropout, LeakyReLU, ZeroPadding2D
 from keras.layers.pooling import MaxPooling2D
@@ -16,6 +15,8 @@ from keras.layers.normalization import BatchNormalization
 from keras.layers.convolutional import Conv2D
 from keras.callbacks import EarlyStopping, Callback, CSVLogger, History
 from keras.optimizers import Adam, Adamax
+
+import cnn_models
 
 import numpy as np
 import cv2
@@ -521,35 +522,92 @@ class ImgToSensorCNN:
     def cnn_model(self):
         """Creates a keras ConvNet model"""
         # loss= mean_squared_error, metrics=mean_absolute_error
-        self.model = Sequential()
+        #self.model = Sequential()
         if "alexnet" == self.model_architecture:
-            self.cnn_alexnet()
+            self.model = cnn_models.alexnet(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
         elif "alexnet_no_dropout" == self.model_architecture:
+            self.model = cnn_models.alexnet_no_dropout(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
             self.cnn_alexnet_no_dropout()
         elif "tensorkart" == self.model_architecture:
-            self.cnn_tensorkart()
+            self.model = cnn_models.tensorkart(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
         elif "simple" == self.model_architecture:
-            self.cnn_simple()
+            self.model = cnn_models.simple(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
         elif "simple_invcnv" == self.model_architecture:
-            self.cnn_simple_invcnv()
+            self.model = cnn_models.simple_invcnv(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
         elif "simple_min1d" == self.model_architecture:
-            self.cnn_simple_min1d()
+            self.model = cnn_models.simple_min1d(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
         elif "simple_min2d" == self.model_architecture:
-            self.cnn_simple_min2d()
+            self.model = cnn_models.simple_min2d(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
         elif "simple_plu1d" == self.model_architecture:
-            self.cnn_simple_plu1d()
+            self.model = cnn_models.simple_plu1d(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
         elif "simple_plu2d" == self.model_architecture:
-            self.cnn_simple_plu2d()
+            self.model = cnn_models.simple_plu2d(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
         elif "simple_invcnv_adv" == self.model_architecture:
-            self.cnn_simple_invcnv_adv()
+            self.model = cnn_models.simple_invcnv_adv(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
         elif "simple_small" == self.model_architecture:
-            self.cnn_simple_small()
+            self.model = cnn_models.simple_small(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
         elif "simple_very_small" == self.model_architecture:
-            self.cnn_simple_very_small()
+            self.model = cnn_models.simple_very_small(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
         elif "simple_small_leaky_relu" == self.model_architecture:
-            self.cnn_simple_small_leaky_relu()
+            self.model = cnn_models.simple_small_leaky_relu(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
         elif "simple_very_small_3l" == self.model_architecture:
-            self.cnn_simple_very_small_3l()
+            self.model = cnn_models.simple_very_small_3l(
+                self.img_height,
+                self.img_width,
+                self.img_depth,
+                self.dim_choice)
 
         train_data = np.empty(
                 (self.num_train_set, self.img_height, self.img_width, self.img_depth),
@@ -600,426 +658,6 @@ class ImgToSensorCNN:
                 x=train_data, y=train_target_vals[:, self.dim_choice], batch_size=self.batch_size,
                 validation_data=(val_data, val_target_vals[:, self.dim_choice]),
                 epochs=self.num_epochs, callbacks=cbs)
-
-    def cnn_alexnet(self):
-        """Uses the AlexNet network topology for the cnn model"""
-        self.model.add(
-            Conv2D(
-                96, kernel_size=(11, 11), strides=(4, 4), padding="same",
-                input_shape=(self.img_height, self.img_width, self.img_depth)))
-        self.model.add(Activation("relu"))
-        self.model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
-        self.model.add(ZeroPadding2D(padding=(2, 2)))
-        self.model.add(Conv2D(256, kernel_size=(5, 5), strides=(4, 4)))
-        self.model.add(Activation("relu"))
-        self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        self.model.add(ZeroPadding2D(padding=(1, 1)))
-        self.model.add(Conv2D(384, kernel_size=(3, 3)))
-        self.model.add(Activation("relu"))
-        self.model.add(ZeroPadding2D(padding=(1, 1)))
-        self.model.add(Conv2D(384, kernel_size=(3, 3)))
-        self.model.add(Activation("relu"))
-        self.model.add(ZeroPadding2D(padding=(1, 1)))
-        self.model.add(Conv2D(256, kernel_size=(3, 3)))
-        self.model.add(Activation("relu"))
-        self.model.add(ZeroPadding2D(padding=(1, 1)))
-        self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(4096))
-        self.model.add(Activation("relu"))
-        self.model.add(Dropout(0.5))
-        self.model.add(Dense(4096))
-        self.model.add(Activation("relu"))
-        self.model.add(Dropout(0.5))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
-
-    def cnn_alexnet_no_dropout(self):
-        """Uses the AlexNet network topology without dropout layers for the cnn model"""
-        self.model.add(
-            Conv2D(
-                96, kernel_size=(11, 11), strides=(4, 4), padding="same",
-                input_shape=(self.img_height, self.img_width, self.img_depth)))
-        self.model.add(Activation("relu"))
-        self.model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
-        self.model.add(ZeroPadding2D(padding=(2, 2)))
-        self.model.add(Conv2D(256, kernel_size=(5, 5), strides=(4, 4)))
-        self.model.add(Activation("relu"))
-        self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        self.model.add(ZeroPadding2D(padding=(1, 1)))
-        self.model.add(Conv2D(384, kernel_size=(3, 3)))
-        self.model.add(Activation("relu"))
-        self.model.add(ZeroPadding2D(padding=(1, 1)))
-        self.model.add(Conv2D(384, kernel_size=(3, 3)))
-        self.model.add(Activation("relu"))
-        self.model.add(ZeroPadding2D(padding=(1, 1)))
-        self.model.add(Conv2D(256, kernel_size=(3, 3)))
-        self.model.add(Activation("relu"))
-        self.model.add(ZeroPadding2D(padding=(1, 1)))
-        self.model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(4096))
-        self.model.add(Activation("relu"))
-        self.model.add(Dense(4096))
-        self.model.add(Activation("relu"))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
-
-    def cnn_tensorkart(self):
-        """Uses NeuralKart/TensorKart model architecture"""
-        self.model.add(BatchNormalization(
-            input_shape=(self.img_height, self.img_width, self.img_depth)))
-        self.model.add(
-            Conv2D(
-                24,
-                kernel_size=(5, 5),
-                strides=(2, 2),
-                activation='relu'))
-        self.model.add(BatchNormalization())
-        self.model.add(
-            Conv2D(
-                36,
-                kernel_size=(5, 5),
-                strides=(2, 2),
-                activation='relu'))
-        self.model.add(BatchNormalization())
-        self.model.add(
-            Conv2D(
-                48,
-                kernel_size=(5, 5),
-                strides=(2, 2),
-                activation='relu'))
-        self.model.add(BatchNormalization())
-        self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
-        self.model.add(BatchNormalization())
-        #self.model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
-        #self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(1164, activation='relu'))
-        drop_out = 0.4
-        self.model.add(Dropout(drop_out))
-        self.model.add(Dense(100, activation='relu'))
-        self.model.add(Dropout(drop_out))
-        self.model.add(Dense(50, activation='relu'))
-        self.model.add(Dropout(drop_out))
-        self.model.add(Dense(10, activation='relu'))
-        self.model.add(Dropout(drop_out))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
-
-    def cnn_simple_min1d(self):
-        """Uses own simple model as cnn topology"""
-        self.model.add(
-            Conv2D(
-                256,
-                input_shape=(self.img_height, self.img_width, self.img_depth),
-                kernel_size=(7, 7),
-                padding='same',
-                activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(
-            Conv2D(
-                256,
-                kernel_size=(5, 5),
-                activation='relu',
-                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.mode.add(
-            Conv2D(
-                128,
-                kernel_size=(3, 3),
-                activation='relu',
-                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(2048, activation='relu'))
-        self.model.add(Dense(1024, activation='relu'))
-        self.model.add(Dense(512, activation='relu'))
-        self.model.add(Dense(256, activation='relu'))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
-
-    def cnn_simple_min2d(self):
-        """Uses own simple model as cnn topology"""
-        self.model.add(Conv2D(256,
-            input_shape=(self.img_height, self.img_width, self.img_depth),
-            kernel_size=(7, 7),
-            padding='same',
-            activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(256,
-                                kernel_size=(5, 5),
-                                activation='relu',
-                                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(128,
-                                kernel_size=(3, 3),
-                                activation='relu',
-                                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(2048, activation='relu'))
-        self.model.add(Dense(1024, activation='relu'))
-        self.model.add(Dense(512, activation='relu'))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
-
-    def cnn_simple_plu1d(self):
-        """Uses own simple model as cnn topology"""
-        self.model.add(Conv2D(256,
-            input_shape=(self.img_height, self.img_width, self.img_depth),
-            kernel_size=(7, 7),
-            padding='same',
-            activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(256,
-                                kernel_size=(5, 5),
-                                activation='relu',
-                                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(128,
-                                kernel_size=(3, 3),
-                                activation='relu',
-                                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(2048, activation='relu'))
-        self.model.add(Dense(1024, activation='relu'))
-        self.model.add(Dense(512, activation='relu'))
-        self.model.add(Dense(256, activation='relu'))
-        self.model.add(Dense(128, activation='relu'))
-        self.model.add(Dense(64, activation='relu'))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
-
-    def cnn_simple_plu2d(self):
-        """Uses own simple model as cnn topology"""
-        self.model.add(Conv2D(256,
-            input_shape=(self.img_height, self.img_width, self.img_depth),
-            kernel_size=(7, 7),
-            padding='same',
-            activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(256,
-                                kernel_size=(5, 5),
-                                activation='relu',
-                                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(128,
-                                kernel_size=(3, 3),
-                                activation='relu',
-                                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(2048, activation='relu'))
-        self.model.add(Dense(1024, activation='relu'))
-        self.model.add(Dense(512, activation='relu'))
-        self.model.add(Dense(256, activation='relu'))
-        self.model.add(Dense(128, activation='relu'))
-        self.model.add(Dense(64, activation='relu'))
-        self.model.add(Dense(32, activation='relu'))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
-
-    def cnn_simple(self):
-        """Uses own simple model as cnn topology"""
-        self.model.add(Conv2D(256,
-            input_shape=(self.img_height, self.img_width, self.img_depth),
-            kernel_size=(7, 7),
-            padding='same',
-            activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(256,
-                                kernel_size=(5, 5),
-                                activation='relu',
-                                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(128,
-                                kernel_size=(3, 3),
-                                activation='relu',
-                                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(2048, activation='relu'))
-        self.model.add(Dense(1024, activation='relu'))
-        self.model.add(Dense(512, activation='relu'))
-        self.model.add(Dense(256, activation='relu'))
-        self.model.add(Dense(128, activation='relu'))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
-
-    def cnn_simple_invcnv(self):
-        """Uses own simple model as cnn topology"""
-        self.model.add(Conv2D(128,
-            input_shape=(self.img_height, self.img_width, self.img_depth),
-            kernel_size=(7, 7),
-            padding='same',
-            activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(256,
-                                kernel_size=(5, 5),
-                                activation='relu',
-                                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(384,
-                                kernel_size=(3, 3),
-                                activation='relu',
-                                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(2048, activation='relu'))
-        self.model.add(Dense(1024, activation='relu'))
-        self.model.add(Dense(512, activation='relu'))
-        self.model.add(Dense(256, activation='relu'))
-        self.model.add(Dense(128, activation='relu'))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
-
-    def cnn_simple_invcnv_adv(self):
-        """Uses own simple model as cnn topology"""
-        self.model.add(Conv2D(128,
-            input_shape=(self.img_height, self.img_width, self.img_depth),
-            kernel_size=(7, 7),
-            padding='same',
-            activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(256,
-                                kernel_size=(5, 5),
-                                activation='relu',
-                                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(384,
-                                kernel_size=(3, 3),
-                                activation='relu',
-                                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(256,
-                                kernel_size=(3, 3),
-                                activation='relu',
-                                padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(2048, activation='relu'))
-        self.model.add(Dense(1024, activation='relu'))
-        self.model.add(Dense(512, activation='relu'))
-        self.model.add(Dense(256, activation='relu'))
-        self.model.add(Dense(128, activation='relu'))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
-
-    def cnn_simple_small_leaky_relu(self):
-        self.model = Sequential()
-        self.model.add(
-            Conv2D(
-                96,
-                input_shape=(self.img_height, self.img_width, self.img_depth),
-                kernel_size=(7, 7),
-                padding='same'))
-        self.model.add(LeakyReLU(alpha=0.3))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(128, kernel_size=(7, 7), padding='same'))
-        self.model.add(LeakyReLU(alpha=0.3))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(64, kernel_size=(5, 5), padding='same'))
-        self.model.add(LeakyReLU(alpha=0.3))
-        self.model.add(MaxPooling2D(pool_size=(2,2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(256))
-        self.model.add(LeakyReLU(alpha=0.3))
-        self.model.add(Dense(128))
-        self.model.add(LeakyReLU(alpha=0.3))
-        self.model.add(Dense(64))
-        self.model.add(LeakyReLU(alpha=0.3))
-        self.model.add(Dense(32))
-        self.model.add(LeakyReLU(alpha=0.3))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
-
-    def cnn_simple_small(self):
-        self.model = Sequential()
-        self.model.add(
-            Conv2D(
-                96,
-                input_shape=(self.img_height, self.img_width, self.img_depth),
-                kernel_size=(7, 7),
-                padding='same',
-                activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(128, kernel_size=(7, 7), activation='relu', padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(64, kernel_size=(5, 5), activation='relu', padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2,2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(256, activation='relu'))
-        self.model.add(Dense(128, activation='relu'))
-        self.model.add(Dense(64, activation='relu'))
-        self.model.add(Dense(32, activation='relu'))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
-
-    def cnn_simple_very_small(self):
-        self.model = Sequential()
-        self.model.add(
-            Conv2D(
-                96,
-                input_shape=(self.img_height, self.img_width, self.img_depth),
-                kernel_size=(3, 3),
-                padding='same',
-                activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(128, kernel_size=(7, 7), activation='relu', padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Conv2D(64, kernel_size=(5, 5), activation='relu', padding='same'))
-        self.model.add(MaxPooling2D(pool_size=(2,2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(128, activation='relu'))
-        self.model.add(Dense(64, activation='relu'))
-        self.model.add(Dense(32, activation='relu'))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
-
-    def cnn_simple_very_small_3l(self):
-        self.model = Sequential()
-        self.model.add(
-            Conv2D(
-                96,
-                input_shape=(self.img_height, self.img_width, self.img_depth),
-                kernel_size=(3, 3),
-                padding='same',
-                activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Flatten())
-        self.model.add(Dense(64, activation='relu'))
-        if 2 == self.dim_choice:
-            self.model.add(Dense(2, activation='linear'))
-        else:
-            self.model.add(Dense(1, activation='linear'))
 
     def test_model(self):
         """Evaluate the loaded / trained model"""
