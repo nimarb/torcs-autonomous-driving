@@ -162,7 +162,7 @@ class ImgToSensorCNN:
         """Set the training/validation data size in percent of available img files
         
         Arguments
-            val_percent: Integer, validation data size in percent of total data"""
+            val_percent: int, validation data size in percent of total data"""
         num_img = 0
         for track_dir in DATA_DIRS:
             img_dir = os.path.join(track_dir, "images")
@@ -227,39 +227,13 @@ class ImgToSensorCNN:
             img_list.append(img)
         print("All imgs of " + data_dir + " loaded into img_list")
 
-    def load_imgs_with_rnd_split(self):
-        """Load all imgs into array and randomly split into train/val
-        DEPRECATED!!!"""
-        tests = sample(
-            range(0, (self.num_train_set + self.num_val_set) - 1),
-            self.num_val_set)
-        tests.sort()
-        test_index = 0
-        train_index = 0
-        img_iter = 0
-        img_name_filter = glob.glob(
-                                DATA_DIR + "/images/*" + self.img_data_type)
-        for filename in sorted(img_name_filter):
-            img = cv2.imread(filename)
-            if tests[test_index] == img_iter:
-                self.val_imgs[test_index] = img
-                if self.num_val_set < test_index:
-                    test_index += 1
-                img_iter += 1
-            else:
-                self.train_imgs[train_index] = img
-                if self.num_train_set < train_index:
-                    train_index += 1
-                img_iter += 1
-        print("All imgs randomly loaded into np array")
-
     def load_labels(self, data_dir, a=-1, b=1):
         """Load recorded sensor data into numpy arrays
-        
+
         Arguments:
-            data_dir: 
-            a: 
-            b: """
+            data_dir: string, data dir containing the sensor folder
+            a: int, minimal value to normalise to
+            b: int, maximal value to normalise to """
         _distance_array = np.load(data_dir + "/sensor/distance.npy")
         _angle_array = np.load(data_dir + "/sensor/angle.npy")
         #if self.normalise_arrays:
@@ -522,7 +496,6 @@ class ImgToSensorCNN:
     def cnn_model(self):
         """Creates a keras ConvNet model"""
         # loss= mean_squared_error, metrics=mean_absolute_error
-        #self.model = Sequential()
         if "alexnet" == self.model_architecture:
             self.model = cnn_models.alexnet(
                 self.img_height,
@@ -655,9 +628,13 @@ class ImgToSensorCNN:
                 epochs=self.num_epochs, callbacks=cbs)
         else:
             self.model.fit(
-                x=train_data, y=train_target_vals[:, self.dim_choice], batch_size=self.batch_size,
-                validation_data=(val_data, val_target_vals[:, self.dim_choice]),
-                epochs=self.num_epochs, callbacks=cbs)
+                x=train_data,
+                y=train_target_vals[:, self.dim_choice],
+                batch_size=self.batch_size,
+                validation_data=(
+                    val_data, val_target_vals[:, self.dim_choice]),
+                epochs=self.num_epochs,
+                jcallbacks=cbs)
 
     def test_model(self):
         """Evaluate the loaded / trained model"""
@@ -688,7 +665,10 @@ class ImgToSensorCNN:
         for j in range(i):
             data[j, :, :, :] = self.test_imgs[j, :, :, :]
 
-        print("Predicting test pictures, " + str(self.num_test_set) + " pics to predict...")
+        print(
+            "Predicting test pictures, "
+            + str(self.num_test_set)
+            + " pics to predict...")
         print("shape: " + str(data.shape))
         t1 = time.time()
         prediction = self.model.predict(x=data, verbose=1)
@@ -759,10 +739,16 @@ if __name__ == "__main__":
         cnn = ImgToSensorCNN(w=int(sys.argv[2]), h=int(sys.argv[3]))
     elif len(sys.argv) == 5:
         cnn = ImgToSensorCNN(
-            w=int(sys.argv[2]), h=int(sys.argv[3]), model_architecture=sys.argv[4])
+            w=int(sys.argv[2]),
+            h=int(sys.argv[3]),
+            model_architecture=sys.argv[4])
     elif len(sys.argv) == 7:
         cnn = ImgToSensorCNN(
-            w=int(sys.argv[2]), h=int(sys.argv[3]), model_architecture=sys.argv[4], camera_perspective=sys.argv[5], data_n=sys.argv[6])
+            w=int(sys.argv[2]),
+            h=int(sys.argv[3]),
+            model_architecture=sys.argv[4],
+            camera_perspective=sys.argv[5],
+            data_n=sys.argv[6])
 
     cnn.set_val_set_in_percent(10)
     if train:
@@ -777,7 +763,8 @@ if __name__ == "__main__":
         cnn.preditct_test_pics()
         cnn.save()
     else:
-        cnn.load_model("model_arch-val_mae-comp-large/modelslearndrive-model-21063")
+        MODEL_DIR = "model_arch-val_mae-comp-large/"
+        cnn.load_model(MODEL_DIR + "modelslearndrive-model-21063")
         cnn.load_test_set()
         cnn.test_model()
         cnn.preditct_test_pics()

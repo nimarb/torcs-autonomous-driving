@@ -6,7 +6,13 @@ from keras.layers.convolutional import Conv2D
 
 
 def alexnet(img_height, img_width, img_depth, dim_choice):
-    """Uses the AlexNet network topology for the cnn model"""
+    """Uses the AlexNet network topology for the cnn model
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(
         Conv2D(
@@ -44,7 +50,13 @@ def alexnet(img_height, img_width, img_depth, dim_choice):
 
 
 def alexnet_no_dropout(img_height, img_width, img_depth, dim_choice):
-    """Uses the AlexNet network topology without dropout layers for the cnn model"""
+    """Uses the AlexNet network topology without dropout layers for the cnn model
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(
         Conv2D(
@@ -80,7 +92,13 @@ def alexnet_no_dropout(img_height, img_width, img_depth, dim_choice):
 
 
 def tensorkart(img_height, img_width, img_depth, dim_choice):
-    """Uses NeuralKart/TensorKart model architecture"""
+    """Uses NeuralKart/TensorKart model architecture
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(BatchNormalization(
         input_shape=(img_height, img_width, img_depth)))
@@ -127,7 +145,13 @@ def tensorkart(img_height, img_width, img_depth, dim_choice):
 
 
 def simple_min1d(img_height, img_width, img_depth, dim_choice):
-    """Uses own simple model as cnn topology"""
+    """Uses own simple model as cnn topology
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(
         Conv2D(
@@ -164,7 +188,13 @@ def simple_min1d(img_height, img_width, img_depth, dim_choice):
 
 
 def simple_min2d(img_height, img_width, img_depth, dim_choice):
-    """Uses own simple model as cnn topology"""
+    """Uses own simple model as cnn topology
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(Conv2D(256,
         input_shape=(img_height, img_width, img_depth),
@@ -194,7 +224,13 @@ def simple_min2d(img_height, img_width, img_depth, dim_choice):
 
 
 def simple_plu1d(img_height, img_width, img_depth, dim_choice):
-    """Uses own simple model as cnn topology"""
+    """Uses own simple model as cnn topology
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(Conv2D(256,
         input_shape=(img_height, img_width, img_depth),
@@ -227,7 +263,13 @@ def simple_plu1d(img_height, img_width, img_depth, dim_choice):
 
 
 def simple_plu2d(img_height, img_width, img_depth, dim_choice):
-    """Uses own simple model as cnn topology"""
+    """Uses own simple model as cnn topology
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(Conv2D(256,
         input_shape=(img_height, img_width, img_depth),
@@ -261,7 +303,13 @@ def simple_plu2d(img_height, img_width, img_depth, dim_choice):
 
 
 def simple(img_height, img_width, img_depth, dim_choice):
-    """Uses own simple model as cnn topology"""
+    """Uses own simple model as cnn topology
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(Conv2D(256,
         input_shape=(img_height, img_width, img_depth),
@@ -293,7 +341,13 @@ def simple(img_height, img_width, img_depth, dim_choice):
 
 
 def simple_invcnv(img_height, img_width, img_depth, dim_choice):
-    """Uses own simple model as cnn topology"""
+    """Uses own simple model as cnn topology
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(Conv2D(128,
         input_shape=(img_height, img_width, img_depth),
@@ -325,7 +379,13 @@ def simple_invcnv(img_height, img_width, img_depth, dim_choice):
 
 
 def simple_invcnv_adv(img_height, img_width, img_depth, dim_choice):
-    """Uses own simple model as cnn topology"""
+    """Uses own simple model as cnn topology
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(Conv2D(128,
         input_shape=(img_height, img_width, img_depth),
@@ -362,6 +422,13 @@ def simple_invcnv_adv(img_height, img_width, img_depth, dim_choice):
 
 
 def simple_small_leaky_relu(img_height, img_width, img_depth, dim_choice):
+    """Simple model with LeakyReLU as activation function
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(
         Conv2D(
@@ -394,6 +461,13 @@ def simple_small_leaky_relu(img_height, img_width, img_depth, dim_choice):
 
 
 def simple_small(img_height, img_width, img_depth, dim_choice):
+    """Simple model smaller...
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(
         Conv2D(
@@ -420,6 +494,13 @@ def simple_small(img_height, img_width, img_depth, dim_choice):
 
 
 def simple_very_small(img_height, img_width, img_depth, dim_choice):
+    """Simple model very small
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(
         Conv2D(
@@ -445,6 +526,13 @@ def simple_very_small(img_height, img_width, img_depth, dim_choice):
 
 
 def simple_very_small_3l(img_height, img_width, img_depth, dim_choice):
+    """Simple model very small with only 3+1 layers containing neurons
+
+    Arguments:
+        img_height: int, input image height
+        img_width: int, input image width
+        img_depth: int, numer of input image channels
+        dim_choice: int, number of output dimensions"""
     model = Sequential()
     model.add(
         Conv2D(
