@@ -34,10 +34,10 @@ TEST_DATA_NAME = "data-cg_track_2-2laps-640x480"
 
 DATA_NAMES = [
     "data-olethros_road_1-2laps-640x480",
-    #"data-aalborg-2laps-640x480",
-    #"data-alpine_1-2laps-640x480",
-    #"data-alpine_2-2laps-640x480",
-    #"data-brondehach-2laps-640x480",
+    "data-aalborg-2laps-640x480",
+    "data-alpine_1-2laps-640x480",
+    "data-alpine_2-2laps-640x480",
+    "data-brondehach-2laps-640x480",
     #"data-cg_speedway_1-2laps-640x480",
     #"data-cg_track_3-2laps-640x480",
     #"data-corkscrew-2laps-640x480",
@@ -111,8 +111,11 @@ class ImgToSensorCNN:
                 dim_choice=1,
                 camera_perspective="1st_no_hood",
                 data_n=None,
-                normalise_imgs=False,
-                normalise_arrays=False):
+                normalise_imgs=True,
+                normalise_arrays=False,
+                top_region_cropped=False,
+                img_depth=3,
+                colourspace="hsv"):
         self.img_width = w
         self.img_height = h
         self.resize_imgs = True
@@ -143,6 +146,12 @@ class ImgToSensorCNN:
         self.camera_perspective = camera_perspective
         self.normalise_imgs = normalise_imgs
         self.normalise_arrays = normalise_arrays
+        self.top_region_cropped = top_region_cropped
+        self.top_crop_factor = 0.4
+        if colourspace == "hsv":
+            img_depth = 1
+        self.colourspace = colourspace
+        self.img_depth = img_depth
         if data_n is not None:
             print("Data_n is: " + data_n)
             DATA_NAMES.clear()
@@ -206,6 +215,14 @@ class ImgToSensorCNN:
                 if h != self.img_height and w != self.img_width:
                     factor = self.img_width / w
                     img = cv2.resize(img, None, fx=factor, fy=factor)
+            if self.top_region_cropped:
+                top_crop = int(self.top_crop_factor * self.img_height)
+                img = img[top_crop:self.img_height, 0:self.img_width]
+                self.img_height = self.img_height - top_crop
+            if self.colourspace == "hsv":
+                if 1 == self.img_depth:
+                    img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+                    img = img[:, :, 1:2]
             img_list.append(img)
         print("All imgs of " + data_dir + " loaded into img_list")
 
@@ -244,6 +261,8 @@ class ImgToSensorCNN:
             b: """
         _distance_array = np.load(data_dir + "/sensor/distance.npy")
         _angle_array = np.load(data_dir + "/sensor/angle.npy")
+        #if self.normalise_arrays:
+            
         self.distance_array = np.append(self.distance_array, _distance_array)
         self.angle_array = np.append(self.angle_array, _angle_array)
         print("Loaded label arrays of " + data_dir + " into np array")
@@ -268,7 +287,7 @@ class ImgToSensorCNN:
             print("ERROR: npy array size and num_test_imgs doesnt match")
 
         self.test_imgs = np.empty(
-            (self.num_test_set, self.img_height, self.img_width, 3),
+            (self.num_test_set, self.img_height, self.img_width, self.img_depth),
             dtype=object)
 
         for i in range(0, self.num_test_set):
@@ -451,6 +470,12 @@ class ImgToSensorCNN:
         metadata["camera_perspective"] = self.camera_perspective
         metadata["model_architecture"] = self.model_architecture
         metadata["learning_rate"] = self.learning_rate
+        metadata["normalise_imgs"] = self.normalise_imgs
+        metadata["normalise_arrays"] = self.normalise_arrays
+        metadata["top_region_cropped"] = self.top_region_cropped
+        metadata["top_crop_factor"] = self.top_crop_factor
+        metadata["img_depth"] = self.img_depth
+        metadata["colourspace"] = self.colourspace
         if self.dim_choice == 2:
             metadata["dim_choice"] = "distance and angle"
         elif self.dim_choice == 1:
@@ -527,13 +552,13 @@ class ImgToSensorCNN:
             self.cnn_simple_very_small_3l()
 
         train_data = np.empty(
-                (self.num_train_set, self.img_height, self.img_width, 3),
+                (self.num_train_set, self.img_height, self.img_width, self.img_depth),
                 dtype=object)
         for i in range(self.num_train_set):
             train_data[i, :, :, :] = self.train_imgs[i]
 
         val_data = np.empty(
-                (self.num_val_set, self.img_height, self.img_width, 3),
+                (self.num_val_set, self.img_height, self.img_width, self.img_depth),
                 dtype=object)
         for i in range(self.num_val_set):
             val_data[i, :, :, :] = self.val_imgs[i]
@@ -581,7 +606,7 @@ class ImgToSensorCNN:
         self.model.add(
             Conv2D(
                 96, kernel_size=(11, 11), strides=(4, 4), padding="same",
-                input_shape=(self.img_height, self.img_width, 3)))
+                input_shape=(self.img_height, self.img_width, self.img_depth)))
         self.model.add(Activation("relu"))
         self.model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
         self.model.add(ZeroPadding2D(padding=(2, 2)))
@@ -616,7 +641,7 @@ class ImgToSensorCNN:
         self.model.add(
             Conv2D(
                 96, kernel_size=(11, 11), strides=(4, 4), padding="same",
-                input_shape=(self.img_height, self.img_width, 3)))
+                input_shape=(self.img_height, self.img_width, self.img_depth)))
         self.model.add(Activation("relu"))
         self.model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
         self.model.add(ZeroPadding2D(padding=(2, 2)))
@@ -647,7 +672,7 @@ class ImgToSensorCNN:
     def cnn_tensorkart(self):
         """Uses NeuralKart/TensorKart model architecture"""
         self.model.add(BatchNormalization(
-            input_shape=(self.img_height, self.img_width, 3)))
+            input_shape=(self.img_height, self.img_width, self.img_depth)))
         self.model.add(
             Conv2D(
                 24,
@@ -693,7 +718,7 @@ class ImgToSensorCNN:
         self.model.add(
             Conv2D(
                 256,
-                input_shape=(self.img_height, self.img_width, 3),
+                input_shape=(self.img_height, self.img_width, self.img_depth),
                 kernel_size=(7, 7),
                 padding='same',
                 activation='relu'))
@@ -725,7 +750,7 @@ class ImgToSensorCNN:
     def cnn_simple_min2d(self):
         """Uses own simple model as cnn topology"""
         self.model.add(Conv2D(256,
-            input_shape=(self.img_height, self.img_width, 3),
+            input_shape=(self.img_height, self.img_width, self.img_depth),
             kernel_size=(7, 7),
             padding='same',
             activation='relu'))
@@ -752,7 +777,7 @@ class ImgToSensorCNN:
     def cnn_simple_plu1d(self):
         """Uses own simple model as cnn topology"""
         self.model.add(Conv2D(256,
-            input_shape=(self.img_height, self.img_width, 3),
+            input_shape=(self.img_height, self.img_width, self.img_depth),
             kernel_size=(7, 7),
             padding='same',
             activation='relu'))
@@ -782,7 +807,7 @@ class ImgToSensorCNN:
     def cnn_simple_plu2d(self):
         """Uses own simple model as cnn topology"""
         self.model.add(Conv2D(256,
-            input_shape=(self.img_height, self.img_width, 3),
+            input_shape=(self.img_height, self.img_width, self.img_depth),
             kernel_size=(7, 7),
             padding='same',
             activation='relu'))
@@ -813,7 +838,7 @@ class ImgToSensorCNN:
     def cnn_simple(self):
         """Uses own simple model as cnn topology"""
         self.model.add(Conv2D(256,
-            input_shape=(self.img_height, self.img_width, 3),
+            input_shape=(self.img_height, self.img_width, self.img_depth),
             kernel_size=(7, 7),
             padding='same',
             activation='relu'))
@@ -842,7 +867,7 @@ class ImgToSensorCNN:
     def cnn_simple_invcnv(self):
         """Uses own simple model as cnn topology"""
         self.model.add(Conv2D(128,
-            input_shape=(self.img_height, self.img_width, 3),
+            input_shape=(self.img_height, self.img_width, self.img_depth),
             kernel_size=(7, 7),
             padding='same',
             activation='relu'))
@@ -871,7 +896,7 @@ class ImgToSensorCNN:
     def cnn_simple_invcnv_adv(self):
         """Uses own simple model as cnn topology"""
         self.model.add(Conv2D(128,
-            input_shape=(self.img_height, self.img_width, 3),
+            input_shape=(self.img_height, self.img_width, self.img_depth),
             kernel_size=(7, 7),
             padding='same',
             activation='relu'))
@@ -907,7 +932,7 @@ class ImgToSensorCNN:
         self.model.add(
             Conv2D(
                 96,
-                input_shape=(self.img_height, self.img_width, 3),
+                input_shape=(self.img_height, self.img_width, self.img_depth),
                 kernel_size=(7, 7),
                 padding='same'))
         self.model.add(LeakyReLU(alpha=0.3))
@@ -937,7 +962,7 @@ class ImgToSensorCNN:
         self.model.add(
             Conv2D(
                 96,
-                input_shape=(self.img_height, self.img_width, 3),
+                input_shape=(self.img_height, self.img_width, self.img_depth),
                 kernel_size=(7, 7),
                 padding='same',
                 activation='relu'))
@@ -961,7 +986,7 @@ class ImgToSensorCNN:
         self.model.add(
             Conv2D(
                 96,
-                input_shape=(self.img_height, self.img_width, 3),
+                input_shape=(self.img_height, self.img_width, self.img_depth),
                 kernel_size=(3, 3),
                 padding='same',
                 activation='relu'))
@@ -984,7 +1009,7 @@ class ImgToSensorCNN:
         self.model.add(
             Conv2D(
                 96,
-                input_shape=(self.img_height, self.img_width, 3),
+                input_shape=(self.img_height, self.img_width, self.img_depth),
                 kernel_size=(3, 3),
                 padding='same',
                 activation='relu'))
@@ -1018,7 +1043,7 @@ class ImgToSensorCNN:
         """Use model to predict values for image data from the test set"""
         i = 10
         data = np.empty(
-                (i, self.img_height, self.img_width, 3),
+                (i, self.img_height, self.img_width, self.img_depth),
                 dtype=object)
 
         #for i in range(self.num_test_set):
