@@ -39,23 +39,23 @@ DATA_NAMES = [
     "data-alpine_1-2laps-640x480",
     "data-alpine_2-2laps-640x480",
     "data-brondehach-2laps-640x480",
-    #"data-cg_speedway_1-2laps-640x480",
-    #"data-cg_track_3-2laps-640x480",
-    #"data-corkscrew-2laps-640x480",
-    #"data-e_road-2laps-640x480",
-    #"data-etrack_1-2laps-640x480",
-    #"data-etrack_2-2laps-640x480",
-    #"data-etrack_3-2laps-640x480",
-    #"data-etrack_4-2laps-640x480",
-    #"data-etrack_6-2laps-640x480",
-    #"data-forza-2laps-640x480",
-    #"data-ruudskogen-2laps-640x480",
-    ####"data-spring-2laps-640x480",
-    #"data-street_1-2laps-640x480",
+    "data-cg_speedway_1-2laps-640x480",
+    "data-cg_track_3-2laps-640x480",
+    "data-corkscrew-2laps-640x480",
+    "data-e_road-2laps-640x480",
+    "data-etrack_1-2laps-640x480",
+    "data-etrack_2-2laps-640x480",
+    "data-etrack_3-2laps-640x480",
+    "data-etrack_4-2laps-640x480",
+    "data-etrack_6-2laps-640x480",
+    "data-forza-2laps-640x480",
+    "data-ruudskogen-2laps-640x480",
+    ###"data-spring-2laps-640x480",
+    "data-street_1-2laps-640x480",
     "data-wheel_1-2laps-640x480"]
 TEST_DATA_NAMES = [
     #"data-cg_track_3-2laps-640x480"]
-    #"data-cg_track_2-2laps-640x480",
+    "data-cg_track_2-2laps-640x480",
     "data-wheel_2-2laps-640x480"]
 
 if len(sys.argv) > 6:
@@ -650,7 +650,7 @@ class ImgToSensorCNN:
                 validation_data=(
                     val_data, val_target_vals[:, self.dim_choice]),
                 epochs=self.num_epochs,
-                jcallbacks=cbs)
+                callbacks=cbs)
 
     def test_model(self):
         """Evaluate the loaded / trained model"""
@@ -771,7 +771,8 @@ if __name__ == "__main__":
         cnn.load_data()
         cnn.split_into_train_val_set()
         cnn.shuffle_data_arrays()
-        cnn.print_train_arr_stats()
+        cnn.print_array_stats(
+            cnn.train_distance_array, cnn.train_angle_array)
         #cnn.visualise_data_connection(
         #    cnn.train_imgs,
         #    cnn.distance_array,
