@@ -30,28 +30,26 @@ tf.set_random_seed(42)
 # import matplotlib.pyplot as plt
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
-DATA_NAME = "data-olethros_road_1-2laps-640x480"
-TEST_DATA_NAME = "data-cg_track_2-2laps-640x480"
 
 DATA_NAMES = [
     "data-olethros_road_1-2laps-640x480",
-    "data-aalborg-2laps-640x480",
-    "data-alpine_1-2laps-640x480",
-    "data-alpine_2-2laps-640x480",
-    "data-brondehach-2laps-640x480",
-    "data-cg_speedway_1-2laps-640x480",
-    "data-cg_track_3-2laps-640x480",
-    "data-corkscrew-2laps-640x480",
-    "data-e_road-2laps-640x480",
-    "data-etrack_1-2laps-640x480",
-    "data-etrack_2-2laps-640x480",
-    "data-etrack_3-2laps-640x480",
-    "data-etrack_4-2laps-640x480",
-    "data-etrack_6-2laps-640x480",
-    "data-forza-2laps-640x480",
-    "data-ruudskogen-2laps-640x480",
+    #"data-aalborg-2laps-640x480",
+    #"data-alpine_1-2laps-640x480",
+    #"data-alpine_2-2laps-640x480",
+    #"data-brondehach-2laps-640x480",
+    #"data-cg_speedway_1-2laps-640x480",
+    #"data-cg_track_3-2laps-640x480",
+    #"data-corkscrew-2laps-640x480",
+    #"data-e_road-2laps-640x480",
+    #"data-etrack_1-2laps-640x480",
+    #"data-etrack_2-2laps-640x480",
+    #"data-etrack_3-2laps-640x480",
+    #"data-etrack_4-2laps-640x480",
+    #"data-etrack_6-2laps-640x480",
+    #"data-forza-2laps-640x480",
+    #"data-ruudskogen-2laps-640x480",
     ###"data-spring-2laps-640x480",
-    "data-street_1-2laps-640x480",
+    #"data-street_1-2laps-640x480",
     "data-wheel_1-2laps-640x480"]
 TEST_DATA_NAMES = [
     #"data-cg_track_3-2laps-640x480"]
@@ -66,11 +64,6 @@ if len(sys.argv) > 6:
 
 if "DigitsBoxBMW2" == platform.node():
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-
-    DATA_DIR = os.path.join(
-        "/", "raid", "student_data", "PP_TORCS_LearnDrive1", DATA_NAME)
-    TEST_DATA_DIR = os.path.join(
-        "/", "raid", "student_data", "PP_TORCS_LearnDrive1", TEST_DATA_NAME)
     DATA_DIRS = []
     for track in DATA_NAMES:
         DATA_DIRS.append(
@@ -82,10 +75,6 @@ if "DigitsBoxBMW2" == platform.node():
             os.path.join(
                 "/", "raid", "student_data", "PP_TORCS_LearnDrive1", track))
 else:
-    DATA_DIR = os.path.join(
-        CURRENT_DIR, "..", "collect_img_sensor_data", DATA_NAME)
-    TEST_DATA_DIR = os.path.join(
-        CURRENT_DIR, "..", "collect_img_sensor_data", TEST_DATA_NAME)
     DATA_DIRS = []
     for track in DATA_NAMES:
         DATA_DIRS.append(
@@ -116,7 +105,11 @@ class ImgToSensorCNN:
                 normalise_arrays=False,
                 top_region_cropped=False,
                 img_depth=3,
-                colourspace="hsv"):
+                colourspace="hsv",
+                hsv_layer="s",
+                data_thinning_enabled=False,
+                thinning_min_delta=0.005,
+                thinning_avg_over_eles=5):
         self.img_width = w
         self.img_height = h
         self.resize_imgs = True
@@ -129,8 +122,6 @@ class ImgToSensorCNN:
         self.angle_array = np.empty(0)
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
         self.val_imgs = np.empty(self.num_val_set, dtype=object)
-        #self.imgs = np.empty(
-        #    self.num_train_set + self.num_val_set, dtype=object)
         self.imgs = np.empty(0, dtype=object)
         self.img_list = []
         self.model = object
@@ -151,8 +142,12 @@ class ImgToSensorCNN:
         self.top_crop_factor = 0.4
         if colourspace == "hsv":
             img_depth = 1
+            self.hsv_layer = hsv_layer
         self.colourspace = colourspace
         self.img_depth = img_depth
+        self.data_thinning_enabled = data_thinning_enabled
+        self.thinning_min_delta = thinning_min_delta
+        self.thinning_avg_over_eles = thinning_avg_over_eles
         if data_n is not None:
             print("Data_n is: " + data_n)
             DATA_NAMES.clear()
@@ -171,6 +166,7 @@ class ImgToSensorCNN:
         self.num_train_set = num_img - self.num_val_set
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
         self.val_imgs = np.empty(self.num_val_set, dtype=object)
+        self.val_percent = val_percent
 
     def load_data(self):
         """Load img & sensor data and split into train/val/test set"""
@@ -284,10 +280,68 @@ class ImgToSensorCNN:
         self.test_vals[:, 0] = _angle_array[:self.num_test_set]
         self.test_vals[:, 1] = _distance_array[:self.num_test_set]
 
+    def thin_data_set(
+            self, distance_array, angle_array, img_array,
+            min_delta=0.005, avg_nr_eles=5):
+        """
+        
+        Arguments:
+            distance_array: numpy array,
+            angle_array: numpy array,
+            img_array: numpy array,
+            min_delta: float,
+            avg_nr_eles: int,"""
+
+        # if value in dist_array is close to zero (min_delta dist)
+        # and no change in value greater than min_delta over
+        # avg_nr_else number of frames, then delete avg_nr_frames-1
+        # from data set at i+1
+        entries_to_delete = []
+        for i in range(0, distance_array.size-avg_nr_eles):
+            if np.absolute(distance_array[i]) > min_delta:
+                dist_tmp_mean = np.mean(distance_array[i:i+avg_nr_eles])
+                diffs = np.subtract(
+                    dist_tmp_mean, distance_array[i:i+avg_nr_eles])
+                diffs = np.absolute(diffs)
+                diff_detected_counter = 0
+                for j in range(diffs.size):
+                    if diffs[j] > min_delta:
+                        diff_detected_counter += 1
+                if diff_detected_counter >= avg_nr_eles:
+                    for j in range(1, avg_nr_eles):
+                        entries_to_delete.append(i+j)
+
+        entries_to_delete_arr = np.empty(len(entries_to_delete))
+        for i in range(len(entries_to_delete)):
+            entries_to_delete_arr[i] = entries_to_delete[i]
+        distance_array = np.delete(distance_array, entries_to_delete_arr)
+        angle_array = np.delete(angle_array, entries_to_delete_arr)
+        img_array = np.delete(img_array, entries_to_delete_arr)
+        print(
+            "Data set thinning deleted a total of: "
+            + str(entries_to_delete_arr.size)
+            + " entries")
+        print(
+            "New array sizes\n"
+            + "dist: "
+            + str(self.distance_array.size)
+            + "\ndist2: "
+            + str(distance_array.size))
+
     def split_into_train_val_set(self):
         """Splits loaded imgs&sensor data randomly in train/validation set"""
         self.shuffle_three_arrays_in_unison(
             self.imgs, self.distance_array, self.angle_array)
+
+        if self.data_thinning_enabled:
+            self.thin_data_set(
+                self.distance_array, self.angle_array, self.imgs)
+            num_img = self.imgs.size
+            self.num_val_set = round(num_img * (self.val_percent * 0.01))
+            self.num_train_set = num_img - self.num_val_set
+            self.train_imgs = np.empty(self.num_train_set, dtype=object)
+            self.val_imgs = np.empty(self.num_val_set, dtype=object)
+            print("Resized arrays to match thinned data set.")
 
         total_set_size = self.num_val_set + self.num_train_set
 
@@ -440,8 +494,6 @@ class ImgToSensorCNN:
         metadata["loss_function"] = self.loss_function
         metadata["metrics"] = self.metrics
         metadata["loss_hist"] = self.loss_hist.loss
-        metadata["data_name"] = DATA_NAME
-        metadata["test_data_name"] = TEST_DATA_NAME
         metadata["data_names"] = DATA_NAMES
         metadata["test_data_names"] = TEST_DATA_NAMES
         metadata["time_hist"] = self.time_hist.times
@@ -461,6 +513,10 @@ class ImgToSensorCNN:
         metadata["top_crop_factor"] = self.top_crop_factor
         metadata["img_depth"] = self.img_depth
         metadata["colourspace"] = self.colourspace
+        metadata["hsv_layer"] = self.hsv_layer
+        metadata["data_thinning_enabled"] = self.data_thinning_enabled
+        metadata["data_thinning_min_delta"] = self.data_thinning_min_delta
+        metadata["data_thinning_avg_over_eles"] = self.data_thinning_avg_over_eles
         if self.dim_choice == 2:
             metadata["dim_choice"] = "distance and angle"
         elif self.dim_choice == 1:
@@ -479,7 +535,7 @@ class ImgToSensorCNN:
         """Saves the trained keras model to disk"""
         save_data_dir = os.path.join(
             "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
-        self.model.save(save_data_dir + self.model_name + ".hd5")
+        self.model.save(save_data_dir + "/" + self.model_name + ".hd5")
         json_str = self.model.to_json()
         json_str = json.dumps(json_str, indent=4, sort_keys=True)
         with open(
@@ -501,13 +557,36 @@ class ImgToSensorCNN:
             "/home/nb/progs/torcs-autonomous-driving/src/models",
             self.model_name + ".hd5")
         self.model = load_model(_model_path)
-
-        _model_metadata_path = os.path.join(
-            "/home/nb/progs/torcs-autonomous-driving/src/models",
-            self.model_name + "-metadata.json")
-        json_metadata = json.load(open(_model_metadata_path))
-        self.dim_choice = json_metadata["dim_choice"]
         print("Loaded model")
+
+    def load_metadata(self, model_name=None):
+        """ """
+
+        if model_name:
+            self.model_name = model_name
+
+        if "DigitsBoxBMW2" == platform.node():
+            model_dir = os.path.join(
+                "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
+            _model_metadata_path = os.path.join(model_dir, self.model_name + "-metadata.json")
+        else:
+            _model_metadata_path = os.path.join(
+                "/home/nb/progs/torcs-autonomous-driving/src/models",
+                self.model_name + "-metadata.json")
+
+        metadata = json.load(open(_model_metadata_path))
+        self.img_width = metadata["img_width"]
+        self.img_height = metadata["img_height"]
+        self.img_data_type = metadata["img_data_type"]
+        self.camera_perspecive = metadata["camera_perspective"]
+        self.model_architecture = metadata["model_architecture"]
+        self.normalise_imgs = metadata["normalise_imgs"]
+        self.normalise_arrays = metadata["normalise_arrays"]
+        self.top_regio_cropped = metadata["top_region_cropped"]
+        self.top_crop_factor = metadata["top_crop_factor"]
+        self.img_depth = metadata["img_depth"]
+        self.colourspace = metadata["colourspace"]
+        self.hsv_layer = metadata["hsv_layer"]
 
     def cnn_model(self):
         """Creates a keras ConvNet model"""
@@ -748,10 +827,14 @@ if __name__ == "__main__":
         train = True
     elif "test" == sys.argv[1]:
         train = False
-    if len(sys.argv) == 2:
-        if sys.argv[2]:
-            cnn = ImgToSensorCNN(sys.argv[2])
-    elif len(sys.argv) == 4:
+    elif "-h" == sys.argv[1]:
+        print(
+            "Usage: python train-dnn.py INTEND PARAMETRES"
+            + "\tINTEND: \n\t\ttest: to test a model"
+            + "\n\t\ttrain: to train a model")
+    else:
+        print("ERROR: provide train or test as first argument, -h for help")
+    if len(sys.argv) == 4:
         cnn = ImgToSensorCNN(w=int(sys.argv[2]), h=int(sys.argv[3]))
     elif len(sys.argv) == 5:
         cnn = ImgToSensorCNN(
