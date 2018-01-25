@@ -4,30 +4,24 @@ import sys
 import glob
 import json
 import platform
-from random import sample
+# from random import sample
 import random
 import time
 
-from keras.models import Sequential, load_model
-from keras.layers import Flatten, Dense, Activation, Dropout, LeakyReLU, ZeroPadding2D
-from keras.layers.pooling import MaxPooling2D
-from keras.layers.normalization import BatchNormalization
-from keras.layers.convolutional import Conv2D
+import numpy as np
+import cv2
+import tensorflow as tf
+import matplotlib.pyplot as plt
+from keras.models import load_model
 from keras.callbacks import EarlyStopping, Callback, CSVLogger, History
 from keras.optimizers import Adam, Adamax
 
 import cnn_models
 
-import numpy as np
-import cv2
-
-import tensorflow as tf
-
 np.random.seed(42)
 os.environ['PYTHONHASHSEED'] = '0'
 random.seed(42)
 tf.set_random_seed(42)
-# import matplotlib.pyplot as plt
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -98,14 +92,14 @@ class ImgToSensorCNN:
                 optimiser="adamax",
                 model_architecture="simple",
                 learning_rate=0.00001,
-                dim_choice=1,
+                dim_choice=2,
                 camera_perspective="1st_no_hood",
                 data_n=None,
                 normalise_imgs=True,
                 normalise_arrays=False,
                 top_region_cropped=False,
                 img_depth=3,
-                colourspace="hsv",
+                colourspace="rgb",
                 hsv_layer="s",
                 data_thinning_enabled=False,
                 thinning_min_delta=0.005,
@@ -232,7 +226,8 @@ class ImgToSensorCNN:
             b: int, maximal value to normalise to """
         _distance_array = np.load(data_dir + "/sensor/distance.npy")
         _angle_array = np.load(data_dir + "/sensor/angle.npy")
-        #if self.normalise_arrays:
+        # TODO:
+        # if self.normalise_arrays:
             
         self.distance_array = np.append(self.distance_array, _distance_array)
         self.angle_array = np.append(self.angle_array, _angle_array)
@@ -258,18 +253,22 @@ class ImgToSensorCNN:
             print("ERROR: npy array size and num_test_imgs doesnt match")
 
         self.test_imgs = np.empty(
-            (self.num_test_set, self.img_height, self.img_width, self.img_depth),
+            (
+                self.num_test_set,
+                self.img_height,
+                self.img_width,
+                self.img_depth),
             dtype=object)
 
         for i in range(0, self.num_test_set):
             self.test_imgs[i, :, :, :] = _imgs_raw[i]
 
         _imgs_raw = None
-        #_imgs = np.empty(self.num_test_set, dtype=object)
-        #_imgs = np.array(_imgs_raw)
-        #print("_imgs array contains: " + str(_imgs.size) + " items")
-        #_imgs = _imgs[:self.num_test_set]
-        #for i in range(self.num_test_set):
+        # _imgs = np.empty(self.num_test_set, dtype=object)
+        # _imgs = np.array(_imgs_raw)
+        # print("_imgs array contains: " + str(_imgs.size) + " items")
+        # _imgs = _imgs[:self.num_test_set]
+        # for i in range(self.num_test_set):
         #    self.test_imgs[i, :, :, :] = _imgs[i]
             
         # Test data is from a different track but always a rnd subset
@@ -421,15 +420,14 @@ class ImgToSensorCNN:
         Arguments
             array: numpy array, values to plot"""
         x = np.arange(array.size)
-        # plt.plot(x, array, linewidth=0.5)
+        plt.plot(x, array, linewidth=0.5)
         binwidth = 0.1
-        #plt.hist(
-        #    array,
-        #    bins=np.arange(min(array),
-        #    max(array) + binwidth,
-        #    binwidth),
-        #    linewidth=0.5)
-        # plt.show()
+        plt.hist(
+            array,
+            bins=np.arange(
+                min(array), max(array) + binwidth, binwidth),
+            linewidth=0.5)
+        plt.show()
     
     def print_array_stats(self, distance_array, angle_array):
         """Print stats of input distance and angle arrays
@@ -452,7 +450,8 @@ class ImgToSensorCNN:
             + "; avg: "
             + str(np.mean(angle_array)))
 
-    def visualise_data_connection(self, img_array, distance_array, angle_array):
+    def visualise_data_connection(
+            self, img_array, distance_array, angle_array):
         """Shows images and corresponding distance and angle values
 
         Arguments:
@@ -568,25 +567,36 @@ class ImgToSensorCNN:
         if "DigitsBoxBMW2" == platform.node():
             model_dir = os.path.join(
                 "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
-            _model_metadata_path = os.path.join(model_dir, self.model_name + "-metadata.json")
+            _model_metadata_path = os.path.join(
+                model_dir, self.model_name + "-metadata.json")
         else:
             _model_metadata_path = os.path.join(
                 "/home/nb/progs/torcs-autonomous-driving/src/models",
                 self.model_name + "-metadata.json")
 
         metadata = json.load(open(_model_metadata_path))
-        self.img_width = metadata["img_width"]
-        self.img_height = metadata["img_height"]
-        self.img_data_type = metadata["img_data_type"]
-        self.camera_perspecive = metadata["camera_perspective"]
-        self.model_architecture = metadata["model_architecture"]
-        self.normalise_imgs = metadata["normalise_imgs"]
-        self.normalise_arrays = metadata["normalise_arrays"]
-        self.top_regio_cropped = metadata["top_region_cropped"]
-        self.top_crop_factor = metadata["top_crop_factor"]
-        self.img_depth = metadata["img_depth"]
-        self.colourspace = metadata["colourspace"]
-        self.hsv_layer = metadata["hsv_layer"]
+        try:
+            self.img_width = metadata["img_width"]
+            self.img_height = metadata["img_height"]
+            self.img_data_type = metadata["img_data_type"]
+            self.camera_perspective = metadata["camera_perspective"]
+            self.model_architecture = metadata["model_architecture"]
+            self.normalise_imgs = metadata["normalise_imgs"]
+            self.normalise_arrays = metadata["normalise_arrays"]
+            self.top_regio_cropped = metadata["top_region_cropped"]
+            self.top_crop_factor = metadata["top_crop_factor"]
+            self.img_depth = metadata["img_depth"]
+            self.colourspace = metadata["colourspace"]
+            self.hsv_layer = metadata["hsv_layer"]
+            if metadata["dim_choice"] == "distance and angle":
+                self.dim_choice = 2
+            elif metadata["dim_choice"] == "distance":
+                self.dim_choice = 1
+            elif metadata["dim_choice"] == "angle":
+                self.dim_choice = 0
+        except KeyError:
+            print("several keys not found but start anyway")
+            pass
 
     def cnn_model(self):
         """Creates a keras ConvNet model"""
@@ -678,13 +688,21 @@ class ImgToSensorCNN:
                 self.dim_choice)
 
         train_data = np.empty(
-                (self.num_train_set, self.img_height, self.img_width, self.img_depth),
+                (
+                    self.num_train_set,
+                    self.img_height,
+                    self.img_width,
+                    self.img_depth),
                 dtype=object)
         for i in range(self.num_train_set):
             train_data[i, :, :, :] = self.train_imgs[i]
 
         val_data = np.empty(
-                (self.num_val_set, self.img_height, self.img_width, self.img_depth),
+                (
+                    self.num_val_set,
+                    self.img_height,
+                    self.img_width,
+                    self.img_depth),
                 dtype=object)
         for i in range(self.num_val_set):
             val_data[i, :, :, :] = self.val_imgs[i]
@@ -712,7 +730,7 @@ class ImgToSensorCNN:
         opti = Adamax(lr=self.learning_rate)
         self.model.compile(
             loss=self.loss_function,
-            #optimizer=self.optimiser,
+            # optimizer=self.optimiser,
             optimizer=opti,
             metrics=[self.metrics])
         
@@ -733,7 +751,7 @@ class ImgToSensorCNN:
 
     def test_model(self):
         """Evaluate the loaded / trained model"""
-        print("Evaluating model...")
+        print("Evaluating model: " + self.model_name)
         if self.dim_choice == 2:
             self.score = self.model.evaluate(
                                         x=self.test_imgs,
@@ -751,6 +769,7 @@ class ImgToSensorCNN:
 
     def preditct_test_pics(self):
         """Use model to predict values for image data from the test set"""
+        print("Predicting pics from: " + self.model_name)
         i = 10
         data = np.empty(
                 (i, self.img_height, self.img_width, self.img_depth),
@@ -767,7 +786,7 @@ class ImgToSensorCNN:
         print("shape: " + str(data.shape))
         t1 = time.time()
         prediction = self.model.predict(x=data, verbose=1)
-        #prediction = self.model.predict(x=self.test_imgs)
+        #prediction = self.model.predict(x=self.test_imgs, verbose=1)
         dt = time.time() - t1
         print("TIME TO PROP: " + str(dt))
 
@@ -834,20 +853,23 @@ if __name__ == "__main__":
             + "\n\t\ttrain: to train a model")
     else:
         print("ERROR: provide train or test as first argument, -h for help")
-    if len(sys.argv) == 4:
-        cnn = ImgToSensorCNN(w=int(sys.argv[2]), h=int(sys.argv[3]))
-    elif len(sys.argv) == 5:
-        cnn = ImgToSensorCNN(
-            w=int(sys.argv[2]),
-            h=int(sys.argv[3]),
-            model_architecture=sys.argv[4])
-    elif len(sys.argv) == 7:
-        cnn = ImgToSensorCNN(
-            w=int(sys.argv[2]),
-            h=int(sys.argv[3]),
-            model_architecture=sys.argv[4],
-            camera_perspective=sys.argv[5],
-            data_n=sys.argv[6])
+    if train:
+        if len(sys.argv) == 4:
+            cnn = ImgToSensorCNN(w=int(sys.argv[2]), h=int(sys.argv[3]))
+        elif len(sys.argv) == 5:
+            cnn = ImgToSensorCNN(
+                w=int(sys.argv[2]),
+                h=int(sys.argv[3]),
+                model_architecture=sys.argv[4])
+        elif len(sys.argv) == 7:
+            cnn = ImgToSensorCNN(
+                w=int(sys.argv[2]),
+                h=int(sys.argv[3]),
+                model_architecture=sys.argv[4],
+                camera_perspective=sys.argv[5],
+                data_n=sys.argv[6])
+    else:
+        cnn = ImgToSensorCNN()
 
     cnn.set_val_set_in_percent(10)
     if train:
@@ -868,15 +890,16 @@ if __name__ == "__main__":
     else:
         MODEL_DIR = "model_arch-val_mae-comp-large/"
         cnn.load_model(MODEL_DIR + "modelslearndrive-model-21063")
+        cnn.load_metadata()
         cnn.load_test_set()
         if cnn.dim_choice == 2:
             cnn.visualise_data_connection(
                 cnn.test_imgs,
                 cnn.test_vals[:, 0],
                 cnn.test_vals[:, 1])
-        else:
-            cnn.visualise_data_connection(
-                cnn.test_imgs,
-                cnn.test_vals[:, cnn.dim_choice])
+        #else:
+            #cnn.visualise_data_connection(
+            #    cnn.test_imgs,
+            #    cnn.test_vals[:, cnn.dim_choice])
         cnn.test_model()
         cnn.preditct_test_pics()
