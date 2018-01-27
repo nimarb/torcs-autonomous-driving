@@ -767,28 +767,42 @@ class ImgToSensorCNN:
         print("Model evaluated, score is:")
         print(self.score)
 
-    def preditct_test_pics(self):
-        """Use model to predict values for image data from the test set"""
-        print("Predicting pics from: " + self.model_name)
-        i = 10
-        data = np.empty(
-                (i, self.img_height, self.img_width, self.img_depth),
-                dtype=object)
+    def preditct_test_pics(self, num_imgs_to_predict=0):
+        """Use model to predict values for image data from the test set
+        
+        Arguments:
+            num_imgs_to_predict: int, number of imgs to run the prediction on,
+                                    if zero -> run prediction on all imgs"""
+        print("Predicting images from: " + self.model_name)
 
-        #for i in range(self.num_test_set):
-        for j in range(i):
-            data[j, :, :, :] = self.test_imgs[j, :, :, :]
+        if 0 < num_imgs_to_predict:
+            data = np.empty(
+                    (
+                        num_imgs_to_predict,
+                        self.img_height,
+                        self.img_width,
+                        self.img_depth),
+                    dtype=object)
+            for j in range(num_imgs_to_predict):
+                data[j, :, :, :] = self.test_imgs[j, :, :, :]
+            self.num_test_set = num_imgs_to_predict
 
         print(
             "Predicting test pictures, "
             + str(self.num_test_set)
             + " pics to predict...")
-        print("shape: " + str(data.shape))
+
         t1 = time.time()
-        prediction = self.model.predict(x=data, verbose=1)
-        #prediction = self.model.predict(x=self.test_imgs, verbose=1)
+        if 0 == num_imgs_to_predict:
+            prediction = self.model.predict(x=self.test_imgs, verbose=1)
+        else:
+            prediction = self.model.predict(x=data, verbose=1)
+
         dt = time.time() - t1
-        print("TIME TO PROP: " + str(dt))
+        print("Time needed for prediction: " + str(dt))
+        print(
+            "Avg. time needed for prediction per img: "
+            + str(dt/self.num_test_set))
 
         pred_descr = ["angl", "dist"]
         i = 0
@@ -797,19 +811,19 @@ class ImgToSensorCNN:
                 print(
                     "angl val: "
                     + str(self.test_vals[i, 0])
-                    + "; pred: "
+                    + ";\tpred: "
                     + str(val[0]))
                 print(
                     "dist val: "
                     + str(self.test_vals[i, 1])
-                    + "; pred: "
+                    + ";\tpred:"
                     + str(val[1]))
             else:
                 print(
                     pred_descr[self.dim_choice]
                     + " val: "
                     + str(self.test_vals[i, self.dim_choice])
-                    + "; pred: "
+                    + ";\tpred: "
                     + str(val[0]))
             i += 1
 
