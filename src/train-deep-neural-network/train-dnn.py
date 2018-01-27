@@ -165,12 +165,14 @@ class ImgToSensorCNN:
 
     def load_data(self):
         """Load img & sensor data and split into train/val/test set"""
-        print("Loading " + str(self.num_val_set + self.num_train_set) + " imgs")
+        print(
+            "Loading " + str(self.num_val_set + self.num_train_set) + " imgs")
         for track_dir in DATA_DIRS:
             self.load_imgs(self.img_list, track_dir)
             self.load_labels(track_dir)
             print("img_list contains: " + str(len(self.img_list)) + " items")
-            print("labels contain: " + str(self.distance_array.size) + " items")
+            print(
+                "labels contain: " + str(self.distance_array.size) + " items")
         print("All imgs loaded into img_list")
         self.imgs = np.empty(len(self.img_list), dtype=object)
         for i in range(0, len(self.img_list)-1):
@@ -208,7 +210,8 @@ class ImgToSensorCNN:
                     factor = self.attrs['img_width'] / w
                     img = cv2.resize(img, None, fx=factor, fy=factor)
             if self.attrs['top_region_cropped']:
-                top_crop = int(self.attrs['top_crop_factor'] * self.attrs['img_height'])
+                top_crop = int(
+                    self.attrs['top_crop_factor'] * self.attrs['img_height'])
                 img = img[top_crop:self.attrs['img_height'], 0:self.attrs['img_width']]
                 self.attrs['img_height'] = self.attrs['img_height'] - top_crop
             if self.attrs['colourspace'] == "hsv":
@@ -420,15 +423,16 @@ class ImgToSensorCNN:
 
         Arguments
             array: numpy array, values to plot"""
+        print("To plot array values, please import matplotlib")
         # x = np.arange(array.size)
         # plt.plot(x, array, linewidth=0.5)
-        binwidth = 0.1
+        # binwidth = 0.1
         # plt.hist(
         #    array,
         #    bins=np.arange(
         #        min(array), max(array) + binwidth, binwidth),
         #    linewidth=0.5)
-        #plt.show()
+        # plt.show()
     
     def print_array_stats(self, distance_array, angle_array):
         """Print stats of input distance and angle arrays
@@ -514,7 +518,9 @@ class ImgToSensorCNN:
         save_data_dir = os.path.join(
             "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
         with open(
-                save_data_dir + self.attrs['model_name'] + "-metadata.json", "w") as f:
+                save_data_dir
+                + self.attrs['model_name']
+                + "-metadata.json", "w") as f:
             f.write(json_str)
         print("Saved metadata")
 
@@ -522,7 +528,8 @@ class ImgToSensorCNN:
         """Saves the trained keras model to disk"""
         save_data_dir = os.path.join(
             "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
-        self.model.save(save_data_dir + "/" + self.attrs['model_name'] + ".hd5")
+        self.model.save(
+            save_data_dir + "/" + self.attrs['model_name'] + ".hd5")
         json_str = self.model.to_json()
         json_str = json.dumps(json_str, indent=4, sort_keys=True)
         with open(
@@ -717,7 +724,8 @@ class ImgToSensorCNN:
         
         if self.attrs['dim_choice'] == 2:
             self.model.fit(
-                x=train_data, y=train_target_vals, batch_size=self.attrs['batch_size'],
+                x=train_data, y=train_target_vals,
+                batch_size=self.attrs['batch_size'],
                 validation_data=(val_data, val_target_vals),
                 epochs=self.attrs['num_epochs'], callbacks=cbs)
         else:
@@ -730,20 +738,20 @@ class ImgToSensorCNN:
                 epochs=self.attrs['num_epochs'],
                 callbacks=cbs)
 
-    def test_model(self):
+    def evaluate_model(self):
         """Evaluate the loaded / trained model"""
         print("Evaluating model: " + self.attrs['model_name'])
         if self.attrs['dim_choice'] == 2:
             self.score = self.model.evaluate(
-                                        x=self.test_imgs,
-                                        # y=self.test_vals[:, 0],
-                                        y=self.test_vals,
-                                        batch_size=self.attrs['batch_size'])
+                x=self.test_imgs,
+                # y=self.test_vals[:, 0],
+                y=self.test_vals,
+                batch_size=self.attrs['batch_size'])
         else:
             self.score = self.model.evaluate(
-                                        x=self.test_imgs,
-                                        y=self.test_vals[:, self.attrs['dim_choice']],
-                                        batch_size=self.attrs['batch_size'])
+                x=self.test_imgs,
+                y=self.test_vals[:, self.attrs['dim_choice']],
+                batch_size=self.attrs['batch_size'])
 
         print("Model evaluated, the score is: ")
         print(self.score)
@@ -819,7 +827,7 @@ class LossHistory(Callback):
         self.epochs = 0
 
     def on_epoch_end(self, batch, logs={}):
-        """Logs after each epoch; ATTENTION, log property has to be updated manually"""
+        """Logs after each epoch; log property has to be updated manually"""
         self.loss.append(logs.get("loss"))
         self.metric.append(logs.get("mae"))
         self.epochs += 1
@@ -879,7 +887,7 @@ if __name__ == "__main__":
         #    cnn.angle_array)
         cnn.cnn_model()
         cnn.load_test_set()
-        cnn.test_model()
+        cnn.evaluate_model()
         cnn.preditct_test_pics()
         cnn.save()
     else:
@@ -896,5 +904,5 @@ if __name__ == "__main__":
             #cnn.visualise_data_connection(
             #    img_array=cnn.test_imgs,
             #    distance_array=cnn.test_vals[:, cnn.dim_choice])
-        cnn.test_model()
+        cnn.evaluate_model()
         cnn.preditct_test_pics(10)
