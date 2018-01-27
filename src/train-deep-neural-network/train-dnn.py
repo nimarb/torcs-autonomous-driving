@@ -489,16 +489,10 @@ class ImgToSensorCNN:
 
     def save_metadata(self):
         """Saves metadata for the current training in a json file"""
-        metadata = {}
-        metadata["img_width"] = self.attrs['img_width']
-        metadata["img_height"] = self.attrs['img_height']
-        metadata["img_data_type"] = self.attrs['img_data_type']
+        metadata = self.attrs
         metadata["num_val_set"] = self.num_val_set
         metadata["num_test_set"] = self.num_test_set
         metadata["num_train_set"] = self.num_train_set
-        metadata["num_epochs"] = self.attrs['num_epochs']
-        metadata["loss_function"] = self.attrs['loss_function']
-        metadata["metrics"] = self.attrs['metrics']
         metadata["loss_hist"] = self.loss_hist.loss
         metadata["data_names"] = DATA_NAMES
         metadata["test_data_names"] = TEST_DATA_NAMES
@@ -510,19 +504,6 @@ class ImgToSensorCNN:
         metadata["test_loss"] = self.score[0]
         metadata["test_mae"] = self.score[1]
         metadata["optimiser"] = self.optimiser
-        metadata["camera_perspective"] = self.attrs['camera_perspective']
-        metadata["model_architecture"] = self.attrs['model_architecture']
-        metadata["learning_rate"] = self.attrs['learning_rate']
-        metadata["normalise_imgs"] = self.attrs['normalise_imgs']
-        metadata["normalise_arrays"] = self.attrs['normalise_arrays']
-        metadata["top_region_cropped"] = self.attrs['top_region_cropped']
-        metadata["top_crop_factor"] = self.attrs['top_crop_factor']
-        metadata["img_depth"] = self.attrs['img_depth']
-        metadata["colourspace"] = self.attrs['colourspace']
-        metadata["hsv_layer"] = self.attrs['hsv_layer']
-        metadata["data_thinning_enabled"] = self.attrs['data_thinning_enabled']
-        metadata["data_thinning_min_delta"] = self.attrs['data_thinning_min_delta']
-        metadata["data_thinning_avg_over_eles"] = self.attrs['data_thinning_avg_over_eles']
         if self.attrs['dim_choice'] == 2:
             metadata["dim_choice"] = "distance and angle"
         elif self.attrs['dim_choice'] == 1:
@@ -582,29 +563,21 @@ class ImgToSensorCNN:
                 self.attrs['model_name'] + "-metadata.json")
 
         metadata = json.load(open(_model_metadata_path))
-        try:
-            self.attrs['img_width'] = metadata["img_width"]
-            self.attrs['img_height'] = metadata["img_height"]
-            self.attrs['img_data_type'] = metadata["img_data_type"]
-            self.attrs['camera_perspective'] = metadata["camera_perspective"]
-            self.attrs['model_architecture'] = metadata["model_architecture"]
-            self.attrs['normalise_imgs'] = metadata["normalise_imgs"]
-            self.attrs['normalise_arrays'] = metadata["normalise_arrays"]
-            self.top_regio_cropped = metadata["top_region_cropped"]
-            self.attrs['top_crop_factor'] = metadata["top_crop_factor"]
-            self.attrs['img_depth'] = metadata["img_depth"]
-            self.attrs['colourspace'] = metadata["colourspace"]
-            self.attrs['hsv_layer'] = metadata["hsv_layer"]
-            if metadata["dim_choice"] == "distance and angle":
-                self.attrs['dim_choice'] = 2
-            elif metadata["dim_choice"] == "distance":
-                self.attrs['dim_choice'] = 1
-            elif metadata["dim_choice"] == "angle":
-                self.attrs['dim_choice'] = 0
-        except KeyError as e:
-            print("Several metadata keys not found but start anyway")
-            #print("Details: " + e)
-            pass
+        for key in self.attrs:
+            try:
+                if "dim_choice" == key:
+                    if metadata["dim_choice"] == "distance and angle":
+                        self.attrs['dim_choice'] = 2
+                    elif metadata["dim_choice"] == "distance":
+                        self.attrs['dim_choice'] = 1
+                    elif metadata["dim_choice"] == "angle":
+                        self.attrs['dim_choice'] = 0
+                else:
+                    self.attrs[key] = metadata[key]
+            except KeyError as e:
+                print("Key: " + key + " not found in metadata.")
+                print("Using default value of: " + str(self.attrs[key]))
+                pass
 
     def cnn_model(self):
         """Creates a keras ConvNet model"""
