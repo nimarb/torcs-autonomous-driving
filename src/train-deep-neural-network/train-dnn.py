@@ -451,21 +451,27 @@ class ImgToSensorCNN:
             + str(np.mean(angle_array)))
 
     def visualise_data_connection(
-            self, img_array, distance_array, angle_array):
+            self, img_array, distance_array=None, angle_array=None):
         """Shows images and corresponding distance and angle values
 
         Arguments:
-            distance_array: numpy array
-            angle_array: numpy array"""
-        print("Showing images with assigned values side by side...")
-        self.print_array_stats(distance_array, angle_array)
+            distance_array: numpy array, contains the distance values
+            angle_array: numpy array, contains the angle values"""
 
+        print("Showing images with assigned values side by side...")
+        if angle_array is None:
+            angle_array = np.zeros(shape=distance_array.shape)
+            print("No angle array given, angle values will be zero")
+        if distance_array is None:
+            distance_array = np.zeros(shape=angle_array.shape)
+            print("No distance array given, distance values will be zero")
+        self.print_array_stats(distance_array, angle_array)
         i = 0
         for img in img_array:
             print(
                 "Dist: "
                 + str(distance_array[i])
-                + "; angl: "
+                + ";\tangl: "
                 + str(angle_array[i]))
             print("img shape: " + str(img.shape))
             cv2.imshow("Img" + str(i), img_array[i])
@@ -764,7 +770,7 @@ class ImgToSensorCNN:
                                         y=self.test_vals[:, self.dim_choice],
                                         batch_size=self.batch_size)
 
-        print("Model evaluated, score is:")
+        print("Model evaluated, the score is: ")
         print(self.score)
 
     def preditct_test_pics(self, num_imgs_to_predict=0):
@@ -906,14 +912,14 @@ if __name__ == "__main__":
         cnn.load_model(MODEL_DIR + "modelslearndrive-model-21063")
         cnn.load_metadata()
         cnn.load_test_set()
-        if cnn.dim_choice == 2:
-            cnn.visualise_data_connection(
-                cnn.test_imgs,
-                cnn.test_vals[:, 0],
-                cnn.test_vals[:, 1])
+        #if cnn.dim_choice == 2:
+            #cnn.visualise_data_connection(
+            #    img_array=cnn.test_imgs,
+            #    distance_array=cnn.test_vals[:, 0],
+            #    angle_array=cnn.test_vals[:, 1])
         #else:
             #cnn.visualise_data_connection(
-            #    cnn.test_imgs,
-            #    cnn.test_vals[:, cnn.dim_choice])
+            #    img_array=cnn.test_imgs,
+            #    distance_array=cnn.test_vals[:, cnn.dim_choice])
         cnn.test_model()
-        cnn.preditct_test_pics()
+        cnn.preditct_test_pics(10)
