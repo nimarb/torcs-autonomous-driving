@@ -104,14 +104,15 @@ class ImgToSensorCNN:
                 data_thinning_enabled=False,
                 thinning_min_delta=0.005,
                 thinning_avg_over_eles=5):
-        self.img_width = w
-        self.img_height = h
-        self.resize_imgs = True
+        self.attrs = {}
+        self.attrs['img_width'] = w
+        self.attrs['img_height'] = h
+        self.attrs['resize_imgs'] = True
         self.num_train_set = 1
         self.num_val_set = 1
         self.num_test_set = 20
-        self.img_data_type = ".jpg"
-        self.learning_rate = learning_rate
+        self.attrs['img_data_type'] = ".jpg"
+        self.attrs['learning_rate'] = learning_rate
         self.distance_array = np.empty(0)
         self.angle_array = np.empty(0)
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
@@ -119,29 +120,29 @@ class ImgToSensorCNN:
         self.imgs = np.empty(0, dtype=object)
         self.img_list = []
         self.model = object
-        self.batch_size = 32
-        self.num_epochs = 50
-        self.loss_function = "mean_squared_error"
-        self.metrics = "mae"
-        self.model_name = model_name
+        self.attrs['batch_size'] = 32
+        self.attrs['num_epochs'] = 50
+        self.attrs['loss_function'] = "mean_squared_error"
+        self.attrs['metrics'] = "mae"
+        self.attrs['model_name'] = model_name
         self.optimiser = optimiser
-        self.model_architecture = model_architecture
+        self.attrs['model_architecture'] = model_architecture
         self.img_iter = 0
         # 0: only angle, 1: only distance, 2: angle&distance
-        self.dim_choice = dim_choice
-        self.camera_perspective = camera_perspective
-        self.normalise_imgs = normalise_imgs
-        self.normalise_arrays = normalise_arrays
-        self.top_region_cropped = top_region_cropped
-        self.top_crop_factor = 0.4
+        self.attrs['dim_choice'] = dim_choice
+        self.attrs['camera_perspective'] = camera_perspective
+        self.attrs['normalise_imgs'] = normalise_imgs
+        self.attrs['normalise_arrays'] = normalise_arrays
+        self.attrs['top_region_cropped'] = top_region_cropped
+        self.attrs['top_crop_factor'] = 0.4
         if colourspace == "hsv":
             img_depth = 1
-            self.hsv_layer = hsv_layer
-        self.colourspace = colourspace
-        self.img_depth = img_depth
-        self.data_thinning_enabled = data_thinning_enabled
-        self.thinning_min_delta = thinning_min_delta
-        self.thinning_avg_over_eles = thinning_avg_over_eles
+            self.attrs['hsv_layer'] = hsv_layer
+        self.attrs['colourspace'] = colourspace
+        self.attrs['img_depth'] = img_depth
+        self.attrs['data_thinning_enabled'] = data_thinning_enabled
+        self.attrs['data_thinning_min_delta'] = thinning_min_delta
+        self.attrs['data_thinning_avg_over_eles'] = thinning_avg_over_eles
         if data_n is not None:
             print("Data_n is: " + data_n)
             DATA_NAMES.clear()
@@ -155,7 +156,7 @@ class ImgToSensorCNN:
         num_img = 0
         for track_dir in DATA_DIRS:
             img_dir = os.path.join(track_dir, "images")
-            num_img += len([f for f in os.listdir(img_dir) if f.endswith(self.img_data_type) and os.path.isfile(os.path.join(img_dir, f))])
+            num_img += len([f for f in os.listdir(img_dir) if f.endswith(self.attrs['img_data_type']) and os.path.isfile(os.path.join(img_dir, f))])
         self.num_val_set = round(num_img * (val_percent * 0.01))
         self.num_train_set = num_img - self.num_val_set
         self.train_imgs = np.empty(self.num_train_set, dtype=object)
@@ -188,10 +189,10 @@ class ImgToSensorCNN:
             a: int, min value of img to normalise to
             b: int, max value of img to normalise to"""
         img_name_filter = glob.glob(
-                            data_dir + "/images/*" + self.img_data_type)
+                            data_dir + "/images/*" + self.attrs['img_data_type'])
         for filename in sorted(img_name_filter):
             img = cv2.imread(filename)
-            if self.normalise_imgs:
+            if self.attrs['normalise_imgs']:
                 norm_img = np.zeros(img.shape)
                 norm_img = cv2.normalize(
                     img,
@@ -201,17 +202,17 @@ class ImgToSensorCNN:
                     norm_type=cv2.NORM_MINMAX,
                     dtype=cv2.CV_32F)
                 img = norm_img
-            if self.resize_imgs:
+            if self.attrs['resize_imgs']:
                 (h, w, _) = img.shape
-                if h != self.img_height and w != self.img_width:
-                    factor = self.img_width / w
+                if h != self.attrs['img_height'] and w != self.attrs['img_width']:
+                    factor = self.attrs['img_width'] / w
                     img = cv2.resize(img, None, fx=factor, fy=factor)
-            if self.top_region_cropped:
-                top_crop = int(self.top_crop_factor * self.img_height)
-                img = img[top_crop:self.img_height, 0:self.img_width]
-                self.img_height = self.img_height - top_crop
-            if self.colourspace == "hsv":
-                if 1 == self.img_depth:
+            if self.attrs['top_region_cropped']:
+                top_crop = int(self.attrs['top_crop_factor'] * self.attrs['img_height'])
+                img = img[top_crop:self.attrs['img_height'], 0:self.attrs['img_width']]
+                self.attrs['img_height'] = self.attrs['img_height'] - top_crop
+            if self.attrs['colourspace'] == "hsv":
+                if 1 == self.attrs['img_depth']:
                     img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
                     img = img[:, :, 1:2]
             img_list.append(img)
@@ -227,7 +228,7 @@ class ImgToSensorCNN:
         _distance_array = np.load(data_dir + "/sensor/distance.npy")
         _angle_array = np.load(data_dir + "/sensor/angle.npy")
         # TODO:
-        # if self.normalise_arrays:
+        # if self.attrs['normalise_arrays']:
             
         self.distance_array = np.append(self.distance_array, _distance_array)
         self.angle_array = np.append(self.angle_array, _angle_array)
@@ -255,9 +256,9 @@ class ImgToSensorCNN:
         self.test_imgs = np.empty(
             (
                 self.num_test_set,
-                self.img_height,
-                self.img_width,
-                self.img_depth),
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth']),
             dtype=object)
 
         for i in range(0, self.num_test_set):
@@ -332,7 +333,7 @@ class ImgToSensorCNN:
         self.shuffle_three_arrays_in_unison(
             self.imgs, self.distance_array, self.angle_array)
 
-        if self.data_thinning_enabled:
+        if self.attrs['data_thinning_enabled']:
             self.thin_data_set(
                 self.distance_array, self.angle_array, self.imgs)
             num_img = self.imgs.size
@@ -482,22 +483,22 @@ class ImgToSensorCNN:
     def save(self):
         """Saves all data"""
         stamp = str(time.time()).split(".")[0]
-        self.model_name = self.model_name + "-" + stamp[5:]
+        self.attrs['model_name'] = self.attrs['model_name'] + "-" + stamp[5:]
         self.save_model()
         self.save_metadata()
 
     def save_metadata(self):
         """Saves metadata for the current training in a json file"""
         metadata = {}
-        metadata["img_width"] = self.img_width
-        metadata["img_height"] = self.img_height
-        metadata["img_data_type"] = self.img_data_type
+        metadata["img_width"] = self.attrs['img_width']
+        metadata["img_height"] = self.attrs['img_height']
+        metadata["img_data_type"] = self.attrs['img_data_type']
         metadata["num_val_set"] = self.num_val_set
         metadata["num_test_set"] = self.num_test_set
         metadata["num_train_set"] = self.num_train_set
-        metadata["num_epochs"] = self.num_epochs
-        metadata["loss_function"] = self.loss_function
-        metadata["metrics"] = self.metrics
+        metadata["num_epochs"] = self.attrs['num_epochs']
+        metadata["loss_function"] = self.attrs['loss_function']
+        metadata["metrics"] = self.attrs['metrics']
         metadata["loss_hist"] = self.loss_hist.loss
         metadata["data_names"] = DATA_NAMES
         metadata["test_data_names"] = TEST_DATA_NAMES
@@ -509,30 +510,30 @@ class ImgToSensorCNN:
         metadata["test_loss"] = self.score[0]
         metadata["test_mae"] = self.score[1]
         metadata["optimiser"] = self.optimiser
-        metadata["camera_perspective"] = self.camera_perspective
-        metadata["model_architecture"] = self.model_architecture
-        metadata["learning_rate"] = self.learning_rate
-        metadata["normalise_imgs"] = self.normalise_imgs
-        metadata["normalise_arrays"] = self.normalise_arrays
-        metadata["top_region_cropped"] = self.top_region_cropped
-        metadata["top_crop_factor"] = self.top_crop_factor
-        metadata["img_depth"] = self.img_depth
-        metadata["colourspace"] = self.colourspace
-        metadata["hsv_layer"] = self.hsv_layer
-        metadata["data_thinning_enabled"] = self.data_thinning_enabled
-        metadata["data_thinning_min_delta"] = self.data_thinning_min_delta
-        metadata["data_thinning_avg_over_eles"] = self.data_thinning_avg_over_eles
-        if self.dim_choice == 2:
+        metadata["camera_perspective"] = self.attrs['camera_perspective']
+        metadata["model_architecture"] = self.attrs['model_architecture']
+        metadata["learning_rate"] = self.attrs['learning_rate']
+        metadata["normalise_imgs"] = self.attrs['normalise_imgs']
+        metadata["normalise_arrays"] = self.attrs['normalise_arrays']
+        metadata["top_region_cropped"] = self.attrs['top_region_cropped']
+        metadata["top_crop_factor"] = self.attrs['top_crop_factor']
+        metadata["img_depth"] = self.attrs['img_depth']
+        metadata["colourspace"] = self.attrs['colourspace']
+        metadata["hsv_layer"] = self.attrs['hsv_layer']
+        metadata["data_thinning_enabled"] = self.attrs['data_thinning_enabled']
+        metadata["data_thinning_min_delta"] = self.attrs['data_thinning_min_delta']
+        metadata["data_thinning_avg_over_eles"] = self.attrs['data_thinning_avg_over_eles']
+        if self.attrs['dim_choice'] == 2:
             metadata["dim_choice"] = "distance and angle"
-        elif self.dim_choice == 1:
+        elif self.attrs['dim_choice'] == 1:
             metadata["dim_choice"] = "distance"
-        elif self.dim_choice == 0:
+        elif self.attrs['dim_choice'] == 0:
             metadata["dim_choice"] = "angle"
         json_str = json.dumps(metadata)
         save_data_dir = os.path.join(
             "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
         with open(
-                save_data_dir + self.model_name + "-metadata.json", "w") as f:
+                save_data_dir + self.attrs['model_name'] + "-metadata.json", "w") as f:
             f.write(json_str)
         print("Saved metadata")
 
@@ -540,12 +541,12 @@ class ImgToSensorCNN:
         """Saves the trained keras model to disk"""
         save_data_dir = os.path.join(
             "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
-        self.model.save(save_data_dir + "/" + self.model_name + ".hd5")
+        self.model.save(save_data_dir + "/" + self.attrs['model_name'] + ".hd5")
         json_str = self.model.to_json()
         json_str = json.dumps(json_str, indent=4, sort_keys=True)
         with open(
                 save_data_dir
-                + self.model_name
+                + self.attrs['model_name']
                 + "-architecture.json", 'w') as f:
             f.write(json_str)
         print("Saved model")
@@ -556,11 +557,11 @@ class ImgToSensorCNN:
         Arguments:
             model: keras.model, filename"""
         if name:
-            self.model_name = name
+            self.attrs['model_name'] = name
         
         _model_path = os.path.join(
             "/home/nb/progs/torcs-autonomous-driving/src/models",
-            self.model_name + ".hd5")
+            self.attrs['model_name'] + ".hd5")
         self.model = load_model(_model_path)
         print("Loaded model")
 
@@ -568,137 +569,138 @@ class ImgToSensorCNN:
         """ """
 
         if model_name:
-            self.model_name = model_name
+            self.attrs['model_name'] = model_name
 
         if "DigitsBoxBMW2" == platform.node():
             model_dir = os.path.join(
                 "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
             _model_metadata_path = os.path.join(
-                model_dir, self.model_name + "-metadata.json")
+                model_dir, self.attrs['model_name'] + "-metadata.json")
         else:
             _model_metadata_path = os.path.join(
                 "/home/nb/progs/torcs-autonomous-driving/src/models",
-                self.model_name + "-metadata.json")
+                self.attrs['model_name'] + "-metadata.json")
 
         metadata = json.load(open(_model_metadata_path))
         try:
-            self.img_width = metadata["img_width"]
-            self.img_height = metadata["img_height"]
-            self.img_data_type = metadata["img_data_type"]
-            self.camera_perspective = metadata["camera_perspective"]
-            self.model_architecture = metadata["model_architecture"]
-            self.normalise_imgs = metadata["normalise_imgs"]
-            self.normalise_arrays = metadata["normalise_arrays"]
+            self.attrs['img_width'] = metadata["img_width"]
+            self.attrs['img_height'] = metadata["img_height"]
+            self.attrs['img_data_type'] = metadata["img_data_type"]
+            self.attrs['camera_perspective'] = metadata["camera_perspective"]
+            self.attrs['model_architecture'] = metadata["model_architecture"]
+            self.attrs['normalise_imgs'] = metadata["normalise_imgs"]
+            self.attrs['normalise_arrays'] = metadata["normalise_arrays"]
             self.top_regio_cropped = metadata["top_region_cropped"]
-            self.top_crop_factor = metadata["top_crop_factor"]
-            self.img_depth = metadata["img_depth"]
-            self.colourspace = metadata["colourspace"]
-            self.hsv_layer = metadata["hsv_layer"]
+            self.attrs['top_crop_factor'] = metadata["top_crop_factor"]
+            self.attrs['img_depth'] = metadata["img_depth"]
+            self.attrs['colourspace'] = metadata["colourspace"]
+            self.attrs['hsv_layer'] = metadata["hsv_layer"]
             if metadata["dim_choice"] == "distance and angle":
-                self.dim_choice = 2
+                self.attrs['dim_choice'] = 2
             elif metadata["dim_choice"] == "distance":
-                self.dim_choice = 1
+                self.attrs['dim_choice'] = 1
             elif metadata["dim_choice"] == "angle":
-                self.dim_choice = 0
-        except KeyError:
-            print("several keys not found but start anyway")
+                self.attrs['dim_choice'] = 0
+        except KeyError as e:
+            print("Several metadata keys not found but start anyway")
+            #print("Details: " + e)
             pass
 
     def cnn_model(self):
         """Creates a keras ConvNet model"""
         # loss= mean_squared_error, metrics=mean_absolute_error
-        if "alexnet" == self.model_architecture:
+        if "alexnet" == self.attrs['model_architecture']:
             self.model = cnn_models.alexnet(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
-        elif "alexnet_no_dropout" == self.model_architecture:
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
+        elif "alexnet_no_dropout" == self.attrs['model_architecture']:
             self.model = cnn_models.alexnet_no_dropout(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
             self.cnn_alexnet_no_dropout()
-        elif "tensorkart" == self.model_architecture:
+        elif "tensorkart" == self.attrs['model_architecture']:
             self.model = cnn_models.tensorkart(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
-        elif "simple" == self.model_architecture:
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
+        elif "simple" == self.attrs['model_architecture']:
             self.model = cnn_models.simple(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
-        elif "simple_invcnv" == self.model_architecture:
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
+        elif "simple_invcnv" == self.attrs['model_architecture']:
             self.model = cnn_models.simple_invcnv(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
-        elif "simple_min1d" == self.model_architecture:
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
+        elif "simple_min1d" == self.attrs['model_architecture']:
             self.model = cnn_models.simple_min1d(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
-        elif "simple_min2d" == self.model_architecture:
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
+        elif "simple_min2d" == self.attrs['model_architecture']:
             self.model = cnn_models.simple_min2d(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
-        elif "simple_plu1d" == self.model_architecture:
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
+        elif "simple_plu1d" == self.attrs['model_architecture']:
             self.model = cnn_models.simple_plu1d(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
-        elif "simple_plu2d" == self.model_architecture:
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
+        elif "simple_plu2d" == self.attrs['model_architecture']:
             self.model = cnn_models.simple_plu2d(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
-        elif "simple_invcnv_adv" == self.model_architecture:
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
+        elif "simple_invcnv_adv" == self.attrs['model_architecture']:
             self.model = cnn_models.simple_invcnv_adv(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
-        elif "simple_small" == self.model_architecture:
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
+        elif "simple_small" == self.attrs['model_architecture']:
             self.model = cnn_models.simple_small(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
-        elif "simple_very_small" == self.model_architecture:
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
+        elif "simple_very_small" == self.attrs['model_architecture']:
             self.model = cnn_models.simple_very_small(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
-        elif "simple_small_leaky_relu" == self.model_architecture:
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
+        elif "simple_small_leaky_relu" == self.attrs['model_architecture']:
             self.model = cnn_models.simple_small_leaky_relu(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
-        elif "simple_very_small_3l" == self.model_architecture:
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
+        elif "simple_very_small_3l" == self.attrs['model_architecture']:
             self.model = cnn_models.simple_very_small_3l(
-                self.img_height,
-                self.img_width,
-                self.img_depth,
-                self.dim_choice)
+                self.attrs['img_height'],
+                self.attrs['img_width'],
+                self.attrs['img_depth'],
+                self.attrs['dim_choice'])
 
         train_data = np.empty(
                 (
                     self.num_train_set,
-                    self.img_height,
-                    self.img_width,
-                    self.img_depth),
+                    self.attrs['img_height'],
+                    self.attrs['img_width'],
+                    self.attrs['img_depth']),
                 dtype=object)
         for i in range(self.num_train_set):
             train_data[i, :, :, :] = self.train_imgs[i]
@@ -706,9 +708,9 @@ class ImgToSensorCNN:
         val_data = np.empty(
                 (
                     self.num_val_set,
-                    self.img_height,
-                    self.img_width,
-                    self.img_depth),
+                    self.attrs['img_height'],
+                    self.attrs['img_width'],
+                    self.attrs['img_depth']),
                 dtype=object)
         for i in range(self.num_val_set):
             val_data[i, :, :, :] = self.val_imgs[i]
@@ -728,47 +730,47 @@ class ImgToSensorCNN:
         cbs.append(self.fit_hist)
         cbs.append(self.loss_hist)
         cbs.append(self.time_hist)
-        cbs.append(CSVLogger(self.model_name + ".csv", separator=','))
+        cbs.append(CSVLogger(self.attrs['model_name'] + ".csv", separator=','))
         es = EarlyStopping(monitor='mean_absolute_error', min_delta=0.04)
         # cbs.append(es)
 
         # other good optimiser: adam, rmsprop
-        opti = Adamax(lr=self.learning_rate)
+        opti = Adamax(lr=self.attrs['learning_rate'])
         self.model.compile(
-            loss=self.loss_function,
+            loss=self.attrs['loss_function'],
             # optimizer=self.optimiser,
             optimizer=opti,
-            metrics=[self.metrics])
+            metrics=[self.attrs['metrics']])
         
-        if self.dim_choice == 2:
+        if self.attrs['dim_choice'] == 2:
             self.model.fit(
-                x=train_data, y=train_target_vals, batch_size=self.batch_size,
+                x=train_data, y=train_target_vals, batch_size=self.attrs['batch_size'],
                 validation_data=(val_data, val_target_vals),
-                epochs=self.num_epochs, callbacks=cbs)
+                epochs=self.attrs['num_epochs'], callbacks=cbs)
         else:
             self.model.fit(
                 x=train_data,
-                y=train_target_vals[:, self.dim_choice],
-                batch_size=self.batch_size,
+                y=train_target_vals[:, self.attrs['dim_choice']],
+                batch_size=self.attrs['batch_size'],
                 validation_data=(
-                    val_data, val_target_vals[:, self.dim_choice]),
-                epochs=self.num_epochs,
+                    val_data, val_target_vals[:, self.attrs['dim_choice']]),
+                epochs=self.attrs['num_epochs'],
                 callbacks=cbs)
 
     def test_model(self):
         """Evaluate the loaded / trained model"""
-        print("Evaluating model: " + self.model_name)
-        if self.dim_choice == 2:
+        print("Evaluating model: " + self.attrs['model_name'])
+        if self.attrs['dim_choice'] == 2:
             self.score = self.model.evaluate(
                                         x=self.test_imgs,
                                         # y=self.test_vals[:, 0],
                                         y=self.test_vals,
-                                        batch_size=self.batch_size)
+                                        batch_size=self.attrs['batch_size'])
         else:
             self.score = self.model.evaluate(
                                         x=self.test_imgs,
-                                        y=self.test_vals[:, self.dim_choice],
-                                        batch_size=self.batch_size)
+                                        y=self.test_vals[:, self.attrs['dim_choice']],
+                                        batch_size=self.attrs['batch_size'])
 
         print("Model evaluated, the score is: ")
         print(self.score)
@@ -779,15 +781,15 @@ class ImgToSensorCNN:
         Arguments:
             num_imgs_to_predict: int, number of imgs to run the prediction on,
                                     if zero -> run prediction on all imgs"""
-        print("Predicting images from: " + self.model_name)
+        print("Predicting images from: " + self.attrs['model_name'])
 
         if 0 < num_imgs_to_predict:
             data = np.empty(
                     (
                         num_imgs_to_predict,
-                        self.img_height,
-                        self.img_width,
-                        self.img_depth),
+                        self.attrs['img_height'],
+                        self.attrs['img_width'],
+                        self.attrs['img_depth']),
                     dtype=object)
             for j in range(num_imgs_to_predict):
                 data[j, :, :, :] = self.test_imgs[j, :, :, :]
@@ -813,7 +815,7 @@ class ImgToSensorCNN:
         pred_descr = ["angl", "dist"]
         i = 0
         for val in prediction:
-            if self.dim_choice == 2:
+            if self.attrs['dim_choice'] == 2:
                 print(
                     "angl val: "
                     + str(self.test_vals[i, 0])
@@ -826,9 +828,9 @@ class ImgToSensorCNN:
                     + str(val[1]))
             else:
                 print(
-                    pred_descr[self.dim_choice]
+                    pred_descr[self.attrs['dim_choice']]
                     + " val: "
-                    + str(self.test_vals[i, self.dim_choice])
+                    + str(self.test_vals[i, self.attrs['dim_choice']])
                     + ";\tpred: "
                     + str(val[0]))
             i += 1
