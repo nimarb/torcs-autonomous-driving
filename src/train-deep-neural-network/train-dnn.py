@@ -11,7 +11,7 @@ import time
 import numpy as np
 import cv2
 import tensorflow as tf
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from keras.models import load_model
 from keras.callbacks import EarlyStopping, Callback, CSVLogger, History
 from keras.optimizers import Adam, Adamax
@@ -419,15 +419,15 @@ class ImgToSensorCNN:
 
         Arguments
             array: numpy array, values to plot"""
-        x = np.arange(array.size)
-        plt.plot(x, array, linewidth=0.5)
+        # x = np.arange(array.size)
+        # plt.plot(x, array, linewidth=0.5)
         binwidth = 0.1
-        plt.hist(
-            array,
-            bins=np.arange(
-                min(array), max(array) + binwidth, binwidth),
-            linewidth=0.5)
-        plt.show()
+        # plt.hist(
+        #    array,
+        #    bins=np.arange(
+        #        min(array), max(array) + binwidth, binwidth),
+        #    linewidth=0.5)
+        #plt.show()
     
     def print_array_stats(self, distance_array, angle_array):
         """Print stats of input distance and angle arrays
