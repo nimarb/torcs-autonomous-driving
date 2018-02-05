@@ -27,23 +27,23 @@ CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 DATA_NAMES = [
     "data-olethros_road_1-2laps-640x480",
-    #"data-aalborg-2laps-640x480",
-    #"data-alpine_1-2laps-640x480",
-    #"data-alpine_2-2laps-640x480",
-    #"data-brondehach-2laps-640x480",
-    #"data-cg_speedway_1-2laps-640x480",
-    #"data-cg_track_3-2laps-640x480",
-    #"data-corkscrew-2laps-640x480",
-    #"data-e_road-2laps-640x480",
-    #"data-etrack_1-2laps-640x480",
-    #"data-etrack_2-2laps-640x480",
-    #"data-etrack_3-2laps-640x480",
-    #"data-etrack_4-2laps-640x480",
-    #"data-etrack_6-2laps-640x480",
-    #"data-forza-2laps-640x480",
-    #"data-ruudskogen-2laps-640x480",
+    "data-aalborg-2laps-640x480",
+    "data-alpine_1-2laps-640x480",
+    "data-alpine_2-2laps-640x480",
+    "data-brondehach-2laps-640x480",
+    "data-cg_speedway_1-2laps-640x480",
+    "data-cg_track_3-2laps-640x480",
+    "data-corkscrew-2laps-640x480",
+    "data-e_road-2laps-640x480",
+    "data-etrack_1-2laps-640x480",
+    "data-etrack_2-2laps-640x480",
+    "data-etrack_3-2laps-640x480",
+    "data-etrack_4-2laps-640x480",
+    "data-etrack_6-2laps-640x480",
+    "data-forza-2laps-640x480",
+    "data-ruudskogen-2laps-640x480",
     ###"data-spring-2laps-640x480",
-    #"data-street_1-2laps-640x480",
+    "data-street_1-2laps-640x480",
     "data-wheel_1-2laps-640x480"]
 TEST_DATA_NAMES = [
     #"data-cg_track_3-2laps-640x480"]
@@ -184,7 +184,7 @@ class ImgToSensorCNN:
 
     def load_imgs(self, img_list, data_dir, a=0, b=1):
         """Load all images into list, sorted by file name (pad with zeros!)
-        
+
         Arguments:
             img_list:
             data_dir:
@@ -232,7 +232,7 @@ class ImgToSensorCNN:
         _angle_array = np.load(data_dir + "/sensor/angle.npy")
         # TODO:
         # if self.attrs['normalise_arrays']:
-            
+
         self.distance_array = np.append(self.distance_array, _distance_array)
         self.angle_array = np.append(self.angle_array, _angle_array)
         print("Loaded label arrays of " + data_dir + " into np array")
@@ -274,7 +274,7 @@ class ImgToSensorCNN:
         # _imgs = _imgs[:self.num_test_set]
         # for i in range(self.num_test_set):
         #    self.test_imgs[i, :, :, :] = _imgs[i]
-            
+ 
         # Test data is from a different track but always a rnd subset
         self.shuffle_three_arrays_in_unison(
             self.test_imgs, _angle_array, _distance_array)
@@ -287,7 +287,7 @@ class ImgToSensorCNN:
             self, distance_array, angle_array, img_array,
             min_delta=0.005, avg_nr_eles=5):
         """
-        
+
         Arguments:
             distance_array: numpy array,
             angle_array: numpy array,
@@ -433,7 +433,7 @@ class ImgToSensorCNN:
         #        min(array), max(array) + binwidth, binwidth),
         #    linewidth=0.5)
         # plt.show()
-    
+ 
     def print_array_stats(self, distance_array, angle_array):
         """Print stats of input distance and angle arrays
 
@@ -554,7 +554,10 @@ class ImgToSensorCNN:
         print("Loaded model")
 
     def load_metadata(self, model_name=None):
-        """ """
+        """Loads the model metadata from a saved JSON file.
+
+        Arguments:
+            model_name: string, name of the model file without datatype"""
 
         if model_name:
             self.attrs['model_name'] = model_name
@@ -588,7 +591,6 @@ class ImgToSensorCNN:
 
     def cnn_model(self):
         """Creates a keras ConvNet model"""
-        # loss= mean_squared_error, metrics=mean_absolute_error
         if "alexnet" == self.attrs['model_architecture']:
             self.model = cnn_models.alexnet(
                 self.attrs['img_height'],
@@ -721,7 +723,7 @@ class ImgToSensorCNN:
             # optimizer=self.optimiser,
             optimizer=opti,
             metrics=[self.attrs['metrics']])
-        
+ 
         if self.attrs['dim_choice'] == 2:
             self.model.fit(
                 x=train_data, y=train_target_vals,
@@ -758,7 +760,7 @@ class ImgToSensorCNN:
 
     def preditct_test_pics(self, num_imgs_to_predict=0):
         """Use model to predict values for image data from the test set
-        
+
         Arguments:
             num_imgs_to_predict: int, number of imgs to run the prediction on,
                                     if zero -> run prediction on all imgs"""
@@ -842,20 +844,32 @@ class TimeHistory(Callback):
 
     def on_epoch_end(self, batch, logs={}):
         self.times.append(time.time() - self.epoch_time_start)
-        
+
 
 if __name__ == "__main__":
+    visualise_connection = False
     if "train" == sys.argv[1]:
         train = True
     elif "test" == sys.argv[1]:
         train = False
-    elif "-h" == sys.argv[1]:
+    elif "-h" == sys.argv[1] or "help" == sys.argv[1] or "--help" == sys.argv[1]:
         print(
-            "Usage: python train-dnn.py INTEND PARAMETRES"
-            + "\tINTEND: \n\t\ttest: to test a model"
-            + "\n\t\ttrain: to train a model")
+            "\nUsage: python train-dnn.py INTEND PARAMETRES"
+            + "\n\tINTEND: \n\t\ttest: to test a model"
+            + "\n\t\ttrain: to train a model"
+            + "\n\tPARAMETRES for train:"
+            + "\n\t\t desired image width in px"
+            + "\n\t\t desired image height in px"
+            + "\n\t\t visualise data connection: True/False"
+            + "\n\t\t model architecture name"
+            + "\n\t\t training camera perspective"
+            + "\n\tPARAMETRES for test:"
+            + "\n\t\t path to the model file"
+            + "\n\t\t visualise data connection: True/False")
+        sys.exit(0)
     else:
         print("ERROR: provide train or test as first argument, -h for help")
+        sys.exit(0)
     if train:
         if len(sys.argv) == 4:
             cnn = ImgToSensorCNN(w=int(sys.argv[2]), h=int(sys.argv[3]))
@@ -863,16 +877,23 @@ if __name__ == "__main__":
             cnn = ImgToSensorCNN(
                 w=int(sys.argv[2]),
                 h=int(sys.argv[3]),
-                model_architecture=sys.argv[4])
+                model_architecture=sys.argv[5])
+            if sys.argv[4] == "True":
+                visualise_connection = True
         elif len(sys.argv) == 7:
             cnn = ImgToSensorCNN(
                 w=int(sys.argv[2]),
                 h=int(sys.argv[3]),
-                model_architecture=sys.argv[4],
-                camera_perspective=sys.argv[5],
-                data_n=sys.argv[6])
+                model_architecture=sys.argv[5],
+                camera_perspective=sys.argv[6],
+                data_n=sys.argv[7])
+            if sys.argv[4] == "True":
+                visualise_connection = True
     else:
         cnn = ImgToSensorCNN()
+        if len(sys.argv) > 3:
+            if sys.argv[4] == "True":
+                visualise_connection = True
 
     cnn.set_val_set_in_percent(10)
     if train:
@@ -881,10 +902,12 @@ if __name__ == "__main__":
         cnn.shuffle_data_arrays()
         cnn.print_array_stats(
             cnn.train_distance_array, cnn.train_angle_array)
-        #cnn.visualise_data_connection(
-        #    cnn.train_imgs,
-        #    cnn.distance_array,
-        #    cnn.angle_array)
+        if "DigitsBoxBMW2" == platform.node():
+            if visualise_connection:
+                cnn.visualise_data_connection(
+                    cnn.train_imgs,
+                    cnn.distance_array,
+                    cnn.angle_array)
         cnn.cnn_model()
         cnn.load_test_set()
         cnn.evaluate_model()
@@ -895,14 +918,16 @@ if __name__ == "__main__":
         cnn.load_model(MODEL_DIR + "modelslearndrive-model-21063")
         cnn.load_metadata()
         cnn.load_test_set()
-        #if cnn.dim_choice == 2:
-            #cnn.visualise_data_connection(
-            #    img_array=cnn.test_imgs,
-            #    distance_array=cnn.test_vals[:, 0],
-            #    angle_array=cnn.test_vals[:, 1])
-        #else:
-            #cnn.visualise_data_connection(
-            #    img_array=cnn.test_imgs,
-            #    distance_array=cnn.test_vals[:, cnn.dim_choice])
+        if "DigitsBoxBMW2" == platform.node():
+            if visualise_connection:
+                if cnn.dim_choice == 2:
+                    cnn.visualise_data_connection(
+                        img_array=cnn.test_imgs,
+                        distance_array=cnn.test_vals[:, 0],
+                        angle_array=cnn.test_vals[:, 1])
+                else:
+                    cnn.visualise_data_connection(
+                        img_array=cnn.test_imgs,
+                        distance_array=cnn.test_vals[:, cnn.dim_choice])
         cnn.evaluate_model()
         cnn.preditct_test_pics(10)
