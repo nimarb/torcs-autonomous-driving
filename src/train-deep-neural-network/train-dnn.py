@@ -7,6 +7,7 @@ import platform
 # from random import sample
 import random
 import time
+from pathlib import Path
 
 import numpy as np
 import cv2
@@ -186,8 +187,8 @@ class ImgToSensorCNN:
         """Load all images into list, sorted by file name (pad with zeros!)
 
         Arguments:
-            img_list:
-            data_dir:
+            img_list: list, images are loaded into this list
+            data_dir: string, path containing the images folder
             a: int, min value of img to normalise to
             b: int, max value of img to normalise to"""
         img_name_filter = glob.glob(
@@ -227,7 +228,7 @@ class ImgToSensorCNN:
         Arguments:
             data_dir: string, data dir containing the sensor folder
             a: int, minimal value to normalise to
-            b: int, maximal value to normalise to """
+            b: int, maximal value to normalise to"""
         _distance_array = np.load(data_dir + "/sensor/distance.npy")
         _angle_array = np.load(data_dir + "/sensor/angle.npy")
         # TODO:
@@ -546,7 +547,7 @@ class ImgToSensorCNN:
             model: keras.model, filename"""
         if name:
             self.attrs['model_name'] = name
-        
+
         _model_path = os.path.join(
             "/home/nb/progs/torcs-autonomous-driving/src/models",
             self.attrs['model_name'] + ".hd5")
@@ -603,7 +604,6 @@ class ImgToSensorCNN:
                 self.attrs['img_width'],
                 self.attrs['img_depth'],
                 self.attrs['dim_choice'])
-            self.cnn_alexnet_no_dropout()
         elif "tensorkart" == self.attrs['model_architecture']:
             self.model = cnn_models.tensorkart(
                 self.attrs['img_height'],
@@ -846,6 +846,27 @@ class TimeHistory(Callback):
         self.times.append(time.time() - self.epoch_time_start)
 
 
+def find_model_file(file_str):
+    if "DigitsBoxBMW2" == platform.node():
+        model_dir = Path(
+            "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
+    else:
+        model_dir = Path(__file__).absolute().parent.joinpath("models")
+    given_path = Path(file_str)
+    # Check if file name or path was given
+    if str(given_path).find("/") > 0 or str(given_path).find("\\") > 0:
+        if given_path.suffix == '.hd5':
+            if given_path.is_file():
+                return given_path.parent, given_path.name.split('.')[0]
+    else:
+        if given_path.is_file:
+                return given_path.parent, given_path.name.split('.')[0]
+        for fpath in model_dir.glob('*'):
+            if (fpath.name.split('.')[0]) == (str(given_path).split('.')[0]):
+                return fpath.absolute.parent, str(given_path).split('.')[0]
+    return " ", " "
+
+
 if __name__ == "__main__":
     visualise_connection = False
     if "train" == sys.argv[1]:
@@ -889,7 +910,7 @@ if __name__ == "__main__":
                 data_n=sys.argv[7])
             if sys.argv[4] == "True":
                 visualise_connection = True
-    else:
+    elif not train:
         cnn = ImgToSensorCNN()
         if len(sys.argv) > 3:
             if sys.argv[4] == "True":
@@ -913,8 +934,19 @@ if __name__ == "__main__":
         cnn.evaluate_model()
         cnn.preditct_test_pics()
         cnn.save()
-    else:
-        MODEL_DIR = "model_arch-val_mae-comp-large/"
+    elif not train:
+        if "DigitsBoxBMW2" == platform.node():
+            MODEL_DIR = Path(
+                "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
+        else:
+            MODEL_DIR = Path(__file__).absolute().parent.joinpath("models")
+
+        _model_file, _model_name = find_model_file(sys.argv[2])
+        if " " == _model_file:
+            print("Could not find model file")
+            sys.exit(-1)
+
+        MODEL_SUB_DIR = "model_arch-val_mae-comp-large/"
         cnn.load_model(MODEL_DIR + "modelslearndrive-model-21063")
         cnn.load_metadata()
         cnn.load_test_set()
