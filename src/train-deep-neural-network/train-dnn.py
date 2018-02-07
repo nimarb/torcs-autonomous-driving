@@ -69,6 +69,8 @@ if "DigitsBoxBMW2" == platform.node():
         TEST_DATA_DIRS.append(
             os.path.join(
                 "/", "raid", "student_data", "PP_TORCS_LearnDrive1", track))
+    MODEL_DIR = Path(
+        "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
 else:
     DATA_DIRS = []
     for track in DATA_NAMES:
@@ -80,6 +82,7 @@ else:
         TEST_DATA_DIRS.append(
             os.path.join(
                 CURRENT_DIR, "..", "collect_img_sensor_data", track))
+    MODEL_DIR = Path(__file__).absolute().parents[1].joinpath("models")
 
 
 class ImgToSensorCNN:
@@ -516,27 +519,22 @@ class ImgToSensorCNN:
         elif self.attrs['dim_choice'] == 0:
             metadata["dim_choice"] = "angle"
         json_str = json.dumps(metadata)
-        save_data_dir = os.path.join(
-            "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
         with open(
-                save_data_dir
-                + self.attrs['model_name']
-                + "-metadata.json", "w") as f:
+            str(MODEL_DIR.joinpath(
+                self.attrs['model_name'] + "-metadata.json")), "w") as f:
             f.write(json_str)
         print("Saved metadata")
 
     def save_model(self):
         """Saves the trained keras model to disk"""
-        save_data_dir = os.path.join(
-            "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
         self.model.save(
-            save_data_dir + "/" + self.attrs['model_name'] + ".hd5")
+            MODEL_DIR.joinpath(self.attrs['model_name'] + ".hd5"))
         json_str = self.model.to_json()
         json_str = json.dumps(json_str, indent=4, sort_keys=True)
         with open(
-                save_data_dir
-                + self.attrs['model_name']
-                + "-architecture.json", 'w') as f:
+            str(MODEL_DIR.joinpath(
+                self.attrs['model_name']
+                + "-architecture.json")), 'w') as f:
             f.write(json_str)
         print("Saved model")
 
