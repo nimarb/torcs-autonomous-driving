@@ -4,7 +4,6 @@ import sys
 import glob
 import json
 import platform
-# from random import sample
 import random
 import time
 from pathlib import Path
@@ -154,7 +153,7 @@ class ImgToSensorCNN:
 
     def set_val_set_in_percent(self, val_percent):
         """Set the training/validation data size in percent of available img files
-        
+
         Arguments
             val_percent: int, validation data size in percent of total data"""
         num_img = 0
@@ -412,7 +411,7 @@ class ImgToSensorCNN:
 
     def check_equal_occurances(self, array):
         """Prints the number of equal occurances in a np array
-        
+
         Arguments:
             array: numpy array, array to check occurances in"""
         print(
@@ -437,7 +436,7 @@ class ImgToSensorCNN:
         #        min(array), max(array) + binwidth, binwidth),
         #    linewidth=0.5)
         # plt.show()
- 
+
     def print_array_stats(self, distance_array, angle_array):
         """Print stats of input distance and angle arrays
 
@@ -880,11 +879,12 @@ if __name__ == "__main__":
             + "\n\tPARAMETRES for train:"
             + "\n\t\t desired image width in px"
             + "\n\t\t desired image height in px"
-            + "\n\t\t visualise data connection: True/False"
             + "\n\t\t model architecture name"
+            + "\n\t\t visualise data connection: True/False"
             + "\n\t\t training camera perspective"
             + "\n\tPARAMETRES for test:"
-            + "\n\t\t path to the model file"
+            + "\n\t\t name of/path to the model file"
+            + "\n\t\t number of test pictures to predict, 0 for all test imgs"
             + "\n\t\t visualise data connection: True/False")
         sys.exit(0)
     else:
@@ -897,21 +897,30 @@ if __name__ == "__main__":
             cnn = ImgToSensorCNN(
                 w=int(sys.argv[2]),
                 h=int(sys.argv[3]),
-                model_architecture=sys.argv[5])
-            if sys.argv[4] == "True":
+                model_architecture=sys.argv[4])
+        elif len(sys.argv) == 6:
+            cnn = ImgToSensorCNN(
+                w=int(sys.argv[2]),
+                h=int(sys.argv[3]),
+                model_architecture=sys.argv[4])
+            if sys.argv[5] == "True":
                 visualise_connection = True
         elif len(sys.argv) == 7:
             cnn = ImgToSensorCNN(
                 w=int(sys.argv[2]),
                 h=int(sys.argv[3]),
-                model_architecture=sys.argv[5],
+                model_architecture=sys.argv[4],
                 camera_perspective=sys.argv[6],
                 data_n=sys.argv[7])
-            if sys.argv[4] == "True":
+            if sys.argv[5] == "True":
                 visualise_connection = True
     elif not train:
         cnn = ImgToSensorCNN()
+        _num_imgs_to_predict = 10
         if len(sys.argv) > 3:
+            if sys.argv[3].isdigit:
+                _num_imgs_to_predict = int(sys.argv[3])
+        if len(sys.argv) > 4:
             if sys.argv[4] == "True":
                 visualise_connection = True
 
@@ -938,7 +947,6 @@ if __name__ == "__main__":
         if " " == _model_path or " " == _model_name:
             print("Could not find model file")
             sys.exit(-1)
-
         cnn.load_model(_model_path, _model_name)
         cnn.load_metadata(_model_path, _model_name)
         cnn.load_test_set()
@@ -954,4 +962,7 @@ if __name__ == "__main__":
                         img_array=cnn.test_imgs,
                         distance_array=cnn.test_vals[:, cnn.dim_choice])
         cnn.evaluate_model()
-        cnn.preditct_test_pics(10)
+        cnn.preditct_test_pics(_num_imgs_to_predict)
+
+    # Prevent tensorflow TF_DeleteStatus error
+    import gc; gc.collect()
