@@ -540,40 +540,32 @@ class ImgToSensorCNN:
             f.write(json_str)
         print("Saved model")
 
-    def load_model(self, name=None):
+    def load_model(self, model_dir, model_name=None):
         """Loads a previously saved keras model from disk
 
         Arguments:
-            model: keras.model, filename"""
-        if name:
-            self.attrs['model_name'] = name
-
-        _model_path = os.path.join(
-            "/home/nb/progs/torcs-autonomous-driving/src/models",
-            self.attrs['model_name'] + ".hd5")
-        self.model = load_model(_model_path)
-        print("Loaded model")
-
-    def load_metadata(self, model_name=None):
-        """Loads the model metadata from a saved JSON file.
-
-        Arguments:
-            model_name: string, name of the model file without datatype"""
-
+            model_dir: Path, path to the directory containing the model
+            model_name: string, name of the model without suffix"""
         if model_name:
             self.attrs['model_name'] = model_name
 
-        if "DigitsBoxBMW2" == platform.node():
-            model_dir = os.path.join(
-                "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
-            _model_metadata_path = os.path.join(
-                model_dir, self.attrs['model_name'] + "-metadata.json")
-        else:
-            _model_metadata_path = os.path.join(
-                "/home/nb/progs/torcs-autonomous-driving/src/models",
-                self.attrs['model_name'] + "-metadata.json")
+        _model_path = model_dir.joinpath(self.attrs['model_name'] + ".hd5")
+        self.model = load_model(_model_path)
+        print("Loaded model")
 
-        metadata = json.load(open(_model_metadata_path))
+    def load_metadata(self, model_dir, model_name=None):
+        """Loads the model metadata from a saved JSON file.
+
+        Arguments:
+            model_dir: Path, path to the directory containing the model
+            model_name: string, name of the model without suffix"""
+        if model_name:
+            self.attrs['model_name'] = model_name
+
+        _model_metadata_path = model_dir.joinpath(
+            self.attrs['model_name'] + "-metadata.json")
+
+        metadata = json.load(open(str(_model_metadata_path)))
         for key in self.attrs:
             try:
                 if "dim_choice" == key:
@@ -847,23 +839,32 @@ class TimeHistory(Callback):
 
 
 def find_model_file(file_str):
+    """Finds a previously saved .hd5 model file in possible dirs
+
+    Arguments:
+        file_str: string, path or model file name
+    Returns:
+        model_path: Path, path to the dir containing the model
+        model_name: string, name of the found model"""
     if "DigitsBoxBMW2" == platform.node():
         model_dir = Path(
             "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
     else:
-        model_dir = Path(__file__).absolute().parent.joinpath("models")
+        model_dir = Path(__file__).absolute().parents[1].joinpath("models")
     given_path = Path(file_str)
     # Check if file name or path was given
     if str(given_path).find("/") > 0 or str(given_path).find("\\") > 0:
         if given_path.suffix == '.hd5':
             if given_path.is_file():
-                return given_path.parent, given_path.name.split('.')[0]
+                return given_path.parent, given_path.stem
     else:
-        if given_path.is_file:
-                return given_path.parent, given_path.name.split('.')[0]
-        for fpath in model_dir.glob('*'):
-            if (fpath.name.split('.')[0]) == (str(given_path).split('.')[0]):
-                return fpath.absolute.parent, str(given_path).split('.')[0]
+        # Valid path to an existing file
+        if given_path.is_file():
+                return given_path.parent, given_path.stem
+        else: 
+            for fpath in model_dir.rglob('*.hd5'):
+                if fpath.stem == given_path.stem:
+                    return fpath.parent.absolute(), given_path.stem
     return " ", " "
 
 
@@ -935,20 +936,13 @@ if __name__ == "__main__":
         cnn.preditct_test_pics()
         cnn.save()
     elif not train:
-        if "DigitsBoxBMW2" == platform.node():
-            MODEL_DIR = Path(
-                "/", "raid", "student_data", "PP_TORCS_LearnDrive1", "models")
-        else:
-            MODEL_DIR = Path(__file__).absolute().parent.joinpath("models")
-
-        _model_file, _model_name = find_model_file(sys.argv[2])
-        if " " == _model_file:
+        _model_path, _model_name = find_model_file(sys.argv[2])
+        if " " == _model_path or " " == _model_name:
             print("Could not find model file")
             sys.exit(-1)
 
-        MODEL_SUB_DIR = "model_arch-val_mae-comp-large/"
-        cnn.load_model(MODEL_DIR + "modelslearndrive-model-21063")
-        cnn.load_metadata()
+        cnn.load_model(_model_path, _model_name)
+        cnn.load_metadata(_model_path, _model_name)
         cnn.load_test_set()
         if "DigitsBoxBMW2" == platform.node():
             if visualise_connection:
